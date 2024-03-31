@@ -30,9 +30,9 @@ There are 64 palette entries, each with 4 bits per color component (red, green, 
 Each character is composed of a 4 bit palette index and an 8 bit font ROM index. Characters can be shown in 16 colors, according to the current palette.
 
 ## Small Font
-Each pixel in the 8x8 pixel character is defined as 64 2-bit transparency values. This allows characters to be shown with some amount of anti-aliasing.
+Each pixel in the 8x8 pixel character is defined as a 2-bit transparency value. This allows characters to be shown with some amount of anti-aliasing.
 
 ## Large Font
-Each pixel in the 16x8 pixel character is defined as 128 2-bit transparency values. This allows characters to be shown with some amount of anti-aliasing.
+Each pixel in the 16x8 pixel character is defined as a 2-bit transparency value. This allows characters to be shown with some amount of anti-aliasing.
 
 [Home](README.md)
