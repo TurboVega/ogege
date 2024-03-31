@@ -34,3 +34,11 @@ Information about the RP2040 may be found here:
 
 https://datasheets.raspberrypi.com/rp2040/rp2040-datasheet.pdf
 
+## Memory
+
+The RP2040 contains 264 KB of SRAM (static RAM), divided into banks for faster
+access by the dual ARM Cortex M0 cores. The GateMate contains 160 KB of BRAM
+(block RAM), which may be thought of as 64 2.5 KB blocks, or as 32 5 KB blocks.
+
+Please refer to (Graphics Engine Memory Map)[memory_map.md] for details about the
+memory organization within the GateMate BRAM.
