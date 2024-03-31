@@ -34,3 +34,5 @@ Each pixel in the 8x8 pixel character is defined as 64 2-bit transparency values
 
 ## Large Font ROM
 Each pixel in the 16x8 pixel character is defined as 128 2-bit transparency values. This allows characters to be shown with some amount of anti-aliasing.
+
+[Home](README.md)
