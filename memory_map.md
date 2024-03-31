@@ -12,8 +12,8 @@ In general, memory is allocated into these main sections:
 |Frame Buffer|76800|640x480 or 320x240 pixels|
 |Color Palette|768|64 colors at 12 bits each|
 |Character Array|7200|80x60 or 40x30 characters, at 12 bits each|
-|Small Font ROM|4096|256 characters of 8x8x2 bit transparency levels|
-|Large Font ROM|8192|256 characters of 16x8x2 bit transparency levels|
+|Small Font|4096|256 characters of 8x8x2 bit transparency levels|
+|Large Font|8192|256 characters of 16x8x2 bit transparency levels|
 
 ## Frame Buffer
 ### 640x480 mode
@@ -29,10 +29,10 @@ There are 64 palette entries, each with 4 bits per color component (red, green, 
 ## Character Array
 Each character is composed of a 4 bit palette index and an 8 bit font ROM index. Characters can be shown in 16 colors, according to the current palette.
 
-## Small Font ROM
+## Small Font
 Each pixel in the 8x8 pixel character is defined as 64 2-bit transparency values. This allows characters to be shown with some amount of anti-aliasing.
 
-## Large Font ROM
+## Large Font
 Each pixel in the 16x8 pixel character is defined as 128 2-bit transparency values. This allows characters to be shown with some amount of anti-aliasing.
 
 [Home](README.md)
