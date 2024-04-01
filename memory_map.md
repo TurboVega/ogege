@@ -7,7 +7,7 @@ as used by the graphics engine. The GateMate has a total of 160 KB of BRAM.
 
 ## Overall Memory Allocation
 
-In general, memory is allocated into these main sections:
+In general, memory is allocated into these main sections (numbers may be approximate, depending on how physical arrangement must be done):
 
 |Purpose|Size (bytes)|Usage|
 |-------|----:|-----|
@@ -15,12 +15,13 @@ In general, memory is allocated into these main sections:
 |Text FG Color Palette|24|16 colors at 12 bits each|
 |Text BG Color Palette|24|16 colors at 12 bits each|
 |Main Color Palette|384|256 colors at 12 bits each|
-|Character Array|9600|80x60 or 40x30 characters, at 16 bits each|
+|Small Text Array|9600|80x60 or 40x30 characters, at 16 bits each|
+|Large Text Array|2250|40x30 or 20x15 characters, at 15 bits each|
 |Small Font|6144|256 characters of 8x8x3 bit transparency levels|
-|Large Font|12288|256 characters of 16x8x3 bit transparency levels|
-|Sprite Control|TBD|Control settings for sprites|
-|Sprite Data|TBD|Pixel data for sprites|
-|Total|TBD|Total size of used BRAM|
+|Large Font|6144|128 characters of 16x8x3 bit transparency levels|
+|Sprite Control|640|Control settings for sprites|
+|Sprite Data|62470|Pixel data for sprites|
+|Total|163840|Total size of used BRAM|
 
 ## Frame Buffer
 
@@ -31,7 +32,7 @@ buffer and sprites share the same color palette.
 
 ### 640x480 mode
 Each frame buffer byte holds two pixels.
-Pixel format is AAAABBBB where AAAA is the palette index of the first pixel and BBBB is the palette index of the second pixel. The first pixel has an even X coordinate, and the second pixel has an odd X coordinate.
+Pixel format (as bits) is AAAABBBB where AAAA is the palette index of the first pixel and BBBB is the palette index of the second pixel. The first pixel has an even X coordinate, and the second pixel has an odd X coordinate.
 
 ### 320x240 mode
 Each byte holds one pixel, which is the palette index.
@@ -47,8 +48,11 @@ There are 64 main palette entries, each with 4 bits per color component (red, gr
 The background image and sprites both use the main
 color palette
 
-## Character Array
-Each character is composed of a 4 bit palette index and an 8 bit font ROM index. Characters can be shown in 16 foreground colors, distinct from the 16 background colors, according to the current palette.
+## Small Text Array
+Each character is composed of a 4 bit palette index and an 8 bit font array index. Characters can be shown in 16 foreground colors, distinct from the 16 background colors, according to the current palette.
+
+## Large Text Array
+Each character is composed of a 4 bit palette index and a 7 bit font array index. Characters can be shown in 16 foreground colors, distinct from the 16 background colors, according to the current palette.
 
 ## Small Font
 Each pixel in the 8x8 pixel character is defined as a 3-bit transparency value. This allows characters to be shown with some amount of anti-aliasing. Each of the
@@ -57,7 +61,7 @@ application at runtime, to define new characters.
 
 ## Large Font
 Each pixel in the 16x8 pixel character is defined as a 3-bit transparency value. This allows characters to be shown with some amount of anti-aliasing. Each of the
-256 characters in the font may be redefined by the
+128 characters in the font may be redefined by the
 application at runtime, to define new characters.
 
 ## Sprite Control
@@ -76,6 +80,7 @@ There may be up to 128 sprites on the screen at one time. Each one is controlled
 |Flip Vertical|1|Whether to flip the pixels vertically|
 |Pixel Data|16|Index of pixel data for sprite|
 |Reserved|1|Future use|
+|Total|40|5 bytes|
 
 Active: a sprite that is active may be involved in collisions, even if it is not visible, to allow for hidden dangers.
 
@@ -106,6 +111,21 @@ Data Index: pixel data for sprites is stored in an array, accessed using the pix
 Pixel data for sprites is stored in an array, accessed using the pixel data index value.
 Each data element is 10 bits long. There are 3 bits for a transparency level, and 8 bits for a palette color index.
 
+In terms of storage sprites of various sizes consume the following numbers of sprite array bytes (sizes can be thought of as WxH or HxW):
+
+|Size|Pixels|Total Bits|Total Bytes|
+|---:|---:|---:|---:|
+|8 x 8|64|704|88|
+|8 x 16|128|1408|176|
+|8 x 32|256|2816|352|
+|8 x 64|512|5632|704|
+|16 x 16|256|2816|352|
+|16 x 32|512|5632|704|
+|16 x 64|1024|11264|1408|
+|32 x 32|1024|11264|1408|
+|32 x 64|2048|22528|2816|
+|64 x 64|4096|45056|5632|
+
 ## Transparency Levels
 
 In font characters and in sprite data there a are 3 bits designating the transparency of each pixel, according
@@ -116,5 +136,9 @@ to the following set of codes:
 * 010B (2H) - 50% opaque (50% transparent)
 * 011B (3H) - 75% opaque (25% transparent)
 * 100B (4H) - 100% opaque (0% transparent)
+
+## Graphics Engine Registers
+
+TBD
 
 [Home](README.md)
