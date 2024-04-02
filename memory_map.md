@@ -17,8 +17,8 @@ In general, memory is allocated into these main sections (numbers may be approxi
 |Main Color Palette|384|256 colors at 12 bits each|
 |Small Text Array|9600|80x60 or 40x30 characters, at 16 bits each|
 |Large Text Array|2250|40x30 or 20x15 characters, at 15 bits each|
-|Small Font|6144|256 characters of 8x8x3 bit transparency levels|
-|Large Font|6144|128 characters of 16x8x3 bit transparency levels|
+|Small Font|6144|256 characters of 8x8x3 bit alpha levels|
+|Large Font|6144|128 characters of 16x8x3 bit alpha levels|
 |Sprite Control|640|Control settings for sprites|
 |Sprite Data|62470|Pixel data for sprites|
 |Total|163840|Total size of used BRAM|
@@ -55,12 +55,12 @@ Each character is composed of a 4 bit palette index and an 8 bit font array inde
 Each character is composed of a 4 bit palette index and a 7 bit font array index. Characters can be shown in 16 foreground colors, distinct from the 16 background colors, according to the current palette.
 
 ## Small Font
-Each pixel in the 8x8 pixel character is defined as a 3-bit transparency value. This allows characters to be shown with some amount of anti-aliasing. Each of the
+Each pixel in the 8x8 pixel character is defined as a 3-bit alpha value. This allows characters to be shown with some amount of anti-aliasing. Each of the
 256 characters in the font may be redefined by the
 application at runtime, to define new characters.
 
 ## Large Font
-Each pixel in the 16x8 pixel character is defined as a 3-bit transparency value. This allows characters to be shown with some amount of anti-aliasing. Each of the
+Each pixel in the 16x8 pixel character is defined as a 3-bit alpha value. This allows characters to be shown with some amount of anti-aliasing. Each of the
 128 characters in the font may be redefined by the
 application at runtime, to define new characters.
 
@@ -109,7 +109,7 @@ Data Index: pixel data for sprites is stored in an array, accessed using the pix
 
 ## Sprite Data
 Pixel data for sprites is stored in an array, accessed using the pixel data index value.
-Each data element is 10 bits long. There are 3 bits for a transparency level, and 8 bits for a palette color index.
+Each data element is 10 bits long. There are 3 bits for an alpha level, and 8 bits for a palette color index.
 
 In terms of storage sprites of various sizes consume the following numbers of sprite array bytes (sizes can be thought of as WxH or HxW):
 
@@ -126,16 +126,20 @@ In terms of storage sprites of various sizes consume the following numbers of sp
 |32 x 64|2048|22528|2816|
 |64 x 64|4096|45056|5632|
 
-## Transparency Levels
+## Alpha (opaqueness) Levels
 
-In font characters and in sprite data there a are 3 bits designating the transparency of each pixel, according
-to the following set of codes:
+In font characters and in sprite data there a are 3 bits designating the opaqueness (and
+corresponding transparency) of each pixel, according
+to the following set of codes.
 
 * 000B (0H) - 0% opaque (100% transparent)
 * 001B (1H) - 25% opaque (75% transparent)
-* 010B (2H) - 50% opaque (50% transparent)
-* 011B (3H) - 75% opaque (25% transparent)
-* 100B (4H) - 100% opaque (0% transparent)
+* 010B (2H) - 33% opaque (67% transparent)
+* 011B (3H) - 50% opaque (50% transparent)
+* 100B (4H) - 67% opaque (33% transparent)
+* 101B (5H) - 75% opaque (25% transparent)
+* 110B (6H) - 100% opaque (0% transparent)
+* 111B (7H) - reserved
 
 ## Graphics Engine Registers
 
