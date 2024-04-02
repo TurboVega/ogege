@@ -1,5 +1,4 @@
-@echo on
-cls
+echo -- winmake %1%
 
 :: toolchain
 set CC_TOOL=D:\cc-toolchain-win\bin
@@ -57,7 +56,7 @@ if "%1"=="impl" (
 if ERRORLEVEL 1 EXIT /b 3
 
 if "%1"=="jtag" (
-  start /WAIT /B %OFL% -b gatemate_evb_jtag --cable dirtyJtag %TOP%_00.cfg.bit
+  start /WAIT /B %OFL% -b gatemate_evb_jtag --cable dirtyJtag -v --bitstream %TOP%_00.cfg.bit
 )
 
 if ERRORLEVEL 1 EXIT /b 4

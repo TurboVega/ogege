@@ -11,6 +11,7 @@
 *.sdf
 *.used
 *_00.v
+*_00pre*
 *.id
 *.net
 *.pathes
