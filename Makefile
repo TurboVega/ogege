@@ -50,7 +50,7 @@ jtag-flash: $(TOP)_00.cfg
 clean:
 	$(RM) *.log *_synth.v *.history *.txt *.refwire *.refparam
 	$(RM) *.refcomp *.pos *.pathes *.path_struc *.net *.id *.prn
-	$(RM) *_00.v *.used *.sdf *.place *.pin *.cfg* *.cdf
+	$(RM) *_00.v *_00pre* *.used *.sdf *.place *.pin *.cfg* *.cdf
 
 .SECONDARY:
 .PHONY: all jtag jtag-flash clean

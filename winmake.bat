@@ -22,7 +22,7 @@ if not exist net (
 )
 
 :: Place&Route arguments
-set PRFLAGS=-ccf src/gatemate1a_evb.ccf -cCP
+set PRFLAGS=--verbose -ccf src/gatemate1a_evb.ccf -cCP
 
 :: do not change
 if "%1"=="synth_vlog" (
@@ -56,7 +56,7 @@ if "%1"=="impl" (
 if ERRORLEVEL 1 EXIT /b 3
 
 if "%1"=="jtag" (
-  start /WAIT /B %OFL% -b gatemate_evb_jtag --cable dirtyJtag -v --bitstream %TOP%_00.cfg.bit
+  start /WAIT /B %OFL% -b gatemate_evb_jtag --cable dirtyJtag --verbose --bitstream %TOP%_00.cfg.bit
 )
 
 if ERRORLEVEL 1 EXIT /b 4
