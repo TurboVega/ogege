@@ -49,5 +49,7 @@ color_bar #(
 );
 
 assign o_led = 8'b0;
+assign o_clk = clk_i;
+assign o_rst = rstn_i;
 
 endmodule

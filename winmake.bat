@@ -10,14 +10,20 @@ set DISP_640x480_60Hz=1
 
 :: project name and sources
 set TOP=ogege
-set VLOG_SRC=src/ogege.v src/color_bar.v src/vga_core.v src/gatemate_25MHz_pll.v
+set VLOG_SRC=src/ogege.v src/color_bar.v src/vga_core.v ../fpgalibs/clocks/gatemate_25MHz_pll.v
 set VHDL_SRC=src/ogege.vhd
 set LOG=0
 
-md log
+if not exist log (
+  md log
+)
+
+if not exist net (
+  md net
+)
 
 :: Place&Route arguments
-set PRFLAGS=-ccf src/%TOP%.ccf -cCP
+set PRFLAGS=-ccf src/gatemate1a_evb.ccf -cCP
 
 :: do not change
 if "%1"=="synth_vlog" (
@@ -28,7 +34,7 @@ if "%1"=="synth_vlog" (
   )
 )
 
-if ERRORLEVEL 1 EXIT 1
+if ERRORLEVEL 1 EXIT /b 1
 
 if "%1"=="synth_vhdl" (
   if %LOG%==1 (
@@ -38,7 +44,7 @@ if "%1"=="synth_vhdl" (
   )
 )
 
-if ERRORLEVEL 1 EXIT 2
+if ERRORLEVEL 1 EXIT /b 2
 
 if "%1"=="impl" (
   if %LOG%==1 (
@@ -48,31 +54,31 @@ if "%1"=="impl" (
   )
 )
 
-if ERRORLEVEL 1 EXIT 3
+if ERRORLEVEL 1 EXIT /b 3
 
 if "%1"=="jtag" (
-  start /WAIT /B %OFL% -b gatemate_evb_jtag %TOP%_00.cfg
+  start /WAIT /B %OFL% -b gatemate_evb_jtag --cable dirtyJtag %TOP%_00.cfg.bit
 )
 
-if ERRORLEVEL 1 EXIT 4
+if ERRORLEVEL 1 EXIT /b 4
 
 if "%1"=="jtag-flash" (
   start /WAIT /B %OFL% -b gatemate_evb_jtag -f --verify %TOP%_00.cfg
 )
 
-if ERRORLEVEL 1 EXIT 5
+if ERRORLEVEL 1 EXIT /b 5
 
 if "%1"=="spi" (
   start /WAIT /B %OFL% -b gatemate_evb_spi -m %TOP%_00.cfg
 )
 
-if ERRORLEVEL 1 EXIT 6
+if ERRORLEVEL 1 EXIT /b 6
 
 if "%1"=="spi-flash" (
   start /WAIT /B %OFL% -b gatemate_evb_spi -f --verify %TOP%_00.cfg
 )
 
-if ERRORLEVEL 1 EXIT 7
+if ERRORLEVEL 1 EXIT /b 7
 
 if "%1"=="clean" (
   del log\*.log 2>NUL
