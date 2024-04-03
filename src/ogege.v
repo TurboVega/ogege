@@ -15,15 +15,15 @@ module ogege (
 
 wire clk_pix, clk_locked;
 
-wire [3:0] fg_r = 4'b1111;
-wire [3:0] fg_g = 4'b0000;
-wire [3:0] fg_b = 4'b0000;
+wire [3:0] fg_r;
+wire [3:0] fg_g;
+wire [3:0] fg_b;
 
-wire [3:0] bg_r = 4'b0000;
-wire [3:0] bg_g = 4'b1111;
-wire [3:0] bg_b = 4'b0000;
+wire [3:0] bg_r;
+wire [3:0] bg_g;
+wire [3:0] bg_b;
 
-wire [2:0] alpha = 3'b011;
+wire [2:0] alpha;
 
 wire [3:0] new_r;
 wire [3:0] new_g;
@@ -63,17 +63,27 @@ localparam
 	VRES = 480,
 	VSZ  = $clog2(VRES);
 
-wire [HSZ-1:0] hcount_s;
+wire [HSZ-1:0] h_count_s;
 wire [VSZ-1:0] v_count_s;
 wire de_s;
 
 vga_core #(
 	.HSZ(HSZ), .VSZ(VSZ)
 ) vga_inst (.clk_i(clk_pix), .rst_i(~clk_locked),
-	.hcount_o(hcount_s), .vcount_o(v_count_s),
+	.hcount_o(h_count_s), .vcount_o(v_count_s),
 	.de_o(de_s),
 	.vsync_o(o_vsync), .hsync_o(o_hsync)
 );
+
+assign fg_r = h_count_s[6:3];
+assign fg_g = h_count_s[7:4];
+assign fg_b = h_count_s[8:5];
+
+assign bg_r = v_count_s[6:3];
+assign bg_g = v_count_s[7:4];
+assign bg_b = v_count_s[8:5];
+
+assign alpha = 3'b011;
 
 assign o_led = 8'b0;
 assign o_clk = 1'b0;//clk_i;
