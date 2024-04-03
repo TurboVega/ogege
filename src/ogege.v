@@ -51,8 +51,8 @@ vga_core #(
 assign o_led = 8'b0;
 assign o_clk = 1'b0;//clk_i;
 assign o_rst = 1'b0;//rstn_i;
-assign o_r = de_s ? 4'b1111 : 4'b0;
+assign o_b = de_s ? 4'b1111 : 4'b0;
+assign o_r = 4'b0000;
 assign o_g = 4'b0000;
-assign o_b = 4'b0000;
 
 endmodule
