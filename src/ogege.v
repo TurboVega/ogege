@@ -40,19 +40,19 @@ vga_core #(
 	.vsync_o(o_vsync), .hsync_o(o_hsync)
 );
 
-/*color_bar #(
+color_bar #(
     .H_RES(80), .PIX_SZ(4)
 ) col_inst (
 	.i_clk(clk_pix), .i_rst(~clk_locked),
 	.i_blank(~de_s),
 	.o_r(o_r), .o_g(o_g), .o_b(o_b)
-);*/
+);
 
 assign o_led = 8'b0;
 assign o_clk = 1'b0;//clk_i;
 assign o_rst = 1'b0;//rstn_i;
-assign o_b = de_s ? 4'b1111 : 4'b0;
-assign o_r = 4'b0000;
-assign o_g = 4'b0000;
+//assign o_b = de_s ? 4'b1111 : 4'b0;
+//assign o_r = 4'b0000;
+//assign o_g = 4'b0000;
 
 endmodule
