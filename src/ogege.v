@@ -15,6 +15,41 @@ module ogege (
 
 wire clk_pix, clk_locked;
 
+wire [3:0] fg_r = 4'b1111;
+wire [3:0] fg_g = 4'b0000;
+wire [3:0] fg_b = 4'b0000;
+
+wire [3:0] bg_r = 4'b0000;
+wire [3:0] bg_g = 4'b1111;
+wire [3:0] bg_b = 4'b0000;
+
+wire [2:0] alpha = 3'b011;
+
+wire [3:0] new_r;
+wire [3:0] new_g;
+wire [3:0] new_b;
+
+component_blender blend_r (
+	.i_bg_color(bg_r),
+	.i_fg_color(fg_r),
+	.i_fg_alpha(alpha),
+	.o_color(new_r)
+);
+
+component_blender blend_g (
+	.i_bg_color(bg_g),
+	.i_fg_color(fg_g),
+	.i_fg_alpha(alpha),
+	.o_color(new_g)
+);
+
+component_blender blend_b (
+	.i_bg_color(bg_b),
+	.i_fg_color(fg_b),
+	.i_fg_alpha(alpha),
+	.o_color(new_b)
+);
+
 pll pll_inst (
     .clock_in(clk_i), // 10 MHz
 	.rst_in(~rstn_i),
@@ -40,19 +75,11 @@ vga_core #(
 	.vsync_o(o_vsync), .hsync_o(o_hsync)
 );
 
-color_bar #(
-    .H_RES(80), .PIX_SZ(4)
-) col_inst (
-	.i_clk(clk_pix), .i_rst(~clk_locked),
-	.i_blank(~de_s),
-	.o_r(o_r), .o_g(o_g), .o_b(o_b)
-);
-
 assign o_led = 8'b0;
 assign o_clk = 1'b0;//clk_i;
 assign o_rst = 1'b0;//rstn_i;
-//assign o_b = de_s ? 4'b1111 : 4'b0;
-//assign o_r = 4'b0000;
-//assign o_g = 4'b0000;
+assign o_r = new_r;
+assign o_g = new_g;
+assign o_b = new_b;
 
 endmodule
