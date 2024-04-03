@@ -83,7 +83,7 @@ assign bg_r = v_count_s[6:3];
 assign bg_g = v_count_s[7:4];
 assign bg_b = v_count_s[8:5];
 
-assign alpha = 3'b011;
+assign alpha = 3'b110;
 
 assign o_led = 8'b0;
 assign o_clk = 1'b0;//clk_i;
