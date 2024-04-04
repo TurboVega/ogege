@@ -36,7 +36,7 @@ module char_blender (
         .o_color(char_color)
     );
 
-    color_blender blend_r (
+    color_blender blender (
         .i_bg_color(i_bg_color),
         .i_fg_color(char_color),
         .i_fg_alpha(char_alpha),
