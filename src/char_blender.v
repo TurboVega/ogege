@@ -1,6 +1,10 @@
 /*
  * char_blender.v
  *
+ * This module blends a single pixel of a character with the background color
+ * and outputs the resulting color. The character pixel is based on the given
+ * row and column within the character cell.
+ *
  * Copyright (C) 2024 Curtis Whitley
  * License: APACHE
  */

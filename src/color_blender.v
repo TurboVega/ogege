@@ -1,6 +1,10 @@
 /*
  * color_blender.v
  *
+ * This module blends the individual color components (red, green, and blue)
+ * of a background color and a foreground color, using the given alpha code,
+ * and outputs the resulting color.
+ *
  * Copyright (C) 2024 Curtis Whitley
  * License: APACHE
  */

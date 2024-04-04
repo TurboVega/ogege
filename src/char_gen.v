@@ -1,6 +1,10 @@
 /*
  * char_gen.v
  *
+ * This module looks up a character in the font table, and outputs a single pixel
+ * for that character, in terms of its alpha code and color, based on the given
+ * row and column within the character cell.
+ *
  * Copyright (C) 2024 Curtis Whitley
  * License: APACHE
  */

@@ -1,6 +1,10 @@
 /*
  * ogege.v
  *
+ * This is the top-level module for the graphics generator. It holds all of the
+ * registers needed to generate the entire display, and supports reading and
+ * writing those registers from an external application standpoint.
+ *
  * Copyright (C) 2024 Curtis Whitley
  * License: APACHE
  */
