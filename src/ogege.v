@@ -21,7 +21,13 @@ module ogege (
 );
 
 wire clk_pix, clk_locked;
+reg [11:0] reg_bg_color = 12'b111111110000;
 wire [11:0] new_color;
+wire [HSZ-1:0] h_count_s;
+wire [VSZ-1:0] v_count_s;
+wire active_s;
+wire blank_s;
+
 
 pll pll_inst (
     .clock_in(clk_i), // 10 MHz
@@ -36,11 +42,6 @@ localparam
 	VRES = 480,
 	VSZ  = $clog2(VRES);
 
-wire [HSZ-1:0] h_count_s;
-wire [VSZ-1:0] v_count_s;
-wire active_s;
-wire blank_s;
-
 vga_core #(
 	.HSZ(HSZ), .VSZ(VSZ)
 ) vga_inst (.clk_i(clk_pix), .rst_i(~clk_locked),
@@ -49,13 +50,14 @@ vga_core #(
 	.vsync_o(o_vsync), .hsync_o(o_hsync)
 );
 
-char_gen char_gen_inst (
+char_blender char_blender_inst (
 	.i_clk(clk_pix),
 	.i_rst(~clk_locked),
 	.i_blank(blank_s),
 	.i_char(h_count_s[9:2]),
 	.i_column(h_count_s[2:0]),
 	.i_row(v_count_s[2:0]),
+	.i_bg_color(reg_bg_color),
 	.o_color(new_color)
 );
 

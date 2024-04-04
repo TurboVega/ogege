@@ -25,6 +25,7 @@ OBJS += $(SOURCEDIR)/char_gen.v
 OBJS += $(SOURCEDIR)/component_blender.v
 OBJS += $(SOURCEDIR)/color_blender.v
 OBJS += $(SOURCEDIR)/char_gen.v
+OBJS += $(SOURCEDIR)/char_blender.v
 OBJS += ../fpgalibs/clocks/gatemate_25MHz_pll.v
 
 info:
