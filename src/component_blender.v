@@ -1,14 +1,13 @@
 /*
  * component_blender.v
  *
- * Copyright (C) 2024 by Curtis Whitley
+ * Copyright (C) 2024 Curtis Whitley
  * License: APACHE
  */
 
 `default_nettype none
 
-module component_blender #(
-) (
+module component_blender (
 	input wire [3:0] i_bg_color,
 	input wire [3:0] i_fg_color,
 	input wire [2:0] i_fg_alpha,

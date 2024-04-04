@@ -1,3 +1,10 @@
+/*
+ * ogege.v
+ *
+ * Copyright (C) 2024 Curtis Whitley
+ * License: APACHE
+ */
+
 `default_nettype none
 
 module ogege (
@@ -14,41 +21,7 @@ module ogege (
 );
 
 wire clk_pix, clk_locked;
-
-wire [3:0] fg_r;
-wire [3:0] fg_g;
-wire [3:0] fg_b;
-
-wire [3:0] bg_r;
-wire [3:0] bg_g;
-wire [3:0] bg_b;
-
-wire [2:0] alpha;
-
-wire [3:0] new_r;
-wire [3:0] new_g;
-wire [3:0] new_b;
-
-component_blender blend_r (
-	.i_bg_color(bg_r),
-	.i_fg_color(fg_r),
-	.i_fg_alpha(alpha),
-	.o_color(new_r)
-);
-
-component_blender blend_g (
-	.i_bg_color(bg_g),
-	.i_fg_color(fg_g),
-	.i_fg_alpha(alpha),
-	.o_color(new_g)
-);
-
-component_blender blend_b (
-	.i_bg_color(bg_b),
-	.i_fg_color(fg_b),
-	.i_fg_alpha(alpha),
-	.o_color(new_b)
-);
+wire [11:0] new_color;
 
 pll pll_inst (
     .clock_in(clk_i), // 10 MHz
@@ -65,31 +38,33 @@ localparam
 
 wire [HSZ-1:0] h_count_s;
 wire [VSZ-1:0] v_count_s;
-wire de_s;
+wire active_s;
+wire blank_s;
 
 vga_core #(
 	.HSZ(HSZ), .VSZ(VSZ)
 ) vga_inst (.clk_i(clk_pix), .rst_i(~clk_locked),
 	.hcount_o(h_count_s), .vcount_o(v_count_s),
-	.de_o(de_s),
+	.de_o(active_s),
 	.vsync_o(o_vsync), .hsync_o(o_hsync)
 );
 
-assign fg_r = h_count_s[6:3];
-assign fg_g = h_count_s[7:4];
-assign fg_b = h_count_s[8:5];
-
-assign bg_r = v_count_s[6:3];
-assign bg_g = v_count_s[7:4];
-assign bg_b = v_count_s[8:5];
-
-assign alpha = 3'b110;
+char_gen char_gen_inst (
+	.i_clk(clk_pix),
+	.i_rst(~clk_locked),
+	.i_blank(blank_s),
+	.i_char(h_count_s[9:2]),
+	.i_column(h_count_s[2:0]),
+	.i_row(v_count_s[2:0]),
+	.o_color(new_color)
+);
 
 assign o_led = 8'b0;
-assign o_clk = 1'b0;//clk_i;
-assign o_rst = 1'b0;//rstn_i;
-assign o_r = de_s ? new_r : 1'b0;
-assign o_g = de_s ? new_g : 1'b0;
-assign o_b = de_s ? new_b : 1'b0;
+assign o_clk = clk_i;
+assign o_rst = rstn_i;
+assign blank_s = ~active_s;
+assign o_r = active_s ? new_color[11:8] : 1'b0;
+assign o_g = active_s ? new_color[7:4] : 1'b0;
+assign o_b = active_s ? new_color[3:0] : 1'b0;
 
 endmodule
