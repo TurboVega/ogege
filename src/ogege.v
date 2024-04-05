@@ -25,6 +25,7 @@ module ogege (
 );
 
 wire clk_pix, clk_locked;
+reg [11:0] reg_fg_color = 12'b000000001111;
 reg [11:0] reg_bg_color = 12'b111111110000;
 wire [11:0] new_color;
 wire [HSZ-1:0] h_count_s;
@@ -55,12 +56,10 @@ vga_core #(
 );
 
 char_blender char_blender_inst (
-	.i_clk(clk_pix),
-	.i_rst(~clk_locked),
-	.i_blank(blank_s),
 	.i_char(h_count_s[9:2]),
-	.i_column(h_count_s[2:0]),
 	.i_row(v_count_s[2:0]),
+	.i_column(h_count_s[2:0]),
+	.i_fg_color(reg_fg_color),
 	.i_bg_color(reg_bg_color),
 	.o_color(new_color)
 );
