@@ -21,11 +21,13 @@ ogege.asc: ogege.blif
 ogege.blif: ogege.v
 OBJS += $(SOURCEDIR)/ogege.v
 OBJS += $(SOURCEDIR)/vga_core.v
-OBJS += $(SOURCEDIR)/char_gen.v
+OBJS += $(SOURCEDIR)/char_gen8x8.v
 OBJS += $(SOURCEDIR)/component_blender.v
 OBJS += $(SOURCEDIR)/color_blender.v
-OBJS += $(SOURCEDIR)/char_gen.v
-OBJS += $(SOURCEDIR)/char_blender.v
+OBJS += $(SOURCEDIR)/char_gen8x8.v
+OBJS += $(SOURCEDIR)/char_gen8x12.v
+OBJS += $(SOURCEDIR)/char_blender8x8.v
+OBJS += $(SOURCEDIR)/char_blender8x12.v
 OBJS += ../fpgalibs/clocks/gatemate_25MHz_pll.v
 
 info:

@@ -1,5 +1,5 @@
 /*
- * char_gen.v
+ * char_gen8x12.v
  *
  * This module looks up a character in the font table, and outputs a single pixel
  * for that character, in terms of its alpha code and color, based on the given
@@ -11,23 +11,23 @@
 
 `default_nettype none
 
-module char_gen (
+module char_gen8x12 (
 	input  wire [7:0] i_char,
-	input  wire [2:0] i_row,
+	input  wire [3:0] i_row,
 	input  wire [2:0] i_column,
 	output wire [2:0] o_alpha
 );
 
 	// The items in this array are arranged as if it were a 3D array:
 	// glyphs[character code][character scan row][character scan column]
-	//           0..255               0..7               0..7
+	//           0..255               0..11              0..7
 	//
-	// Total number of alpha values is 256*8*8 = 16384.
+	// Total number of alpha values is 256*12*8 = 24576.
 	//
-    reg [2:0] glyphs[0:16383];
+    reg [2:0] glyphs[0:24575];
 
     initial
-        $readmemb("../font/font8x8.bits", glyphs, 0, 16383);
+        $readmemb("../font/font8x12.bits", glyphs, 0, 24575);
 
 	assign o_alpha = glyphs[{i_char, i_row, i_column}];
 

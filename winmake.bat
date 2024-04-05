@@ -9,8 +9,9 @@ set DISP_640x480_60Hz=1
 
 :: project name and sources
 set TOP=ogege
-set VLOG_SRC=src/ogege.v src/char_gen.v src/vga_core.v src/component_blender.v src/color_blender.v src/char_gen.v
-set VLOG_SRC=%VLOG_SRC% src/char_blender.v ../fpgalibs/clocks/gatemate_25MHz_pll.v
+set VLOG_SRC=src/ogege.v src/char_gen8x8.v src/vga_core.v src/component_blender.v src/color_blender.v
+set VLOG_SRC=%VLOG_SRC% src/char_gen8x8.v src/char_gen8x12.v
+set VLOG_SRC=%VLOG_SRC% src/char_blender8x8.v src/char_blender8x12.v ../fpgalibs/clocks/gatemate_25MHz_pll.v
 set VHDL_SRC=src/ogege.vhd
 set LOG=0
 

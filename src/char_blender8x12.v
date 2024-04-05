@@ -1,5 +1,5 @@
 /*
- * char_blender.v
+ * char_blender8x12.v
  *
  * This module blends a single pixel of a character with the background color
  * and outputs the resulting color. The character pixel is based on the given
@@ -11,9 +11,9 @@
 
 `default_nettype none
 
-module char_blender (
+module char_blender8x12 (
 	input  wire [7:0] i_char,
-	input  wire [2:0] i_row,
+	input  wire [3:0] i_row,
 	input  wire [2:0] i_column,
     input  wire [11:0] i_bg_color,
     input  wire [11:0] i_fg_color,
@@ -22,7 +22,7 @@ module char_blender (
 
     wire [2:0] char_alpha;
 
-    char_gen char_gen_inst (
+    char_gen8x12 char_gen_inst (
         .i_char(i_char),
         .i_row(i_row),
         .i_column(i_column),
