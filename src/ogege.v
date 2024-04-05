@@ -32,7 +32,9 @@ wire [HSZ-1:0] h_count_s;
 wire [VSZ-1:0] v_count_s;
 wire active_s;
 wire blank_s;
-
+reg [3:0] cell_row_count;
+wire [2:0] cell_col_count;
+reg [4:0] text_row_count;
 
 pll pll_inst (
     .clock_in(clk_i), // 10 MHz
@@ -59,10 +61,25 @@ vga_core #(
 	.hsync_o(o_hsync)
 );
 
+assign cell_col_count = h_count_s[2:0];
+
+always @(posedge clk_pix) begin
+	if (h_count_s == 639) begin
+		if (v_count_s == 479) begin
+			cell_row_count = 0;
+			text_row_count = 0;
+		end else if (cell_row_count == 11) begin
+			cell_row_count = 0;
+			text_row_count = text_row_count + 1;
+		end else
+			cell_row_count = cell_row_count + 1;
+	end
+end
+
 char_blender8x12 char_blender_inst (
 	.i_char(8'b00100000+{1'b0, h_count_s[9:3]}),
-	.i_row(v_count_s[3:0]),
-	.i_column(h_count_s[2:0]),
+	.i_row(cell_row_count),
+	.i_column(cell_col_count),
 	.i_fg_color(reg_fg_color),
 	.i_bg_color(reg_bg_color),
 	.o_color(new_color)
@@ -72,8 +89,8 @@ assign o_led = 8'b0;
 assign o_clk = clk_i;
 assign o_rst = rstn_i;
 assign blank_s = ~active_s;
-assign o_r = active_s && (v_count_s<VSZ'd12) ? new_color[11:8] : 1'b0;
-assign o_g = active_s && (v_count_s<VSZ'd12) ? new_color[7:4] : 1'b0;
-assign o_b = active_s && (v_count_s<VSZ'd12) ? new_color[3:0] : 1'b0;
+assign o_r = active_s ? new_color[11:8] : 1'b0;
+assign o_g = active_s ? new_color[7:4] : 1'b0;
+assign o_b = active_s ? new_color[3:0] : 1'b0;
 
 endmodule
