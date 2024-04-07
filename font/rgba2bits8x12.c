@@ -15,11 +15,10 @@
 #define BYTES_PER_INPUT_ROW     (BYTES_PER_INPUT_LINE*INPUT_CHAR_HEIGHT)
 
 int main() {
-    for (int i=0; i<CHAR_WIDTH*CHAR_HEIGHT*32; i++) {
-        printf("000\n");
-    }
-
     for (int srow=0; srow<CHAR_HEIGHT; srow++) {
+        for (int i=0; i<CHAR_WIDTH*32; i++) {
+            printf("000\n");
+        }
         for (int row=0; row<INPUT_ROWS; row++) {
             for (int col=0; col<INPUT_COLUMNS; col++) {
                 for (int scol=0; scol<CHAR_WIDTH; scol++) {                
@@ -50,8 +49,8 @@ int main() {
                 }
             }
         }
-    }
-    for (int i=0; i<CHAR_WIDTH*CHAR_HEIGHT*128; i++) {
-        printf("000\n");
+        for (int i=0; i<CHAR_WIDTH*128; i++) {
+            printf("000\n");
+        }
     }
 }
