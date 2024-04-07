@@ -46,8 +46,8 @@ module text_area8x8 (
     // The scroll offsets default to zero, which means that the upper-left
 	// visible pixel is the upper-left pixel in the text cell for text row 0
 	// and text column 0.
-	input  wire [4:0] reg_scroll_x_offset,
-	input  wire [4:0] reg_scroll_y_offset,
+	input  wire [4:0] reg_scroll_x_offset = 4'd0;
+	input  wire [4:0] reg_scroll_y_offset = 4'd0;
 
 	// The text area alpha determines how the entire text area is
 	// blended onto the given background.
@@ -86,8 +86,8 @@ module text_area8x8 (
 	wire [7:0] cell_char_code;
 	wire [11:0] intermediate_color;
 
-	assign adjusted_scan_row = i_scan_row + i_scroll_y_offset;
-	assign adjusted_scan_column = i_scan_column + i_scroll_x_offset;
+	assign adjusted_scan_row = i_scan_row + reg_scroll_y_offset;
+	assign adjusted_scan_column = i_scan_column + reg_scroll_x_offset;
 	assign text_cell_row = adjusted_scan_row[8:3];
 	assign text_cell_column = adjusted_scan_column[9:3];
 	assign cell_scan_row = text_cell_row[2:0];
