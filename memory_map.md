@@ -3,7 +3,10 @@
 This document details the memory map (layout) of the GateMate BRAM,
 as used by the graphics engine. The GateMate has a total of 160 KB of BRAM.
 
-<i>All of this information is under design and is subject to change!</i>
+<i>All of this information is under design and is subject to change!
+For example, some of the items listed below may not end up in BRAM,
+but in <b>registers</b>. This document will be cleaned up after final
+decisions are made and code is working properly.</i>
 
 ## Overall Memory Allocation
 

@@ -2,7 +2,7 @@
  * char_gen8x8.v
  *
  * This module looks up a character in the font table, and outputs a single pixel
- * for that character, in terms of its alpha code and color, based on the given
+ * for that character, in terms of its alpha code only, based on the given
  * row and column within the character cell.
  *
  * Copyright (C) 2024 Curtis Whitley
@@ -19,6 +19,7 @@ module char_gen8x8 (
 );
 
 	// The items in this array are arranged as if it were a 3D array:
+	//
 	// glyphs[character code][character scan row][character scan column]
 	//           0..255               0..7               0..7
 	//
