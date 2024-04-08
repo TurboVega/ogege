@@ -15,8 +15,8 @@ module char_blender8x8 (
 	input  wire [7:0] i_char,
 	input  wire [2:0] i_row,
 	input  wire [2:0] i_column,
-    input  wire [11:0] i_bg_color,
     input  wire [11:0] i_fg_color,
+    input  wire [11:0] i_bg_color,
 	output wire [11:0] o_color
 );
 
