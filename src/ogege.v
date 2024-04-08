@@ -26,7 +26,7 @@ module ogege (
 
 wire clk_pix, clk_locked;
 reg [11:0] reg_fg_color = 12'b111111111111;
-reg [11:0] reg_bg_color = 12'b000000001000;
+reg [11:0] reg_bg_color = 12'b000000000000;
 wire [11:0] new_color;
 wire [HSZ-1:0] h_count_s;
 wire [VSZ-1:0] v_count_s;

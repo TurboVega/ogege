@@ -27,21 +27,44 @@ module text_area8x8 (
 	//   https://moddingwiki.shikadi.net/wiki/EGA_Palette
 	//
 	
-	reg [11:0] fg_palette_color[0:15] =
-	{
-		12'h000, 12'h00A, 12'h0A0, 12'h0AA,
-		12'hA00, 12'hA0A, 12'hA50, 12'hAAA,
-		12'h555, 12'h55F, 12'h5F5, 12'h5FF,
-		12'hF55, 12'hF5F, 12'hFF5, 12'hFFF
-	};
+	reg [11:0] fg_palette_color[0:15];
+	reg [11:0] bg_palette_color[0:15];
 
-	reg [11:0] bg_palette_color[0:15] =
-	{
-		12'h000, 12'h00A, 12'h0A0, 12'h0AA,
-		12'hA00, 12'hA0A, 12'hA50, 12'hAAA,
-		12'h555, 12'h55F, 12'h5F5, 12'h5FF,
-		12'hF55, 12'hF5F, 12'hFF5, 12'hFFF
-	};
+	initial begin
+		fg_palette_color[0] = 12'h000;
+		fg_palette_color[1] = 12'h00A;
+		fg_palette_color[2] = 12'h0A0;
+		fg_palette_color[3] = 12'h0AA;
+		fg_palette_color[4] = 12'hA00;
+		fg_palette_color[5] = 12'hA0A;
+		fg_palette_color[6] = 12'hA50;
+		fg_palette_color[7] = 12'hAAA;
+		fg_palette_color[8] = 12'h555;
+		fg_palette_color[9] = 12'h55F;
+		fg_palette_color[10] = 12'h5F5;
+		fg_palette_color[11] = 12'h5FF;
+		fg_palette_color[12] = 12'hF55;
+		fg_palette_color[13] = 12'hF5F;
+		fg_palette_color[14] = 12'hFF5;
+		fg_palette_color[15] = 12'hFFF;
+	
+		bg_palette_color[0] = 12'h000;
+		bg_palette_color[1] = 12'h00A;
+		bg_palette_color[2] = 12'h0A0;
+		bg_palette_color[3] = 12'h0AA;
+		bg_palette_color[4] = 12'hA00;
+		bg_palette_color[5] = 12'hA0A;
+		bg_palette_color[6] = 12'hA50;
+		bg_palette_color[7] = 12'hAAA;
+		bg_palette_color[8] = 12'h555;
+		bg_palette_color[9] = 12'h55F;
+		bg_palette_color[10] = 12'h5F5;
+		bg_palette_color[11] = 12'h5FF;
+		bg_palette_color[12] = 12'hF55;
+		bg_palette_color[13] = 12'hF5F;
+		bg_palette_color[14] = 12'hFF5;
+		bg_palette_color[15] = 12'hFFF;
+	end
 
     // The scroll offsets default to zero, which means that the upper-left
 	// visible pixel is the upper-left pixel in the text cell for text row 0
@@ -73,6 +96,13 @@ module text_area8x8 (
 	// Character code: 8 bits
 	//
     reg [15:0] cells[0:5375];
+
+	generate
+		genvar i;
+		for (i=0; i<5376; i++) begin
+			assign cells[i] = {4'hC, 4'h3, 8'h40};
+		end
+	endgenerate
 
 	wire [8:0] adjusted_scan_row;
 	wire [9:0] adjusted_scan_column;
