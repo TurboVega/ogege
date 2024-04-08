@@ -1,5 +1,5 @@
 /*
- * text_area8x8.v
+ * text_area8x12.v
  *
  * This module uses a character from the text area, and outputs a single pixel
  * for that character, blending it over the given background, based on the given
@@ -14,7 +14,7 @@
 
 `default_nettype none
 
-module text_area8x8 (
+module text_area8x12 (
 	input  wire [8:0] i_scan_row,
 	input  wire [9:0] i_scan_column,
 	input  wire [11:0] i_bg_color,
@@ -42,16 +42,16 @@ module text_area8x8 (
 	reg [2:0] reg_text_area_alpha = 3'b110; // 100%
 
 	// The items in this array are arranged as if it were a 2D array:
-	// With 8x8 pixel cells on a 640x480 screen, there is enough room
-	// to show 80x60 characters (60 rows of 80 columns). In order to
-	// support smooth scrolling of the text area, there are 84x64 cells
+	// With 8x12 pixel cells on a 640x480 screen, there is enough room
+	// to show 80x30 characters (60 rows of 80 columns). In order to
+	// support smooth scrolling of the text area, there are 84x32 cells
 	// in this array. This allows the application to fill invisible cells
 	// while visible cells are being scrolled.
 	//
 	// cells[text column][text row]
-	//         0..83        0..63
+	//         0..83        0..31
 	//
-	// Total number of text cells is 84*64 = 5376.
+	// Total number of text cells is 84*32 = 2688.
 	//
 	// The format of each cell is:
 	//
@@ -59,19 +59,19 @@ module text_area8x8 (
 	// BG palette index: 4 bits
 	// Character code: 8 bits
 	//
-    reg [15:0] cells[0:5375];
+    reg [15:0] cells[0:2687];
 
     initial begin
         $readmemh("../font/default_palette.bits", fg_palette_color, 0, 15);
         $readmemh("../font/default_palette.bits", bg_palette_color, 0, 15);
-        $readmemh("../font/sample_text8x8.bits", cells, 0, 5375);
+        $readmemh("../font/sample_text8x12.bits", cells, 0, 2687);
 	end
 
 	wire [8:0] adjusted_scan_row;
 	wire [9:0] adjusted_scan_column;
-	wire [5:0] text_cell_row;
+	wire [4:0] text_cell_row;
 	wire [6:0] text_cell_column;
-	wire [2:0] cell_scan_row;
+	wire [3:0] cell_scan_row;
 	wire [2:0] cell_scan_column;
 	wire [15:0] cell_value;
 	wire [3:0] cell_fg_color_index;
@@ -83,19 +83,19 @@ module text_area8x8 (
 
 	assign adjusted_scan_row = i_scan_row + {5'b00000, reg_scroll_y_offset};
 	assign adjusted_scan_column = i_scan_column + {6'b000000, reg_scroll_x_offset};
-	assign text_cell_row = adjusted_scan_row[8:3];
+	assign text_cell_row = adjusted_scan_row[8:4];
 	assign text_cell_column = adjusted_scan_column[9:3];
-	assign cell_scan_row = adjusted_scan_row[2:0];
+	assign cell_scan_row = adjusted_scan_row[3:0];
 	assign cell_scan_column = adjusted_scan_column[2:0];
 
-	assign cell_value = cells[{text_cell_column, text_cell_row}];
+	assign cell_value = 16'h5742;//cells[{text_cell_column, text_cell_row}];
 	assign cell_fg_color_index = cell_value[15:12];
 	assign cell_bg_color_index = cell_value[11:8];
 	assign cell_char_code = cell_value[7:0];
 	assign char_fg_color = fg_palette_color[cell_fg_color_index];
 	assign char_bg_color = bg_palette_color[cell_bg_color_index];
 
-	char_blender8x8 char_blender_inst (
+	char_blender8x12 char_blender_inst (
 		.i_char(cell_char_code),
 		.i_row(cell_scan_row),
 		.i_column(cell_scan_column),
