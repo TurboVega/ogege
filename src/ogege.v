@@ -76,11 +76,9 @@ always @(posedge clk_pix) begin
 	end
 end
 
-char_blender8x12 char_blender_inst (
-	.i_char(8'b00100000+{1'b0, h_count_s[9:3]}),
-	.i_row(cell_row_count),
-	.i_column(cell_col_count),
-	.i_fg_color(reg_fg_color),
+text_area8x8 text_area8x8_inst (
+	.i_scan_row(v_count_s),
+	.i_scan_column(h_count_s),
 	.i_bg_color(reg_bg_color),
 	.o_color(new_color)
 );

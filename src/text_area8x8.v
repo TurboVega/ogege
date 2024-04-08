@@ -27,7 +27,7 @@ module text_area8x8 (
 	//   https://moddingwiki.shikadi.net/wiki/EGA_Palette
 	//
 	
-	reg [11:0] fg_color[0:15] =
+	reg [11:0] fg_palette_color[0:15] =
 	{
 		12'h000, 12'h00A, 12'h0A0, 12'h0AA,
 		12'hA00, 12'hA0A, 12'hA50, 12'hAAA,
@@ -35,7 +35,7 @@ module text_area8x8 (
 		12'hF55, 12'hF5F, 12'hFF5, 12'hFFF
 	};
 
-	reg [11:0] bg_color[0:15] =
+	reg [11:0] bg_palette_color[0:15] =
 	{
 		12'h000, 12'h00A, 12'h0A0, 12'h0AA,
 		12'hA00, 12'hA0A, 12'hA50, 12'hAAA,
@@ -46,8 +46,8 @@ module text_area8x8 (
     // The scroll offsets default to zero, which means that the upper-left
 	// visible pixel is the upper-left pixel in the text cell for text row 0
 	// and text column 0.
-	input  wire [4:0] reg_scroll_x_offset = 4'd0;
-	input  wire [4:0] reg_scroll_y_offset = 4'd0;
+	reg [4:0] reg_scroll_x_offset = 4'd0;
+	reg [4:0] reg_scroll_y_offset = 4'd0;
 
 	// The text area alpha determines how the entire text area is
 	// blended onto the given background.
@@ -81,9 +81,11 @@ module text_area8x8 (
 	wire [8:0] cell_scan_row;
 	wire [9:0] cell_scan_column;
 	wire [15:0] cell_value;
-	wire [11:0] cell_fg_color;
-	wire [11:0] cell_bg_color;
+	wire [11:0] cell_fg_color_index;
+	wire [11:0] cell_bg_color_index;
 	wire [7:0] cell_char_code;
+	wire [11:0] char_fg_color;
+	wire [11:0] char_bg_color;
 	wire [11:0] intermediate_color;
 
 	assign adjusted_scan_row = i_scan_row + reg_scroll_y_offset;
@@ -94,16 +96,18 @@ module text_area8x8 (
 	assign cell_scan_column = text_cell_column[2:0];
 
 	assign cell_value = cells[{text_cell_column, text_cell_row}];
-	assign cell_fg_color = cell_value[15:12];
-	assign cell_bg_color = cell_value[11:8];
+	assign cell_fg_color_index = cell_value[15:12];
+	assign cell_bg_color_index = cell_value[11:8];
 	assign cell_char_code = cell_value[7:0];
+	assign char_fg_color = fg_palette_color[cell_fg_color_index];
+	assign char_bg_color = bg_palette_color[cell_bg_color_index];
 
 	char_blender8x12 char_blender_inst (
-		.i_char(char),
-		.i_row(cell_row_count),
-		.i_column(cell_col_count),
-		.i_fg_color(fg_color),
-		.i_bg_color(bg_color),
+		.i_char(cell_char_code),
+		.i_row(cell_scan_row),
+		.i_column(cell_scan_column),
+		.i_fg_color(char_fg_color),
+		.i_bg_color(char_bg_color),
 		.o_color(intermediate_color)
 	);
 

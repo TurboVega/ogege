@@ -1,6 +1,7 @@
 OFL   = openFPGALoader
 RM    = rm -rf
 
+CC_TOOL=/home/curtis/cc-toolchain-linux
 CC_TOOL_DIR=$(CC_TOOL)
 YOSYS = $(CC_TOOL)/bin/yosys/yosys
 P_R   = $(CC_TOOL)/bin/p_r/p_r
