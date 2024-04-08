@@ -43,15 +43,15 @@ module text_area8x12 (
 
 	// The items in this array are arranged as if it were a 2D array:
 	// With 8x12 pixel cells on a 640x480 screen, there is enough room
-	// to show 80x30 characters (60 rows of 80 columns). In order to
-	// support smooth scrolling of the text area, there are 84x32 cells
+	// to show 80x40 characters (40 rows of 80 columns). In order to
+	// support smooth scrolling of the text area, there are 84x44 cells
 	// in this array. This allows the application to fill invisible cells
 	// while visible cells are being scrolled.
 	//
 	// cells[text column][text row]
-	//         0..83        0..31
+	//         0..83        0..43
 	//
-	// Total number of text cells is 84*32 = 2688.
+	// Total number of text cells is 84*44 = 3696.
 	//
 	// The format of each cell is:
 	//
@@ -59,17 +59,33 @@ module text_area8x12 (
 	// BG palette index: 4 bits
 	// Character code: 8 bits
 	//
-    reg [15:0] cells[0:2687];
+    // Because neither the number of text rows nor the number of text
+    // columns is an even power of 2, the array is split into 3 pieces,
+    // to make indexing it easier, and to prevent waste.
+    //
+	// cells[text column][text row]
+	//         0..83        0..31       2688 cells
+	//         0..83       32..39        672 cells
+	//         0..83       40..43        336 cells
+    //
+
+    reg [15:0] cells_0_31[0:2687];
+    reg [15:0] cells_32_39[0:7];
+    reg [15:0] cells_40_43[0:4];
 
     initial begin
         $readmemh("../font/default_palette.bits", fg_palette_color, 0, 15);
         $readmemh("../font/default_palette.bits", bg_palette_color, 0, 15);
-        $readmemh("../font/sample_text8x12.bits", cells, 0, 2687);
+        $readmemh("../font/sample_text8x12_0_31.bits", cells_0_31, 0, 2687);
+        $readmemh("../font/sample_text8x12_32_39.bits", cells_32_39, 0, 7);
+        $readmemh("../font/sample_text8x12_40_43.bits", cells_40_43, 0, 4);
 	end
 
 	wire [8:0] adjusted_scan_row;
 	wire [9:0] adjusted_scan_column;
-	wire [4:0] text_cell_row;
+	wire [5:0] text_cell_row_a;
+	wire [5:0] text_cell_row_b;
+	wire [5:0] text_cell_row_c;
 	wire [6:0] text_cell_column;
 	wire [3:0] cell_scan_row;
 	wire [2:0] cell_scan_column;
@@ -83,12 +99,17 @@ module text_area8x12 (
 
 	assign adjusted_scan_row = i_scan_row + {5'b00000, reg_scroll_y_offset};
 	assign adjusted_scan_column = i_scan_column + {6'b000000, reg_scroll_x_offset};
-	assign text_cell_row = adjusted_scan_row[8:4];
+	assign text_cell_row_a = adjusted_scan_row[8:4];
+	assign text_cell_row_b = text_cell_row_a - 32;
+	assign text_cell_row_c = text_cell_row_b - 8;
 	assign text_cell_column = adjusted_scan_column[9:3];
 	assign cell_scan_row = adjusted_scan_row[3:0];
 	assign cell_scan_column = adjusted_scan_column[2:0];
 
-	assign cell_value = 16'h5742;//cells[{text_cell_column, text_cell_row}];
+	assign cell_value = text_cell_row_a < 32 ? cells_0_31[{text_cell_column, text_cell_row_a}] :
+                        text_cell_row_a < 40 ? cells_32_39[{text_cell_column, text_cell_row_b[2:0]}] :
+                        cells_40_43[{text_cell_column, text_cell_row_c[1:0]}];
+
 	assign cell_fg_color_index = cell_value[15:12];
 	assign cell_bg_color_index = cell_value[11:8];
 	assign cell_char_code = cell_value[7:0];
