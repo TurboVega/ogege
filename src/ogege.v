@@ -76,7 +76,7 @@ always @(posedge clk_pix) begin
 	end
 end
 
-text_area8x12 text_area8x12_inst (
+text_area8x8 text_area8x8_inst (
 	.i_scan_row(v_count_s),
 	.i_scan_column(h_count_s),
 	.i_bg_color(reg_bg_color),
