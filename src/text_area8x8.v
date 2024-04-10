@@ -72,6 +72,9 @@ module text_area8x8 (
         $readmemh("../font/sample_text8x8.bits", reg_cells, 0, 5375);
     end
 
+    reg [5:0] reg_cursor_row;
+    reg [6:0] reg_cursor_column;
+
     wire [9:0] adjusted_scan_row;
     wire [10:0] adjusted_scan_column;
     wire [9:0] wrapped_scan_row;
@@ -123,12 +126,6 @@ module text_area8x8 (
         .o_color(o_color)
     );
 
-    input  wire i_rst,
-    input  wire i_pix_clk,
-    input  wire i_blank,
-    input  wire i_cmd_clk,
-    input  wire [31:0] i_cmd_data,
-
 /*
     Text Area commands:
 
@@ -150,27 +147,27 @@ module text_area8x8 (
 
     always @(posedge i_rst or posedge i_cmd_clk) begin
         if (i_rst) begin
-            reg_scroll_x_offset = 10'd0;
-            reg_scroll_y_offset = 9'd0;
-        else
+            reg_scroll_x_offset <= 10'd0;
+            reg_scroll_y_offset <= 9'd0;
+        end else begin
             case (i_cmd_data[31:28])
-                4'b0001: reg_scroll_x_offset = i_cmd_data[9:0];
-                4'b0010: reg_scroll_y_offset = i_cmd_data[8:0];
+                4'b0001: reg_scroll_x_offset <= i_cmd_data[9:0];
+                4'b0010: reg_scroll_y_offset <= i_cmd_data[8:0];
                 4'b0011: begin
-                            reg_scroll_x_offset = i_cmd_data[9:0];
-                            reg_scroll_y_offset = i_cmd_data[24:16];
+                            reg_scroll_x_offset <= i_cmd_data[9:0];
+                            reg_scroll_y_offset <= i_cmd_data[24:16];
                          end
-                4'b0100: reg_fg_palette_color[i_cmd_data[15:12]] = i_cmd_data[11:0];
-                4'b0101: reg_bg_palette_color[i_cmd_data[15:12]] = i_cmd_data[11:0];
-                4'b0110: reg_text_area_alpha = i_cmd_data[2:0];
+                4'b0100: reg_fg_palette_color[i_cmd_data[15:12]] <= i_cmd_data[11:0];
+                4'b0101: reg_bg_palette_color[i_cmd_data[15:12]] <= i_cmd_data[11:0];
+                4'b0110: reg_text_area_alpha <= i_cmd_data[2:0];
                 4'b0111: begin
-                            reg_cursor_row = i_cmd_data[24:16];
-                            reg_cursor_col = i_cmd_data[9:0];
+                            reg_cursor_row <= i_cmd_data[24:16];
+                            reg_cursor_column <= i_cmd_data[9:0];
                          end
-                4'b1000: reg_cells[reg_cursor_col, reg_cursor_row] = i_cmd_data[15:0];
-                4'b1001: reg_cells[reg_cursor_col, reg_cursor_row][15:12] = i_cmd_data[3:0];
-                4'b1010: reg_cells[reg_cursor_col, reg_cursor_row][11:8] = i_cmd_data[3:0];
-                4'b1011: reg_cells[reg_cursor_col, reg_cursor_row][7:0] = i_cmd_data[7:0];
+                4'b1000: reg_cells[{reg_cursor_column, reg_cursor_row}] <= i_cmd_data[15:0];
+                4'b1001: reg_cells[{reg_cursor_column, reg_cursor_row}][15:12] <= i_cmd_data[3:0];
+                4'b1010: reg_cells[{reg_cursor_column, reg_cursor_row}][11:8] <= i_cmd_data[3:0];
+                4'b1011: reg_cells[{reg_cursor_column, reg_cursor_row}][7:0] <= i_cmd_data[7:0];
             endcase
         end
     end

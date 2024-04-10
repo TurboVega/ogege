@@ -37,9 +37,9 @@ reg [3:0] cell_row_count;
 wire [2:0] cell_col_count;
 reg [4:0] text_row_count;
 
-reg reg_cmd_clk;
-reg [31:0] reg_cmd_data;
-reg [5:0] reg_frame_count;
+reg reg_cmd_clk = 1'b0;
+reg [31:0] reg_cmd_data = 32'd0;
+reg [5:0] reg_frame_count = 6'd0;
 
 pll pll_inst (
     .clock_in(clk_i), // 10 MHz
@@ -84,7 +84,7 @@ end
 
 text_area8x8 text_area8x8_inst (
 	.i_rst(rst_s),
-	.i_clk(pix_clk),
+	.i_pix_clk(pix_clk),
 	.i_blank(blank_s),
     .i_cmd_clk(reg_cmd_clk),
     .i_cmd_data(reg_cmd_data),
