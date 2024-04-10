@@ -15,94 +15,106 @@
 `default_nettype none
 
 module text_area8x8 (
-	input  wire [8:0] i_scan_row,
-	input  wire [9:0] i_scan_column,
-	input  wire [11:0] i_bg_color,
-	output wire [11:0] o_color
+    input  wire i_rst,
+    input  wire i_pix_clk,
+    input  wire i_blank,
+    input  wire i_cmd_clk,
+    input  wire [31:0] i_cmd_data,
+    input  wire [8:0] i_scan_row,
+    input  wire [9:0] i_scan_column,
+    input  wire [11:0] i_bg_color,
+    output wire [11:0] o_color
 );
 
-	// The color palettes each hold 16 colors at 12 bits each (4 bits per
-	// color component), since 12 bits is all that the board supports.
-	// The default palettes are both set to EGA colors, from this site:
-	//   https://moddingwiki.shikadi.net/wiki/EGA_Palette
-	//
-	reg [11:0] fg_palette_color[0:15];
-	reg [11:0] bg_palette_color[0:15];
+    // The color palettes each hold 16 colors at 12 bits each (4 bits per
+    // color component), since 12 bits is all that the board supports.
+    // The default palettes are both set to EGA colors, from this site:
+    //   https://moddingwiki.shikadi.net/wiki/EGA_Palette
+    //
+    reg [11:0] reg_fg_palette_color[0:15];
+    reg [11:0] reg_bg_palette_color[0:15];
 
     // The scroll offsets default to zero, which means that the upper-left
-	// visible pixel is the upper-left pixel in the text cell for text row 0
-	// and text column 0.
-	//
-	reg [4:0] reg_scroll_x_offset = 4'd0;
-	reg [4:0] reg_scroll_y_offset = 4'd0;
+    // visible pixel is the upper-left pixel in the text cell for text row 0
+    // and text column 0.
+    //
+    reg [9:0] reg_scroll_x_offset;
+    reg [8:0] reg_scroll_y_offset;
 
-	// The text area alpha determines how the entire text area is
-	// blended onto the given background.
-	//
-	reg [2:0] reg_text_area_alpha = 3'b110; // 100%
+    // The text area alpha determines how the entire text area is
+    // blended onto the given background.
+    //
+    reg [2:0] reg_text_area_alpha = 3'b110; // 100%
 
-	// The items in this array are arranged as if it were a 2D array:
-	// With 8x8 pixel cells on a 640x480 screen, there is enough room
-	// to show 80x60 characters (60 rows of 80 columns). In order to
-	// support smooth scrolling of the text area, there are 84x64 cells
-	// in this array. This allows the application to fill invisible cells
-	// while visible cells are being scrolled.
-	//
-	// cells[text column][text row]
-	//         0..83        0..63
-	//
-	// Total number of text cells is 84*64 = 5376.
-	//
-	// The format of each cell is:
-	//
-	// FG palette index: 4 bits
-	// BG palette index: 4 bits
-	// Character code: 8 bits
-	//
-    reg [15:0] cells[0:5375];
+    // The items in this array are arranged as if it were a 2D array:
+    // With 8x8 pixel cells on a 640x480 screen, there is enough room
+    // to show 80x60 characters (60 rows of 80 columns). In order to
+    // support smooth scrolling of the text area, there are 84x64 cells
+    // in this array. This allows the application to fill invisible cells
+    // while visible cells are being scrolled.
+    //
+    // reg_cells[text column][text row]
+    //              0..83       0..63
+    //
+    // Total number of text cells is 84*64 = 5376.
+    //
+    // The format of each cell is:
+    //
+    // FG palette index: 4 bits
+    // BG palette index: 4 bits
+    // Character code: 8 bits
+    //
+    reg [15:0] reg_cells[0:5375];
 
     initial begin
-        $readmemh("../font/default_palette.bits", fg_palette_color, 0, 15);
-        $readmemh("../font/default_palette.bits", bg_palette_color, 0, 15);
-        $readmemh("../font/sample_text8x8.bits", cells, 0, 5375);
-	end
+        $readmemh("../font/default_palette.bits", reg_fg_palette_color, 0, 15);
+        $readmemh("../font/default_palette.bits", reg_bg_palette_color, 0, 15);
+        $readmemh("../font/sample_text8x8.bits", reg_cells, 0, 5375);
+    end
 
-	wire [8:0] adjusted_scan_row;
-	wire [9:0] adjusted_scan_column;
-	wire [5:0] text_cell_row;
-	wire [6:0] text_cell_column;
-	wire [2:0] cell_scan_row;
-	wire [2:0] cell_scan_column;
-	wire [15:0] cell_value;
-	wire [3:0] cell_fg_color_index;
-	wire [3:0] cell_bg_color_index;
-	wire [7:0] cell_char_code;
-	wire [11:0] char_fg_color;
-	wire [11:0] char_bg_color;
-	wire [11:0] intermediate_color;
+    wire [9:0] adjusted_scan_row;
+    wire [10:0] adjusted_scan_column;
+    wire [9:0] wrapped_scan_row;
+    wire [10:0] wrapped_scan_column;
 
-	assign adjusted_scan_row = i_scan_row + {5'b00000, reg_scroll_y_offset};
-	assign adjusted_scan_column = i_scan_column + {6'b000000, reg_scroll_x_offset};
-	assign text_cell_row = adjusted_scan_row[8:3];
-	assign text_cell_column = adjusted_scan_column[9:3];
-	assign cell_scan_row = adjusted_scan_row[2:0];
-	assign cell_scan_column = adjusted_scan_column[2:0];
+    wire [5:0] text_cell_row;
+    wire [6:0] text_cell_column;
+    wire [2:0] cell_scan_row;
+    wire [2:0] cell_scan_column;
+    wire [15:0] cell_value;
+    wire [3:0] cell_fg_color_index;
+    wire [3:0] cell_bg_color_index;
+    wire [7:0] cell_char_code;
+    wire [11:0] char_fg_color;
+    wire [11:0] char_bg_color;
+    wire [11:0] intermediate_color;
 
-	assign cell_value = cells[{text_cell_column, text_cell_row}];
-	assign cell_fg_color_index = cell_value[15:12];
-	assign cell_bg_color_index = cell_value[11:8];
-	assign cell_char_code = cell_value[7:0];
-	assign char_fg_color = fg_palette_color[cell_fg_color_index];
-	assign char_bg_color = bg_palette_color[cell_bg_color_index];
+    assign adjusted_scan_row = i_scan_row + {5'b00000, reg_scroll_y_offset};
+    assign wrapped_scan_row = adjusted_scan_row >= 672 ? adjusted_scan_row - 672 : adjusted_scan_row;
 
-	char_blender8x8 char_blender_inst (
-		.i_char(cell_char_code),
-		.i_row(cell_scan_row),
-		.i_column(cell_scan_column),
-		.i_fg_color(char_fg_color),
-		.i_bg_color(char_bg_color),
-		.o_color(intermediate_color)
-	);
+    assign adjusted_scan_column = i_scan_column + {6'b000000, reg_scroll_x_offset};
+    assign wrapped_scan_column = adjusted_scan_column >= 512 ? adjusted_scan_column - 512 : adjusted_scan_column;
+
+    assign text_cell_row = wrapped_scan_row[8:3];
+    assign text_cell_column = wrapped_scan_column[9:3];
+    assign cell_scan_row = wrapped_scan_row[2:0];
+    assign cell_scan_column = wrapped_scan_column[2:0];
+
+    assign cell_value = reg_cells[{text_cell_column, text_cell_row}];
+    assign cell_fg_color_index = cell_value[15:12];
+    assign cell_bg_color_index = cell_value[11:8];
+    assign cell_char_code = cell_value[7:0];
+    assign char_fg_color = reg_fg_palette_color[cell_fg_color_index];
+    assign char_bg_color = reg_bg_palette_color[cell_bg_color_index];
+
+    char_blender8x8 char_blender_inst (
+        .i_char(cell_char_code),
+        .i_row(cell_scan_row),
+        .i_column(cell_scan_column),
+        .i_fg_color(char_fg_color),
+        .i_bg_color(char_bg_color),
+        .o_color(intermediate_color)
+    );
 
     color_blender blender (
         .i_bg_color(i_bg_color),
@@ -110,5 +122,57 @@ module text_area8x8 (
         .i_fg_alpha(reg_text_area_alpha),
         .o_color(o_color)
     );
+
+    input  wire i_rst,
+    input  wire i_pix_clk,
+    input  wire i_blank,
+    input  wire i_cmd_clk,
+    input  wire [31:0] i_cmd_data,
+
+/*
+    Text Area commands:
+
+    33222222222211111111110000000000
+    10987654321098765432109876543210
+    --------------------------------
+    0001xxxxxxxxxxxxxxxxxxXXXXXXXXXX    Set horizontal scroll position (X offset)
+    0010xxxxxxxxxxxxxxxxxxxYYYYYYYYY    Set vertical scroll position (Y offset)
+    0011xxxYYYYYYYYYxxxxxxXXXXXXXXXX    Set horizontal and vertical scroll positions (X and Y offsets)
+    0100xxxxxxxxxxxxIIIIRRRRGGGGBBBB    Set foreground palette color for index (RGB)
+    0101xxxxxxxxxxxxIIIIRRRRGGGGBBBB    Set background palette color for index (RGB)
+    0110xxxxxxxxxxxxxxxxxxxxxxxxxAAA    Set text area alpha value
+    0111xxxxxxxxxxxxxCCCCCCCxxRRRRRR    Set cursor position (row and column)
+    1000xxxxxxxxxxxxFFFFBBBBCCCCCCCC    Set cell attributes (FG index, BG index, Character code)
+    1001xxxxxxxxxxxxxxxxxxxxxxxxFFFF    Set cell foreground (FG index)
+    1010xxxxxxxxxxxxxxxxxxxxxxxxBBBB    Set cell background (BG index)
+    1011xxxxxxxxxxxxxxxxxxxxCCCCCCCC    Set cell character code
+*/
+
+    always @(posedge i_rst or posedge i_cmd_clk) begin
+        if (i_rst) begin
+            reg_scroll_x_offset = 10'd0;
+            reg_scroll_y_offset = 9'd0;
+        else
+            case (i_cmd_data[31:28])
+                4'b0001: reg_scroll_x_offset = i_cmd_data[9:0];
+                4'b0010: reg_scroll_y_offset = i_cmd_data[8:0];
+                4'b0011: begin
+                            reg_scroll_x_offset = i_cmd_data[9:0];
+                            reg_scroll_y_offset = i_cmd_data[24:16];
+                         end
+                4'b0100: reg_fg_palette_color[i_cmd_data[15:12]] = i_cmd_data[11:0];
+                4'b0101: reg_bg_palette_color[i_cmd_data[15:12]] = i_cmd_data[11:0];
+                4'b0110: reg_text_area_alpha = i_cmd_data[2:0];
+                4'b0111: begin
+                            reg_cursor_row = i_cmd_data[24:16];
+                            reg_cursor_col = i_cmd_data[9:0];
+                         end
+                4'b1000: reg_cells[reg_cursor_col, reg_cursor_row] = i_cmd_data[15:0];
+                4'b1001: reg_cells[reg_cursor_col, reg_cursor_row][15:12] = i_cmd_data[3:0];
+                4'b1010: reg_cells[reg_cursor_col, reg_cursor_row][11:8] = i_cmd_data[3:0];
+                4'b1011: reg_cells[reg_cursor_col, reg_cursor_row][7:0] = i_cmd_data[7:0];
+            endcase
+        end
+    end
 
 endmodule
