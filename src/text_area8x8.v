@@ -65,14 +65,15 @@ module text_area8x8 (
     // Character code: 8 bits
     //
 
+    reg reg_cmd_in_progress;
     reg reg_wea;
     reg reg_web;
     reg reg_clka;
-    reg reg_clkb;
+    wire wire_clkb;
     reg [15:0] reg_dia;
     reg [15:0] reg_dib;
     reg [12:0] reg_addra;
-    reg [12:0] reg_addrb;
+    wire [12:0] wire_addrb;
     reg [15:0] reg_doa;
     reg [15:0] reg_dob;
 
@@ -80,11 +81,11 @@ module text_area8x8 (
         .wea(reg_wea),
         .web(reg_web),
         .clka(reg_clka),
-        .clkb(reg_clkb),
+        .clkb(wire_clkb),
         .dia(reg_dia),
         .dib(reg_dib),
         .addra(reg_addra),
-        .addrb(reg_addrb),
+        .addrb(wire_addrb),
         .doa(reg_doa),
         .dob(reg_dob)
     );
@@ -132,6 +133,10 @@ module text_area8x8 (
     assign char_fg_color = reg_fg_palette_color[cell_fg_color_index];
     assign char_bg_color = reg_bg_palette_color[cell_bg_color_index];
 
+    assign wire_addrb = {text_cell_column, text_cell_row};
+    //assign reg_web = 0;
+    assign wire_clkb = i_pix_clk;
+
     char_blender8x8 char_blender_inst (
         .i_char(cell_char_code),
         .i_row(cell_scan_row),
@@ -171,15 +176,19 @@ module text_area8x8 (
         if (i_rst) begin
             reg_scroll_x_offset <= 0;
             reg_scroll_y_offset <= 0;
+            reg_cmd_in_progress <= 0;
             reg_wea <= 0;
             reg_web <= 0;
             reg_clka <= 0;
-            reg_clkb <= 0;
+            //wire_clkb <= 0;
             reg_dia <= 0;
             reg_dib <= 0;
             reg_addra <= 0;
-            reg_addrb <= 0;
+            //reg_addrb <= 0;
+        end else if (reg_cmd_in_progress) begin
+            reg_cmd_in_progress <= 0;
         end else begin
+            reg_cmd_in_progress <= 1;
             case (i_cmd_data[31:28])
                 4'b0001: reg_scroll_x_offset <= i_cmd_data[9:0];
                 4'b0010: reg_scroll_y_offset <= i_cmd_data[8:0];
@@ -197,8 +206,8 @@ module text_area8x8 (
                 4'b1000: begin
                             reg_addra = {reg_cursor_column, reg_cursor_row};
                             reg_dia <= i_cmd_data[15:0];
-                            //reg_wea <= 1;
-                            //reg_clka <= 1;
+                            reg_wea <= 1;
+                            reg_clka <= 1;
                          end
                 4'b1001: begin
                             reg_addra = {reg_cursor_column, reg_cursor_row};
