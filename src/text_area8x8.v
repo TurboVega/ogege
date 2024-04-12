@@ -53,8 +53,8 @@ module text_area8x8 (
     // in this array. This allows the application to fill invisible cells
     // while visible cells are being scrolled.
     //
-    // reg_cells[text column][text row]
-    //              0..83       0..63
+    // cells[text column][text row]
+    //          0..83       0..63
     //
     // Total number of text cells is 84*64 = 5376.
     //
@@ -64,12 +64,34 @@ module text_area8x8 (
     // BG palette index: 4 bits
     // Character code: 8 bits
     //
-    reg [15:0] reg_cells[0:5375];
+
+    reg reg_wea;
+    reg reg_web;
+    reg reg_clka;
+    reg reg_clkb;
+    reg [15:0] reg_dia;
+    reg [15:0] reg_dib;
+    reg [12:0] reg_addra;
+    reg [12:0] reg_addrb;
+    reg [15:0] reg_doa;
+    reg [15:0] reg_dob;
+
+    text_array8x8 text_array8x8_inst (
+        .wea(reg_wea),
+        .web(reg_web),
+        .clka(reg_clka),
+        .clkb(reg_clkb),
+        .dia(reg_dia),
+        .dib(reg_dib),
+        .addra(reg_addra),
+        .addrb(reg_addrb),
+        .doa(reg_doa),
+        .dob(reg_dob)
+    );
 
     initial begin
         $readmemh("../font/default_palette.bits", reg_fg_palette_color, 0, 15);
         $readmemh("../font/default_palette.bits", reg_bg_palette_color, 0, 15);
-        $readmemh("../font/sample_text8x8.bits", reg_cells, 0, 5375);
     end
 
     reg [5:0] reg_cursor_row;
@@ -103,7 +125,7 @@ module text_area8x8 (
     assign cell_scan_row = wrapped_scan_row[2:0];
     assign cell_scan_column = wrapped_scan_column[2:0];
 
-    assign cell_value = reg_cells[{text_cell_column, text_cell_row}];
+    assign cell_value = reg_dob;
     assign cell_fg_color_index = cell_value[15:12];
     assign cell_bg_color_index = cell_value[11:8];
     assign cell_char_code = cell_value[7:0];
@@ -147,8 +169,16 @@ module text_area8x8 (
 
     always @(posedge i_rst or posedge i_cmd_clk) begin
         if (i_rst) begin
-            reg_scroll_x_offset <= 10'd0;
-            reg_scroll_y_offset <= 9'd0;
+            reg_scroll_x_offset <= 0;
+            reg_scroll_y_offset <= 0;
+            reg_wea <= 0;
+            reg_web <= 0;
+            reg_clka <= 0;
+            reg_clkb <= 0;
+            reg_dia <= 0;
+            reg_dib <= 0;
+            reg_addra <= 0;
+            reg_addrb <= 0;
         end else begin
             case (i_cmd_data[31:28])
                 4'b0001: reg_scroll_x_offset <= i_cmd_data[9:0];
@@ -164,10 +194,24 @@ module text_area8x8 (
                             reg_cursor_row <= i_cmd_data[24:16];
                             reg_cursor_column <= i_cmd_data[9:0];
                          end
-                4'b1000: reg_cells[{reg_cursor_column, reg_cursor_row}] <= i_cmd_data[15:0];
-                4'b1001: reg_cells[{reg_cursor_column, reg_cursor_row}][15:12] <= i_cmd_data[3:0];
-                4'b1010: reg_cells[{reg_cursor_column, reg_cursor_row}][11:8] <= i_cmd_data[3:0];
-                4'b1011: reg_cells[{reg_cursor_column, reg_cursor_row}][7:0] <= i_cmd_data[7:0];
+                4'b1000: begin
+                            reg_addra = {reg_cursor_column, reg_cursor_row};
+                            reg_dia <= i_cmd_data[15:0];
+                            //reg_wea <= 1;
+                            //reg_clka <= 1;
+                         end
+                4'b1001: begin
+                            reg_addra = {reg_cursor_column, reg_cursor_row};
+                            //reg_cells[{reg_cursor_column, reg_cursor_row}][15:12] <= i_cmd_data[3:0];
+                         end
+                4'b1010: begin
+                            reg_addra = {reg_cursor_column, reg_cursor_row};
+                            //reg_cells[{reg_cursor_column, reg_cursor_row}][11:8] <= i_cmd_data[3:0];
+                         end
+                4'b1011: begin
+                            reg_addra = {reg_cursor_column, reg_cursor_row};
+                            //reg_cells[{reg_cursor_column, reg_cursor_row}][7:0] <= i_cmd_data[7:0];
+                         end
             endcase
         end
     end

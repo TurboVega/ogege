@@ -40,6 +40,8 @@ reg [4:0] text_row_count;
 reg reg_cmd_clk = 1'b0;
 reg [31:0] reg_cmd_data = 32'd0;
 reg [5:0] reg_frame_count = 6'd0;
+reg [9:0] reg_scroll_x_offset = 10'd0;
+reg [8:0] reg_scroll_y_offset = 9'd0;
 
 pll pll_inst (
     .clock_in(clk_i), // 10 MHz
@@ -69,16 +71,30 @@ vga_core #(
 assign cell_col_count = h_count_s[2:0];
 
 always @(posedge pix_clk) begin
+	reg_cmd_clk = 0;
 	if (h_count_s == 639) begin
 		if (v_count_s == 479) begin
-			cell_row_count = 0;
-			text_row_count = 0;
-            reg_frame_count = (reg_frame_count == 59) ? 0 : reg_frame_count + 1;
+			cell_row_count <= 0;
+			text_row_count <= 0;
+
+			if (reg_frame_count == 59) begin
+				reg_frame_count <= 0;
+				reg_scroll_x_offset <= 0;
+				reg_scroll_y_offset <= 0;
+			end else begin
+	            reg_frame_count <= reg_frame_count + 1;
+				reg_scroll_x_offset = (reg_scroll_x_offset == 671) ? 0 : reg_scroll_x_offset + 1;
+				reg_scroll_y_offset = (reg_scroll_y_offset == 511) ? 0 : reg_scroll_y_offset + 1;
+				reg_cmd_clk = 1;
+				// 0011xxxYYYYYYYYYxxxxxxXXXXXXXXXX
+				reg_cmd_data = {4'b0011, 3'b000, reg_scroll_y_offset, 6'b000000, reg_scroll_x_offset};
+			end
+
 		end else if (cell_row_count == 11) begin
-			cell_row_count = 0;
-			text_row_count = text_row_count + 1;
+			cell_row_count <= 0;
+			text_row_count <= text_row_count + 1;
 		end else
-			cell_row_count = cell_row_count + 1;
+			cell_row_count <= cell_row_count + 1;
 	end
 end
 

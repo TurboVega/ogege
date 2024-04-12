@@ -7,7 +7,7 @@ YOSYS = $(CC_TOOL)/bin/yosys/yosys
 P_R   = $(CC_TOOL)/bin/p_r/p_r
 
 PRFLAGS = --verbose -cCP
-YS_OPTS = -D DISP_640x480_60Hz=1
+YS_OPTS = -verbose -D DISP_640x480_60Hz=1
 BOARD = gatemate_evb_jtag
 OFLFLAGS = --cable dirtyJtag --verbose
 
@@ -28,6 +28,7 @@ OBJS += $(SOURCEDIR)/color_blender.v
 OBJS += $(SOURCEDIR)/char_gen8x8.v
 OBJS += $(SOURCEDIR)/char_blender8x8.v
 OBJS += $(SOURCEDIR)/text_area8x8.v
+OBJS += $(SOURCEDIR)/text_array8x8.v
 OBJS += ../fpgalibs/clocks/gatemate_25MHz_pll.v
 
 info:
@@ -60,7 +61,7 @@ jtag-flash: $(TOP)_00.cfg
 clean:
 	$(RM) *.log *_synth.v *.history *.txt *.refwire *.refparam
 	$(RM) *.refcomp *.pos *.pathes *.path_struc *.net *.id *.prn
-	$(RM) *_00.v *_00pre* *.used *.sdf *.place *.pin *.cfg* *.cdf
+	$(RM) *_00.v *_00pre* *.used *.sdf *.place *.pin *.cfg* *.cdf *.idh
 
 .SECONDARY:
 .PHONY: all jtag jtag-flash clean
