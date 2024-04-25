@@ -24,7 +24,7 @@ module ogege (
 	output wire [7:0] o_led
 );
 
-wire pix_clk, clk_locked;
+wire clk_125mhz, pix_clk, clk_locked;
 reg [11:0] reg_fg_color = 12'b111111111111;
 reg [11:0] reg_bg_color = 12'b000000000000;
 wire [11:0] new_color;
@@ -43,12 +43,37 @@ reg [5:0] reg_frame_count = 6'd0;
 reg [9:0] reg_scroll_x_offset = 10'd0;
 reg [8:0] reg_scroll_y_offset = 9'd0;
 
+/* 10 MHz to 125 MHz */
 pll pll_inst (
-    .clock_in(clk_i), // 10 MHz
+	.clock_in(clk_i), // 10 MHz
 	.rst_in(~rstn_i),
-    .clock_out(pix_clk), // 25 MHz, 0 deg
-    .locked(clk_locked)
+	.clock_out(clk_125mhz), // 125 MHz
+	.locked(clk_locked)
 );
+
+reg [2:0] cnt_5_ph_0 = 0;
+reg [2:0] cnt_5_ph_1 = 0;
+assign pix_clk = (cnt_5_ph_0 < 3) && (cnt_5_ph_1 != 2);
+
+always @(posedge clk_125mhz or negedge rstn_i)
+begin
+	if (~rstn_i)
+		cnt_5_ph_0 <= 0;
+	else if (cnt_5_ph_0 == 4)
+		cnt_5_ph_0 <= 0;
+	else
+		cnt_5_ph_0 <= cnt_5_ph_0 + 1;
+end
+
+always @(negedge clk_125mhz or posedge rstn_i)
+begin
+	if (rstn_i)
+		cnt_5_ph_1 <= 0;
+	else if (cnt_5_ph_1 == 4)
+		cnt_5_ph_1 <= 0;
+	else
+		cnt_5_ph_1 <= cnt_5_ph_1 + 1;
+end
 
 localparam
 	HRES = 640,
