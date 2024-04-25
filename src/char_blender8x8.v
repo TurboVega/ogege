@@ -12,6 +12,7 @@
 `default_nettype none
 
 module char_blender8x8 (
+    input  wire i_clk,
 	input  wire [7:0] i_char,
 	input  wire [2:0] i_row,
 	input  wire [2:0] i_column,
@@ -23,6 +24,7 @@ module char_blender8x8 (
     wire [2:0] char_alpha;
 
     char_gen8x8 char_gen_inst (
+        .i_clk(i_clk),
         .i_char(i_char),
         .i_row(i_row),
         .i_column(i_column),

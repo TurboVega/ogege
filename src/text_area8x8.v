@@ -138,6 +138,7 @@ module text_area8x8 (
     assign wire_clkb = i_pix_clk;
 
     char_blender8x8 char_blender_inst (
+        .i_clk(i_pix_clk),
         .i_char(cell_char_code),
         .i_row(cell_scan_row),
         .i_column(cell_scan_column),

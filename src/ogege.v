@@ -33,7 +33,7 @@ wire [VSZ-1:0] v_count_s;
 wire rst_s;
 wire active_s;
 wire blank_s;
-reg [3:0] cell_row_count;
+reg [3:0] glyph_row_count;
 wire [2:0] cell_col_count;
 reg [4:0] text_row_count;
 
@@ -99,27 +99,13 @@ always @(posedge pix_clk) begin
 	reg_cmd_clk = 0;
 	if (h_count_s == 639) begin
 		if (v_count_s == 479) begin
-			cell_row_count <= 0;
+			glyph_row_count <= 0;
 			text_row_count <= 0;
-
-			if (reg_frame_count == 59) begin
-				reg_frame_count <= 0;
-				reg_scroll_x_offset <= 0;
-				reg_scroll_y_offset <= 0;
-			end else begin
-	            reg_frame_count <= reg_frame_count + 1;
-				reg_scroll_x_offset = (reg_scroll_x_offset == 671) ? 0 : reg_scroll_x_offset + 1;
-				reg_scroll_y_offset = (reg_scroll_y_offset == 511) ? 0 : reg_scroll_y_offset + 1;
-				reg_cmd_clk = 1;
-				// 0011xxxYYYYYYYYYxxxxxxXXXXXXXXXX
-				reg_cmd_data = {4'b0011, 3'b000, reg_scroll_y_offset, 6'b000000, reg_scroll_x_offset};
-			end
-
-		end else if (cell_row_count == 11) begin
-			cell_row_count <= 0;
+		end else if (glyph_row_count == 11) begin
+			glyph_row_count <= 0;
 			text_row_count <= text_row_count + 1;
 		end else
-			cell_row_count <= cell_row_count + 1;
+			glyph_row_count <= glyph_row_count + 1;
 	end
 end
 

@@ -12,10 +12,11 @@
 `default_nettype none
 
 module char_gen8x8 (
+	input  wire i_clk,
 	input  wire [7:0] i_char,
 	input  wire [2:0] i_row,
 	input  wire [2:0] i_column,
-	output wire [2:0] o_alpha
+	output reg  [2:0] o_alpha
 );
 
 	// The items in this array are arranged as if it were a 3D array:
@@ -30,6 +31,8 @@ module char_gen8x8 (
     initial
         $readmemb("../font/font8x8.bits", glyphs, 0, 16383);
 
-	assign o_alpha = glyphs[{i_char, i_row, i_column}];
+	always @(posedge i_clk) begin
+		o_alpha <= glyphs[{i_char, i_row, i_column}];
+	end
 
 endmodule
