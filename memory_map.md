@@ -19,12 +19,9 @@ In general, memory is allocated into these main sections (numbers may be approxi
 |Text BG Color Palette|24|16 colors at 12 bits each|
 |Main Color Palette|384|256 colors at 12 bits each|
 |Small Text Array|9600|80x60 or 40x30 characters, at 16 bits each|
-|Large Text Array|2250|40x30 or 20x15 characters, at 15 bits each|
 |Small Font|6144|256 characters of 8x8x3 bit alpha levels|
-|Large Font|6144|128 characters of 16x8x3 bit alpha levels|
 |Sprite Control|640|Control settings for sprites|
 |Sprite Data|62470|Pixel data for sprites|
-|Total|163840|Total size of used BRAM|
 
 ## Frame Buffer
 
@@ -54,17 +51,9 @@ color palette
 ## Small Text Array
 Each character is composed of a 4 bit palette index and an 8 bit font array index. Characters can be shown in 16 foreground colors, distinct from the 16 background colors, according to the current palette.
 
-## Large Text Array
-Each character is composed of a 4 bit palette index and a 7 bit font array index. Characters can be shown in 16 foreground colors, distinct from the 16 background colors, according to the current palette.
-
 ## Small Font
 Each pixel in the 8x8 pixel character is defined as a 3-bit alpha value. This allows characters to be shown with some amount of anti-aliasing. Each of the
 256 characters in the font may be redefined by the
-application at runtime, to define new characters.
-
-## Large Font
-Each pixel in the 16x8 pixel character is defined as a 3-bit alpha value. This allows characters to be shown with some amount of anti-aliasing. Each of the
-128 characters in the font may be redefined by the
 application at runtime, to define new characters.
 
 ## Sprite Control
