@@ -28,11 +28,14 @@ module char_gen8x8 (
 	//
     reg [2:0] glyphs[0:16383];
 
+	wire [2:0] next_column;
+	assign next_column = (i_column == 0 ? 7 : i_column - 1);
+
     initial
         $readmemb("../font/font8x8.bits", glyphs, 0, 16383);
 
 	always @(posedge i_clk) begin
-		o_alpha <= glyphs[{i_char, i_row, i_column}];
+		o_alpha <= glyphs[{i_char, i_row, next_column}];
 	end
 
 endmodule
