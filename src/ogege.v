@@ -108,7 +108,7 @@ always @(posedge pix_clk) begin
 			glyph_row_count <= glyph_row_count + 1;
 	end
 end
-
+/*
 text_area8x8 text_area8x8_inst (
 	.i_rst(rst_s),
 	.i_pix_clk(pix_clk),
@@ -120,14 +120,49 @@ text_area8x8 text_area8x8_inst (
 	.i_bg_color(reg_bg_color),
 	.o_color(new_color)
 );
+*/
+
+reg canvas_wea = 1'b0;
+reg canvas_web = 1'b0;
+wire canvas_clka;
+reg canvas_clkb = 1'b0;
+reg [7:0] canvas_dia;
+reg [7:0] canvas_dib;
+wire [8:0] canvas_cola;
+wire [7:0] canvas_rowa;
+reg [8:0] canvas_colb;
+reg [7:0] canvas_rowb;
+wire [7:0] canvas_doa;
+reg [7:0] canvas_dob;
+
+assign canvas_clka = pix_clk;
+assign canvas_cola = h_count_s;
+assign canvas_rowa = v_count_s;
+
+canvas my_canvas (
+        .wea(canvas_wea),
+        .web(canvas_web),
+        .clka(canvas_clka),
+        .clkb(canvas_clkb),
+        .dia(canvas_dia),
+        .dib(canvas_dib),
+        .cola(canvas_cola),
+        .rowa(canvas_rowa),
+        .colb(canvas_colb),
+        .rowb(canvas_rowb),
+        .doa(canvas_doa),
+        .dob(canvas_dob)
+    );
+
+assign new_color = {canvas_doa,canvas_doa[3:0]};
 
 assign rst_s = ~rstn_i;
 assign o_led = 8'b0;
 assign o_clk = clk_i;
 assign o_rst = rstn_i;
 assign blank_s = ~active_s;
-assign o_r = active_s ? new_color[11:8] : 1'b0;
-assign o_g = active_s ? new_color[7:4] : 1'b0;
-assign o_b = active_s ? new_color[3:0] : 1'b0;
+assign o_r = active_s ? new_color[11:8] : 4'd0;
+assign o_g = active_s ? new_color[7:4] : 4'd0;
+assign o_b = active_s ? new_color[3:0] : 4'd0;
 
 endmodule
