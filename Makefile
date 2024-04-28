@@ -30,6 +30,7 @@ OBJS += $(SOURCEDIR)/char_blender8x8.v
 OBJS += $(SOURCEDIR)/text_area8x8.v
 OBJS += $(SOURCEDIR)/text_array8x8.v
 OBJS += $(SOURCEDIR)/canvas.v
+OBJS += $(SOURCEDIR)/frame_buffer.v
 OBJS += $(SOURCEDIR)/gatemate_125MHz_pll.v
 
 info:

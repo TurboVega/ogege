@@ -115,11 +115,13 @@ module text_area8x8 (
     wire [11:0] char_bg_color;
     wire [11:0] intermediate_color;
 
-    assign adjusted_scan_row = i_scan_row + {5'b00000, reg_scroll_y_offset};
-    assign wrapped_scan_row = adjusted_scan_row >= 672 ? adjusted_scan_row - 672 : adjusted_scan_row;
+    assign adjusted_scan_row ={1'b0,i_scan_row} + {1'b0,reg_scroll_y_offset};
+    assign wrapped_scan_row = adjusted_scan_row >= 672 ?
+        adjusted_scan_row - 672 : adjusted_scan_row;
 
-    assign adjusted_scan_column = i_scan_column + {6'b000000, reg_scroll_x_offset};
-    assign wrapped_scan_column = adjusted_scan_column >= 512 ? adjusted_scan_column - 512 : adjusted_scan_column;
+    assign adjusted_scan_column = {1'b0,i_scan_column} + {1'b0,reg_scroll_x_offset};
+    assign wrapped_scan_column = adjusted_scan_column >= 512 ?
+        adjusted_scan_column - 512 : adjusted_scan_column;
 
     assign text_cell_row = wrapped_scan_row[8:3];
     assign text_cell_column = wrapped_scan_column[9:3];

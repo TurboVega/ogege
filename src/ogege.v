@@ -28,8 +28,8 @@ wire clk_125mhz, pix_clk, clk_locked;
 reg [11:0] reg_fg_color = 12'b111111111111;
 reg [11:0] reg_bg_color = 12'b000000000000;
 wire [11:0] new_color;
-wire [HSZ-1:0] h_count_s;
-wire [VSZ-1:0] v_count_s;
+wire [9:0] h_count_s;
+wire [8:0] v_count_s;
 wire rst_s;
 wire active_s;
 wire blank_s;
@@ -75,15 +75,9 @@ begin
 		cnt_5_ph_1 <= cnt_5_ph_1 + 1;
 end
 
-localparam
-	HRES = 640,
-	HSZ  = $clog2(HRES),
-	VRES = 480,
-	VSZ  = $clog2(VRES);
-
 vga_core #(
-	.HSZ(HSZ),
-	.VSZ(VSZ)
+	.HSZ(10),
+	.VSZ(9)
 ) vga_inst (.clk_i(pix_clk),
     .rst_i(~clk_locked),
 	.hcount_o(h_count_s),
@@ -108,6 +102,7 @@ always @(posedge pix_clk) begin
 			glyph_row_count <= glyph_row_count + 1;
 	end
 end
+
 /*
 text_area8x8 text_area8x8_inst (
 	.i_rst(rst_s),
@@ -122,39 +117,16 @@ text_area8x8 text_area8x8_inst (
 );
 */
 
-reg canvas_wea = 1'b0;
-reg canvas_web = 1'b0;
-wire canvas_clka;
-reg canvas_clkb = 1'b0;
-reg [7:0] canvas_dia;
-reg [7:0] canvas_dib;
-wire [8:0] canvas_cola;
-wire [7:0] canvas_rowa;
-reg [8:0] canvas_colb;
-reg [7:0] canvas_rowb;
-wire [7:0] canvas_doa;
-reg [7:0] canvas_dob;
-
-assign canvas_clka = pix_clk;
-assign canvas_cola = h_count_s;
-assign canvas_rowa = v_count_s;
-
-canvas my_canvas (
-        .wea(canvas_wea),
-        .web(canvas_web),
-        .clka(canvas_clka),
-        .clkb(canvas_clkb),
-        .dia(canvas_dia),
-        .dib(canvas_dib),
-        .cola(canvas_cola),
-        .rowa(canvas_rowa),
-        .colb(canvas_colb),
-        .rowb(canvas_rowb),
-        .doa(canvas_doa),
-        .dob(canvas_dob)
-    );
-
-assign new_color = {canvas_doa,canvas_doa[3:0]};
+canvas canvas_inst (
+	.i_rst(rst_s),
+	.i_pix_clk(pix_clk),
+	.i_blank(blank_s),
+    .i_cmd_clk(reg_cmd_clk),
+    .i_cmd_data(reg_cmd_data),
+	.i_scan_row({1'b0, v_count_s[8:1]}),
+	.i_scan_column({1'b0, h_count_s[9:1]}),
+	.o_color(new_color)
+);
 
 assign rst_s = ~rstn_i;
 assign o_led = 8'b0;

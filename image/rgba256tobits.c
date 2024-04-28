@@ -8,6 +8,9 @@ typedef union {
 
 Color colors[256];
 int num_colors = 0;
+uint8_t image[256][336];
+int rows = 0;
+int cols = 0;
 
 int main(int argc, const char** argv) {
     if (argc != 3) {
@@ -59,7 +62,18 @@ int main(int argc, const char** argv) {
                     colors[num_colors++].pixel = color[1].pixel;
                 }
 
-                fprintf(fout, "%02X %02X\n", c0, c1);
+                image[rows][cols++] = c0;
+                image[rows][cols++] = c1;
+                if (cols >= 336) {
+                    cols = 0;
+                    rows++;
+                }
+            }
+
+            for (int col = 0; col < 336; col++) {
+                for (int row = 0; row < 256; row++) {
+                    fprintf(fout, "%02X\n", image[row][col]);
+                }
             }
             fclose(fout);
             fclose(fin);
