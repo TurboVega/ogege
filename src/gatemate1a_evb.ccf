@@ -36,3 +36,15 @@ Pin_out   "o_led"   Loc = "IO_SB_B6"; # LED D1
 #Pin_out   "o_led[5]"   Loc = "IO_EB_B6"; # LED D6
 #Pin_out   "o_led[6]"   Loc = "IO_EB_B7"; # LED D7
 #Pin_out   "o_led[7]"   Loc = "IO_EB_B8"; # LED D8
+
+#PSRAM
+Pin_out     "o_psram_csn"       Loc = "IO_WC_A4"; # PSRAM CSn
+Pin_inout   "o_psram_sclk"      Loc = "IO_WC_B4"; # PSRAM SCLK
+Pin_inout   "io_psram_data0"    Loc = "IO_WC_A5"; # PSRAM DATA0
+Pin_inout   "io_psram_data1"    Loc = "IO_WC_B5"; # PSRAM DATA1
+Pin_inout   "io_psram_data2"    Loc = "IO_WC_A6"; # PSRAM DATA2
+Pin_inout   "io_psram_data3"    Loc = "IO_WC_B6"; # PSRAM DATA3
+Pin_inout   "io_psram_data4"    Loc = "IO_WC_A7"; # PSRAM DATA4
+Pin_inout   "io_psram_data5"    Loc = "IO_WC_B7"; # PSRAM DATA5
+Pin_inout   "io_psram_data6"    Loc = "IO_WC_A8"; # PSRAM DATA6
+Pin_inout   "io_psram_data7"    Loc = "IO_WC_B8"; # PSRAM DATA7

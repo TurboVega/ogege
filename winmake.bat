@@ -12,7 +12,7 @@ set TOP=ogege
 set VLOG_SRC=src/ogege.v src/char_gen8x8.v src/vga_core.v src/component_blender.v src/color_blender.v
 set VLOG_SRC=%VLOG_SRC% src/char_gen8x8.v src/text_area8x8.v src/text_array8x8.v src/canvas.v
 set VLOG_SRC=%VLOG_SRC% src/frame_buffer.v
-set VLOG_SRC=%VLOG_SRC% src/char_blender8x8.v src/gatemate_125MHz_pll.v
+set VLOG_SRC=%VLOG_SRC% src/char_blender8x8.v src/gatemate_100MHz_pll.v
 set VHDL_SRC=src/ogege.vhd
 set LOG=0
 
