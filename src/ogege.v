@@ -21,7 +21,17 @@ module ogege (
 	output wire       o_hsync,
 	output wire       o_clk,
 	output wire       o_rst,
-	output wire [7:0] o_led
+	output wire [7:0] o_led,
+	output wire       o_psram_csn,
+	output wire       o_psram_sclk,
+	inout  wire       io_psram_data0,
+	inout  wire       io_psram_data1,
+	inout  wire       io_psram_data2,
+	inout  wire       io_psram_data3,
+	inout  wire       io_psram_data4,
+	inout  wire       io_psram_data5,
+	inout  wire       io_psram_data6,
+	inout  wire       io_psram_data7
 );
 
 wire clk_100mhz, pix_clk, clk_locked;
@@ -132,10 +142,10 @@ canvas canvas_inst (
 reg psram_stb;
 reg psram_we;
 reg [23:0] psram_addr;
-reg [7:0] psram_din;
+reg [15:0] psram_din;
 reg psram_busy;
 reg psram_done;
-reg [7:0] psram_dout;
+reg [15:0] psram_dout;
 reg [7:0] psram_dinout;
 
 psram psram_inst (
