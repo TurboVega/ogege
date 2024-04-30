@@ -60,7 +60,8 @@ typedef enum {
     WRITE_ADDR_7_4,
     WRITE_ADDR_3_0,
     WRITE_WAIT,
-    WRITE_DATA_7_0,
+    WRITE_DATA_7_4,
+    WRITE_DATA_3_0,
     WRITE_DESELECT
 } MachineState;
 
@@ -163,6 +164,7 @@ always @(posedge i_rst or posedge i_clk) begin
                     o_psram_csn <= 1;
                     o_busy <= 0;
                     o_done <= 1;
+                    state <= IDLE;
                 end
 
             // Idle, awaiting command
@@ -234,18 +236,18 @@ always @(posedge i_rst or posedge i_clk) begin
                     if (short_delay == 7)
                         state <= READ_DATA_7_4;
                     else
-                        short_delay = short_delay + 1;
+                        short_delay <= short_delay + 1;
                 end
 
             READ_DATA_7_4: begin
-                    o_dout[15:12] = io_psram_dinout[7:4];
-                    o_dout[11:8] = io_psram_dinout[3:0];
+                    o_dout[15:12] <= io_psram_dinout[7:4];
+                    o_dout[11:8] <= io_psram_dinout[3:0];
                     state <= READ_DATA_3_0;
                 end
 
             READ_DATA_3_0: begin
-                    o_dout[7:4] = io_psram_dinout[7:4];
-                    o_dout[3:0] = io_psram_dinout[3:0];
+                    o_dout[7:4] <= io_psram_dinout[7:4];
+                    o_dout[3:0] <= io_psram_dinout[3:0];
                     state <= READ_DESELECT;
                 end
 
@@ -253,6 +255,7 @@ always @(posedge i_rst or posedge i_clk) begin
                     o_psram_csn <= 1;
                     o_busy <= 0;
                     o_done <= 1;
+                    state <= IDLE;
                 end
 
             WRITE_CMD_3_0: begin
@@ -294,17 +297,26 @@ always @(posedge i_rst or posedge i_clk) begin
             WRITE_ADDR_3_0: begin
                     io_psram_dinout[3:0] <= i_addr[3:0];
                     io_psram_dinout[7:4] <= i_addr[3:0];
-                    state <= WRITE_DATA_7_0;
+                    state <= WRITE_DATA_7_4;
                 end
 
-            WRITE_DATA_7_0: begin
-                    io_psram_dinout <= i_din;
+            WRITE_DATA_7_4: begin
+                    io_psram_dinout[7:4] <= i_din[15:12];
+                    io_psram_dinout[3:0] <= i_din[11:8];
+                    state <= WRITE_DATA_3_0;
+                end
+
+            WRITE_DATA_3_0: begin
+                    io_psram_dinout[7:4] <= i_din[7:4];
+                    io_psram_dinout[3:0] <= i_din[3:0];
+                    state <= WRITE_DESELECT;
                 end
 
             WRITE_DESELECT: begin
                     o_psram_csn <= 1;
                     o_busy <= 0;
                     o_done <= 1;
+                    state <= IDLE;
                 end
         endcase
     end

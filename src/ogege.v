@@ -139,13 +139,14 @@ canvas canvas_inst (
 );
 */
 
-reg psram_stb;
-reg psram_we;
-reg [23:0] psram_addr;
-reg [15:0] psram_din;
+reg psram_stb = 0;
+reg psram_we = 0;
+reg [23:0] psram_addr = 0;
+reg [15:0] psram_din = 0;
 reg psram_busy;
 reg psram_done;
 reg [15:0] psram_dout;
+reg [4:0] psram_state;
 reg [7:0] psram_dinout;
 
 psram psram_inst (
@@ -158,6 +159,7 @@ psram psram_inst (
 	.o_busy(psram_busy),
 	.o_done(psram_done),
 	.o_dout(psram_dout),
+    .o_state(psram_state),
 	.o_psram_csn(o_psram_csn),
 	.o_psram_sclk(o_psram_sclk),
 	.io_psram_dinout(psram_dinout)
@@ -172,7 +174,10 @@ assign io_psram_data5 = psram_dinout[5];
 assign io_psram_data6 = psram_dinout[6];
 assign io_psram_data7 = psram_dinout[7];
 
-assign new_color = {psram_din[3:0], psram_dout};
+assign new_color =
+	(v_count_s < 32) ? {h_count_s[8:5],h_count_s[7:4],h_count_s[8:5]} :
+	(h_count_s[9]) ? 12'h004 :
+	(h_count_s[8:4] == psram_state) ? 12'h880 : 12'h444;
 
 assign rst_s = ~rstn_i;
 assign o_led = 8'b0;
