@@ -149,6 +149,10 @@ reg [15:0] psram_dout;
 reg [4:0] psram_state;
 reg [7:0] psram_dinout;
 
+always @(psram_busy) begin
+	psram_stb <= ~psram_busy;
+end
+
 psram psram_inst (
 	.i_rst(rst_s),
 	.i_clk(clk_100mhz),
