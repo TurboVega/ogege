@@ -180,7 +180,7 @@ assign io_psram_data7 = psram_dinout[7];
 
 assign new_color =
 	(v_count_s < 32) ? {h_count_s[8:5],h_count_s[7:4],h_count_s[8:5]} :
-	(h_count_s[9]) ? 12'h004 :
+	(h_count_s >= 8*64) ? 12'h004 :
 	(h_count_s[8:4] == psram_state) ? 12'h880 : 12'h444;
 
 assign rst_s = ~rstn_i;
