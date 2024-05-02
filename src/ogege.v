@@ -149,6 +149,8 @@ reg [15:0] psram_dout;
 reg [5:0] psram_state;
 reg [7:0] psram_dinout;
 reg [2:0] test_state;
+reg finished;
+reg success;
 
 always @(posedge rst_s or posedge clk_100mhz) begin
 	if (rst_s) begin
@@ -157,19 +159,23 @@ always @(posedge rst_s or posedge clk_100mhz) begin
 		psram_addr <= 0;
 		psram_din <= 0;
 		test_state <= 3'd0;
+		success <= 0;
 	end else begin
 		case (test_state)
 			3'd0: begin
+					// Wait for PSRAM startup
 					if (~psram_busy)
 						test_state <= 3'd1;
 				end
 			3'd1: begin
+					// Write a 16-bit value
 					psram_din <= 16'h8765;
 					psram_we <= 1;
 					psram_stb <= 1;
 					test_state <= 3'd2;
 				end
 			3'd2: begin
+					// Wait for the value to be written
 					if (psram_busy) begin
 						psram_stb <= 0;
 						psram_we <= 0;
@@ -177,15 +183,25 @@ always @(posedge rst_s or posedge clk_100mhz) begin
 					end
 				end
 			3'd3: begin
+					// Read the value back again
 					if (~psram_busy) begin
 						psram_stb <= 1;
 						test_state <= 3'd4;
 					end
 				end
 			3'd4: begin
+					// Wait for the value to be read
 					if (psram_busy) begin
 						psram_stb <= 0;
 						test_state <= 3'd5;
+					end
+				end
+			3'd5: begin
+					// Indicate completion
+					if (~psram_busy) begin
+						finished <= 1;
+						success <= (psram_din == psram_dout);
+						test_state <= 3'd6;
 					end
 				end
 		endcase;
@@ -228,6 +244,7 @@ wire [11:0] color_bar_color;
 wire [11:0] din_color;
 wire [11:0] dout_color;
 wire [11:0] state_color;
+wire [11:0] side_color;
 
 assign is_color_bar = (v_count_s < 32);
 assign is_past_states = (h_count_s >= 16*35);
@@ -275,10 +292,11 @@ assign color_bar_color = ({h_count_s[8:5],h_count_s[7:4],h_count_s[8:5]});
 assign din_color = (is_din ? 12'hC00 : 12'h000);
 assign dout_color = (is_dout ? 12'h0C0 : 12'h000);
 assign state_color = (is_state ? 12'hCC0 : 12'h000);
+assign side_color = (finished ? (success ? 12'h040 : 12'h400) : 12'h222);
 
 assign new_color =
 	is_color_bar ? color_bar_color :
-	is_past_states ? 12'h004 :
+	is_past_states ? side_color :
 	is_din_area ? din_color :
 	is_dout_area ? dout_color :
 	state_color;
