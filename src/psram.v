@@ -108,7 +108,7 @@ always @(posedge i_rst or posedge i_clk) begin
             // Post-reset clock wait end
             RESET_CLOCK_DONE: begin
                     o_busy <= 0;
-                    io_psram_dinout <= 8'bZ;
+                    io_psram_dinout <= 8'bZZZZZZZZ;
                     o_state <= MODE_SELECT_CMD_7;
                 end
 
@@ -168,7 +168,7 @@ always @(posedge i_rst or posedge i_clk) begin
                     o_busy <= 0;
                     o_done <= 1;
                     o_state <= IDLE;
-                    io_psram_dinout <= 8'bZ;
+                    io_psram_dinout <= 8'bZZZZZZZZ;
                 end
 
             // Idle, awaiting command
@@ -260,7 +260,7 @@ always @(posedge i_rst or posedge i_clk) begin
                     o_busy <= 0;
                     o_done <= 1;
                     o_state <= IDLE;
-                    io_psram_dinout <= 8'bZ;
+                    io_psram_dinout <= 8'bZZZZZZZZ;
                 end
 
             WRITE_CMD_3_0: begin
@@ -322,7 +322,7 @@ always @(posedge i_rst or posedge i_clk) begin
                     o_busy <= 0;
                     o_done <= 1;
                     o_state <= IDLE;
-                    io_psram_dinout <= 8'bZ;
+                    io_psram_dinout <= 8'bZZZZZZZZ;
                 end
         endcase
     end
