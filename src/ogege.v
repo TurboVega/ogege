@@ -152,11 +152,11 @@ reg [2:0] test_state;
 reg finished;
 reg success;
 
-always @(posedge rst_s or posedge clk_100mhz) begin
+always @(posedge rst_s or posedge pix_clk) begin
 	if (rst_s) begin
 		psram_stb <= 0;
 		psram_we <= 0;
-		psram_addr <= 0;
+		psram_addr <= 24'hABCDEF;
 		psram_din <= 0;
 		test_state <= 3'd0;
 		success <= 0;
@@ -240,13 +240,17 @@ wire is_dout_area;
 wire is_state;
 wire is_din;
 wire is_dout;
+wire is_address;
+wire is_address_area;
 wire [11:0] color_bar_color;
 wire [11:0] din_color;
 wire [11:0] dout_color;
 wire [11:0] state_color;
 wire [11:0] side_color;
+wire [11:0] address_color;
 
-assign is_color_bar = (v_count_s < 32);
+assign is_address_area = (v_count_s < 16);
+assign is_color_bar = (v_count_s >= 16 && v_count_s < 32);
 assign is_past_states = (h_count_s >= 16*35);
 assign is_din_area = (v_count_s >= 32 && v_count_s < 64);
 assign is_dout_area = (v_count_s >= 64 && v_count_s < 96);
@@ -293,8 +297,37 @@ assign din_color = (is_din ? 12'hC00 : 12'h000);
 assign dout_color = (is_dout ? 12'h0C0 : 12'h000);
 assign state_color = (is_state ? 12'hCC0 : 12'h000);
 assign side_color = (finished ? (success ? 12'h040 : 12'h400) : 12'h222);
+assign address_color = (is_address ? 12'h0C8 : 12'h000);
+
+assign is_address =
+	(h_count_s[9:4] == 0 && psram_addr[23]) ||
+	(h_count_s[9:4] == 1 && psram_addr[22]) ||
+	(h_count_s[9:4] == 2 && psram_addr[21]) ||
+	(h_count_s[9:4] == 3 && psram_addr[20]) ||
+	(h_count_s[9:4] == 4 && psram_addr[19]) ||
+	(h_count_s[9:4] == 5 && psram_addr[18]) ||
+	(h_count_s[9:4] == 6 && psram_addr[17]) ||
+	(h_count_s[9:4] == 7 && psram_addr[16]) ||
+	(h_count_s[9:4] == 8 && psram_addr[15]) ||
+	(h_count_s[9:4] == 9 && psram_addr[14]) ||
+	(h_count_s[9:4] == 10 && psram_addr[13]) ||
+	(h_count_s[9:4] == 11 && psram_addr[12]) ||
+	(h_count_s[9:4] == 12 && psram_addr[11]) ||
+	(h_count_s[9:4] == 13 && psram_addr[10]) ||
+	(h_count_s[9:4] == 14 && psram_addr[9]) ||
+	(h_count_s[9:4] == 15 && psram_addr[8]) ||
+	(h_count_s[9:4] == 16 && psram_addr[7]) ||
+	(h_count_s[9:4] == 17 && psram_addr[6]) ||
+	(h_count_s[9:4] == 18 && psram_addr[5]) ||
+	(h_count_s[9:4] == 19 && psram_addr[4]) ||
+	(h_count_s[9:4] == 20 && psram_addr[3]) ||
+	(h_count_s[9:4] == 21 && psram_addr[2]) ||
+	(h_count_s[9:4] == 22 && psram_addr[1]) ||
+	(h_count_s[9:4] == 23 && psram_addr[0]);
 
 assign new_color =
+	h_count_s[3:0] == 0 ? 12'h222 :
+	is_address_area ? address_color :
 	is_color_bar ? color_bar_color :
 	is_past_states ? side_color :
 	is_din_area ? din_color :
