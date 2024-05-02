@@ -248,49 +248,51 @@ wire [11:0] dout_color;
 wire [11:0] state_color;
 wire [11:0] side_color;
 wire [11:0] address_color;
+wire [5:0] graph_col;
 
+assign graph_col = h_count_s[9:4];
 assign is_address_area = (v_count_s < 16);
 assign is_color_bar = (v_count_s >= 16 && v_count_s < 32);
 assign is_past_states = (h_count_s >= 16*35);
 assign is_din_area = (v_count_s >= 32 && v_count_s < 64);
 assign is_dout_area = (v_count_s >= 64 && v_count_s < 96);
-assign is_state = (h_count_s[9:4] == psram_state);
+assign is_state = (graph_col == psram_state);
 
 assign is_din =
-	(h_count_s[9:4] == 0 && psram_din[15]) ||
-	(h_count_s[9:4] == 1 && psram_din[14]) ||
-	(h_count_s[9:4] == 2 && psram_din[13]) ||
-	(h_count_s[9:4] == 3 && psram_din[12]) ||
-	(h_count_s[9:4] == 4 && psram_din[11]) ||
-	(h_count_s[9:4] == 5 && psram_din[10]) ||
-	(h_count_s[9:4] == 6 && psram_din[9]) ||
-	(h_count_s[9:4] == 7 && psram_din[8]) ||
-	(h_count_s[9:4] == 8 && psram_din[7]) ||
-	(h_count_s[9:4] == 9 && psram_din[6]) ||
-	(h_count_s[9:4] == 10 && psram_din[5]) ||
-	(h_count_s[9:4] == 11 && psram_din[4]) ||
-	(h_count_s[9:4] == 12 && psram_din[3]) ||
-	(h_count_s[9:4] == 13 && psram_din[2]) ||
-	(h_count_s[9:4] == 14 && psram_din[1]) ||
-	(h_count_s[9:4] == 15 && psram_din[0]);
+	(graph_col == 0 && psram_din[15]) ||
+	(graph_col == 1 && psram_din[14]) ||
+	(graph_col == 2 && psram_din[13]) ||
+	(graph_col == 3 && psram_din[12]) ||
+	(graph_col == 4 && psram_din[11]) ||
+	(graph_col == 5 && psram_din[10]) ||
+	(graph_col == 6 && psram_din[9]) ||
+	(graph_col == 7 && psram_din[8]) ||
+	(graph_col == 8 && psram_din[7]) ||
+	(graph_col == 9 && psram_din[6]) ||
+	(graph_col == 10 && psram_din[5]) ||
+	(graph_col == 11 && psram_din[4]) ||
+	(graph_col == 12 && psram_din[3]) ||
+	(graph_col == 13 && psram_din[2]) ||
+	(graph_col == 14 && psram_din[1]) ||
+	(graph_col == 15 && psram_din[0]);
 
 assign is_dout =
-	(h_count_s[9:4] == 0 && psram_dout[15]) ||
-	(h_count_s[9:4] == 1 && psram_dout[14]) ||
-	(h_count_s[9:4] == 2 && psram_dout[13]) ||
-	(h_count_s[9:4] == 3 && psram_dout[12]) ||
-	(h_count_s[9:4] == 4 && psram_dout[11]) ||
-	(h_count_s[9:4] == 5 && psram_dout[10]) ||
-	(h_count_s[9:4] == 6 && psram_dout[9]) ||
-	(h_count_s[9:4] == 7 && psram_dout[8]) ||
-	(h_count_s[9:4] == 8 && psram_dout[7]) ||
-	(h_count_s[9:4] == 9 && psram_dout[6]) ||
-	(h_count_s[9:4] == 10 && psram_dout[5]) ||
-	(h_count_s[9:4] == 11 && psram_dout[4]) ||
-	(h_count_s[9:4] == 12 && psram_dout[3]) ||
-	(h_count_s[9:4] == 13 && psram_dout[2]) ||
-	(h_count_s[9:4] == 14 && psram_dout[1]) ||
-	(h_count_s[9:4] == 15 && psram_dout[0]);
+	(graph_col == 0 && psram_dout[15]) ||
+	(graph_col == 1 && psram_dout[14]) ||
+	(graph_col == 2 && psram_dout[13]) ||
+	(graph_col == 3 && psram_dout[12]) ||
+	(graph_col == 4 && psram_dout[11]) ||
+	(graph_col == 5 && psram_dout[10]) ||
+	(graph_col == 6 && psram_dout[9]) ||
+	(graph_col == 7 && psram_dout[8]) ||
+	(graph_col == 8 && psram_dout[7]) ||
+	(graph_col == 9 && psram_dout[6]) ||
+	(graph_col == 10 && psram_dout[5]) ||
+	(graph_col == 11 && psram_dout[4]) ||
+	(graph_col == 12 && psram_dout[3]) ||
+	(graph_col == 13 && psram_dout[2]) ||
+	(graph_col == 14 && psram_dout[1]) ||
+	(graph_col == 15 && psram_dout[0]);
 
 assign color_bar_color = ({h_count_s[8:5],h_count_s[7:4],h_count_s[8:5]});
 assign din_color = (is_din ? 12'hC00 : 12'h000);
@@ -300,30 +302,30 @@ assign side_color = (finished ? (success ? 12'h040 : 12'h400) : 12'h222);
 assign address_color = (is_address ? 12'h0C8 : 12'h000);
 
 assign is_address =
-	(h_count_s[9:4] == 0 && psram_addr[23]) ||
-	(h_count_s[9:4] == 1 && psram_addr[22]) ||
-	(h_count_s[9:4] == 2 && psram_addr[21]) ||
-	(h_count_s[9:4] == 3 && psram_addr[20]) ||
-	(h_count_s[9:4] == 4 && psram_addr[19]) ||
-	(h_count_s[9:4] == 5 && psram_addr[18]) ||
-	(h_count_s[9:4] == 6 && psram_addr[17]) ||
-	(h_count_s[9:4] == 7 && psram_addr[16]) ||
-	(h_count_s[9:4] == 8 && psram_addr[15]) ||
-	(h_count_s[9:4] == 9 && psram_addr[14]) ||
-	(h_count_s[9:4] == 10 && psram_addr[13]) ||
-	(h_count_s[9:4] == 11 && psram_addr[12]) ||
-	(h_count_s[9:4] == 12 && psram_addr[11]) ||
-	(h_count_s[9:4] == 13 && psram_addr[10]) ||
-	(h_count_s[9:4] == 14 && psram_addr[9]) ||
-	(h_count_s[9:4] == 15 && psram_addr[8]) ||
-	(h_count_s[9:4] == 16 && psram_addr[7]) ||
-	(h_count_s[9:4] == 17 && psram_addr[6]) ||
-	(h_count_s[9:4] == 18 && psram_addr[5]) ||
-	(h_count_s[9:4] == 19 && psram_addr[4]) ||
-	(h_count_s[9:4] == 20 && psram_addr[3]) ||
-	(h_count_s[9:4] == 21 && psram_addr[2]) ||
-	(h_count_s[9:4] == 22 && psram_addr[1]) ||
-	(h_count_s[9:4] == 23 && psram_addr[0]);
+	(graph_col == 0 && psram_addr[23]) ||
+	(graph_col == 1 && psram_addr[22]) ||
+	(graph_col == 2 && psram_addr[21]) ||
+	(graph_col == 3 && psram_addr[20]) ||
+	(graph_col == 4 && psram_addr[19]) ||
+	(graph_col == 5 && psram_addr[18]) ||
+	(graph_col == 6 && psram_addr[17]) ||
+	(graph_col == 7 && psram_addr[16]) ||
+	(graph_col == 8 && psram_addr[15]) ||
+	(graph_col == 9 && psram_addr[14]) ||
+	(graph_col == 10 && psram_addr[13]) ||
+	(graph_col == 11 && psram_addr[12]) ||
+	(graph_col == 12 && psram_addr[11]) ||
+	(graph_col == 13 && psram_addr[10]) ||
+	(graph_col == 14 && psram_addr[9]) ||
+	(graph_col == 15 && psram_addr[8]) ||
+	(graph_col == 16 && psram_addr[7]) ||
+	(graph_col == 17 && psram_addr[6]) ||
+	(graph_col == 18 && psram_addr[5]) ||
+	(graph_col == 19 && psram_addr[4]) ||
+	(graph_col == 20 && psram_addr[3]) ||
+	(graph_col == 21 && psram_addr[2]) ||
+	(graph_col == 22 && psram_addr[1]) ||
+	(graph_col == 23 && psram_addr[0]);
 
 assign new_color =
 	h_count_s[3:0] == 0 ? 12'h222 :
