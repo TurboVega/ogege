@@ -223,18 +223,16 @@ psram psram_inst (
     .o_state(psram_state),
 	.o_psram_csn(o_psram_csn),
 	.o_psram_sclk(o_psram_sclk),
-	.io_psram_dinout(psram_dinout),
+	.io_psram_data0(io_psram_data0),
+	.io_psram_data1(io_psram_data1),
+	.io_psram_data2(io_psram_data2),
+	.io_psram_data3(io_psram_data3),
+	.io_psram_data4(io_psram_data4),
+	.io_psram_data5(io_psram_data5),
+	.io_psram_data6(io_psram_data6),
+	.io_psram_data7(io_psram_data7),
 	.states_hit(states_hit)
 );
-
-assign io_psram_data0 = psram_dinout[0];
-assign io_psram_data1 = psram_dinout[1];
-assign io_psram_data2 = psram_dinout[2];
-assign io_psram_data3 = psram_dinout[3];
-assign io_psram_data4 = psram_dinout[4];
-assign io_psram_data5 = psram_dinout[5];
-assign io_psram_data6 = psram_dinout[6];
-assign io_psram_data7 = psram_dinout[7];
 
 wire is_color_bar;
 wire is_past_states;
