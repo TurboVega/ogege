@@ -139,18 +139,57 @@ canvas canvas_inst (
 );
 */
 
-reg psram_stb = 0;
-reg psram_we = 0;
-reg [23:0] psram_addr = 0;
-reg [15:0] psram_din = 16'h8765;
+reg psram_stb;
+reg psram_we;
+reg [23:0] psram_addr;
+reg [15:0] psram_din;
 reg psram_busy;
 reg psram_done;
 reg [15:0] psram_dout;
 reg [5:0] psram_state;
 reg [7:0] psram_dinout;
+reg [2:0] test_state;
 
-always @(psram_busy) begin
-	psram_stb <= ~psram_busy;
+always @(posedge rst_s or posedge clk_100mhz) begin
+	if (rst_s) begin
+		psram_stb <= 0;
+		psram_we <= 0;
+		psram_addr <= 0;
+		psram_din <= 0;
+		test_state <= 3'd0;
+	end else begin
+		case (test_state)
+			3'd0: begin
+					if (~psram_busy)
+						test_state <= 3'd1;
+				end
+			3'd1: begin
+					psram_din <= 16'h8765;
+					psram_we <= 1;
+					psram_stb <= 1;
+					test_state <= 3'd2;
+				end
+			3'd2: begin
+					if (psram_busy) begin
+						psram_stb <= 0;
+						psram_we <= 0;
+						test_state <= 3'd3;
+					end
+				end
+			3'd3: begin
+					if (~psram_busy) begin
+						psram_stb <= 1;
+						test_state <= 3'd4;
+					end
+				end
+			3'd4: begin
+					if (psram_busy) begin
+						psram_stb <= 0;
+						test_state <= 3'd5;
+					end
+				end
+		endcase;
+	end;
 end
 
 psram psram_inst (
