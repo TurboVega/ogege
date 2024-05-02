@@ -63,7 +63,8 @@ module psram (
     output  reg [5:0] o_state,
 	output  reg o_psram_csn,
 	output  wire o_psram_sclk,
-	inout   reg [7:0] io_psram_dinout
+	inout   reg [7:0] io_psram_dinout,
+    output  reg [34:0] states_hit
 );
 
 // The main clock (i_clk) here is 100 MHz, which ticks every
@@ -86,7 +87,9 @@ always @(posedge i_rst or posedge i_clk) begin
         o_psram_csn <= 1; // deselect
         hold_clk_lo <= 1;
         io_psram_dinout <= 8'd0;
+        states_hit <= 0;
     end else begin
+        states_hit[o_state] <= 1;
         case (o_state)
             // Startup long_delay
             RESET_JUST_NOW: begin

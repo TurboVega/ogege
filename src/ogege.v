@@ -208,6 +208,8 @@ always @(posedge rst_s or posedge pix_clk) begin
 	end;
 end
 
+wire [34:0] states_hit;
+
 psram psram_inst (
 	.i_rst(rst_s),
 	.i_clk(clk_100mhz),
@@ -221,7 +223,8 @@ psram psram_inst (
     .o_state(psram_state),
 	.o_psram_csn(o_psram_csn),
 	.o_psram_sclk(o_psram_sclk),
-	.io_psram_dinout(psram_dinout)
+	.io_psram_dinout(psram_dinout),
+	.states_hit(states_hit)
 );
 
 assign io_psram_data0 = psram_dinout[0];
@@ -242,57 +245,29 @@ wire is_din;
 wire is_dout;
 wire is_address;
 wire is_address_area;
+wire is_hit_area;
+wire is_hit;
 wire [11:0] color_bar_color;
 wire [11:0] din_color;
 wire [11:0] dout_color;
 wire [11:0] state_color;
 wire [11:0] side_color;
 wire [11:0] address_color;
+wire [11:0] hit_color;
 wire [5:0] graph_col;
 
 assign graph_col = h_count_s[9:4];
 assign is_address_area = (v_count_s < 16);
 assign is_color_bar = (v_count_s >= 16 && v_count_s < 32);
-assign is_past_states = (h_count_s >= 16*35);
-assign is_din_area = (v_count_s >= 32 && v_count_s < 64);
-assign is_dout_area = (v_count_s >= 64 && v_count_s < 96);
+assign is_hit_area = (v_count_s >= 32 && v_count_s < 64);
+assign is_din_area = (v_count_s >= 64 && v_count_s < 96);
+assign is_dout_area = (v_count_s >= 96 && v_count_s < 128);
 assign is_state = (graph_col == psram_state);
-
-assign is_din =
-	(graph_col == 0 && psram_din[15]) ||
-	(graph_col == 1 && psram_din[14]) ||
-	(graph_col == 2 && psram_din[13]) ||
-	(graph_col == 3 && psram_din[12]) ||
-	(graph_col == 4 && psram_din[11]) ||
-	(graph_col == 5 && psram_din[10]) ||
-	(graph_col == 6 && psram_din[9]) ||
-	(graph_col == 7 && psram_din[8]) ||
-	(graph_col == 8 && psram_din[7]) ||
-	(graph_col == 9 && psram_din[6]) ||
-	(graph_col == 10 && psram_din[5]) ||
-	(graph_col == 11 && psram_din[4]) ||
-	(graph_col == 12 && psram_din[3]) ||
-	(graph_col == 13 && psram_din[2]) ||
-	(graph_col == 14 && psram_din[1]) ||
-	(graph_col == 15 && psram_din[0]);
-
-assign is_dout =
-	(graph_col == 0 && psram_dout[15]) ||
-	(graph_col == 1 && psram_dout[14]) ||
-	(graph_col == 2 && psram_dout[13]) ||
-	(graph_col == 3 && psram_dout[12]) ||
-	(graph_col == 4 && psram_dout[11]) ||
-	(graph_col == 5 && psram_dout[10]) ||
-	(graph_col == 6 && psram_dout[9]) ||
-	(graph_col == 7 && psram_dout[8]) ||
-	(graph_col == 8 && psram_dout[7]) ||
-	(graph_col == 9 && psram_dout[6]) ||
-	(graph_col == 10 && psram_dout[5]) ||
-	(graph_col == 11 && psram_dout[4]) ||
-	(graph_col == 12 && psram_dout[3]) ||
-	(graph_col == 13 && psram_dout[2]) ||
-	(graph_col == 14 && psram_dout[1]) ||
-	(graph_col == 15 && psram_dout[0]);
+assign is_hit = (graph_col < 35 && states_hit[graph_col]);
+assign is_past_states = (h_count_s >= 16*35);
+assign is_din = (graph_col < 16 && psram_din[15-graph_col]);
+assign is_dout = (graph_col < 16 && psram_dout[15-graph_col]);
+assign is_address = (graph_col < 24 && psram_addr[23-graph_col]);
 
 assign color_bar_color = ({h_count_s[8:5],h_count_s[7:4],h_count_s[8:5]});
 assign din_color = (is_din ? 12'hC00 : 12'h000);
@@ -300,37 +275,13 @@ assign dout_color = (is_dout ? 12'h0C0 : 12'h000);
 assign state_color = (is_state ? 12'hCC0 : 12'h000);
 assign side_color = (finished ? (success ? 12'h040 : 12'h400) : 12'h222);
 assign address_color = (is_address ? 12'h0C8 : 12'h000);
-
-assign is_address =
-	(graph_col == 0 && psram_addr[23]) ||
-	(graph_col == 1 && psram_addr[22]) ||
-	(graph_col == 2 && psram_addr[21]) ||
-	(graph_col == 3 && psram_addr[20]) ||
-	(graph_col == 4 && psram_addr[19]) ||
-	(graph_col == 5 && psram_addr[18]) ||
-	(graph_col == 6 && psram_addr[17]) ||
-	(graph_col == 7 && psram_addr[16]) ||
-	(graph_col == 8 && psram_addr[15]) ||
-	(graph_col == 9 && psram_addr[14]) ||
-	(graph_col == 10 && psram_addr[13]) ||
-	(graph_col == 11 && psram_addr[12]) ||
-	(graph_col == 12 && psram_addr[11]) ||
-	(graph_col == 13 && psram_addr[10]) ||
-	(graph_col == 14 && psram_addr[9]) ||
-	(graph_col == 15 && psram_addr[8]) ||
-	(graph_col == 16 && psram_addr[7]) ||
-	(graph_col == 17 && psram_addr[6]) ||
-	(graph_col == 18 && psram_addr[5]) ||
-	(graph_col == 19 && psram_addr[4]) ||
-	(graph_col == 20 && psram_addr[3]) ||
-	(graph_col == 21 && psram_addr[2]) ||
-	(graph_col == 22 && psram_addr[1]) ||
-	(graph_col == 23 && psram_addr[0]);
+assign hit_color = (is_hit ? 12'hC3C : 12'h000);
 
 assign new_color =
 	h_count_s[3:0] == 0 ? 12'h222 :
 	is_address_area ? address_color :
 	is_color_bar ? color_bar_color :
+	is_hit_area ? hit_color :
 	is_past_states ? side_color :
 	is_din_area ? din_color :
 	is_dout_area ? dout_color :
