@@ -62,7 +62,7 @@ module psram (
     output  reg [5:0] o_state,
 	output  reg o_psram_csn,
 	output  wire o_psram_sclk,
-	inout   reg [7:0] io_psram_dinout,
+	inout   wire [7:0] io_psram_dinout,
     output  reg [34:0] states_hit
 );
 
@@ -73,8 +73,11 @@ reg [14:0] long_delay;
 
 reg [3:0] short_delay;
 reg hold_clk_lo;
+reg out_enable;
+reg [7:0] dinout;
 
 assign o_psram_sclk = (hold_clk_lo ? 0 : i_clk);
+assign io_psram_dinout = (out_enable ? dinout : 8'bZZZZZZZZ);
 
 always @(posedge i_rst or posedge i_clk) begin
     if (i_rst) begin
@@ -84,9 +87,11 @@ always @(posedge i_rst or posedge i_clk) begin
         o_busy <= 1;
         o_done <= 0;
         o_psram_csn <= 1; // deselect
+        o_dout <= 0;
         hold_clk_lo <= 1;
-        io_psram_dinout <= 8'd0;
+        dinout <= 8'd0;
         states_hit <= 0;
+        out_enable <= 1;
     end else begin
         states_hit[o_state] <= 1;
         case (o_state)
@@ -107,7 +112,7 @@ always @(posedge i_rst or posedge i_clk) begin
             // Post-reset clock wait end
             RESET_CLOCK_DONE: begin
                     o_busy <= 0;
-                    io_psram_dinout <= 8'bZZZZZZZZ;
+                    out_enable <= 0;
                     o_state <= MODE_SELECT_CMD_7;
                 end
 
@@ -115,59 +120,52 @@ always @(posedge i_rst or posedge i_clk) begin
             // The command bits are sent 1-at-a-time, on both PSRAM chips
             MODE_SELECT_CMD_7: begin
                     o_psram_csn <= 0; // select
-                    io_psram_dinout[0] <= 0;
-                    io_psram_dinout[4] <= 0;
+                    out_enable <= 1;
+                    dinout <= 8'bZZZ0ZZZ0;
                     o_state <= MODE_CMD_6;
                 end
 
             MODE_CMD_6: begin
-                    io_psram_dinout[0] <= 0;
-                    io_psram_dinout[4] <= 0;
+                    dinout <= 8'bZZZ0ZZZ0;
                     o_state <= MODE_CMD_5;
                 end
 
             MODE_CMD_5: begin
-                    io_psram_dinout[0] <= 1;
-                    io_psram_dinout[4] <= 1;
+                    dinout <= 8'bZZZ1ZZZ1;
                     o_state <= MODE_CMD_4;
                 end
 
             MODE_CMD_4: begin
-                    io_psram_dinout[0] <= 1;
-                    io_psram_dinout[4] <= 1;
+                    dinout <= 8'bZZZ1ZZZ1;
                     o_state <= MODE_CMD_3;
                 end
 
             MODE_CMD_3: begin
-                    io_psram_dinout[0] <= 0;
-                    io_psram_dinout[4] <= 0;
+                    dinout <= 8'bZZZ0ZZZ0;
                     o_state <= MODE_CMD_2;
                 end
 
             MODE_CMD_2: begin
-                    io_psram_dinout[0] <= 1;
-                    io_psram_dinout[4] <= 1;
+                    dinout <= 8'bZZZ1ZZZ1;
                     o_state <= MODE_CMD_1;
                 end
 
             MODE_CMD_1: begin
-                    io_psram_dinout[0] <= 0;
-                    io_psram_dinout[4] <= 0;
+                    dinout <= 8'bZZZ0ZZZ0;
                     o_state <= MODE_CMD_0;
                 end
 
             MODE_CMD_0: begin
-                    io_psram_dinout[0] <= 1;
-                    io_psram_dinout[4] <= 1;
+                    dinout <= 8'bZZZ1ZZZ1;
                     o_psram_csn <= 1; // deselect
                     o_state <= MODE_DESELECT;
+                    out_enable <= 0;
                 end
 
             MODE_DESELECT: begin
                     o_busy <= 0;
                     o_done <= 1;
                     o_state <= IDLE;
-                    io_psram_dinout <= 8'bZZZZZZZZ;
                 end
 
             // Idle, awaiting command
@@ -176,66 +174,68 @@ always @(posedge i_rst or posedge i_clk) begin
                         if (i_we) begin
                             // A write to PSRAM is done by command 38H
                             // The command bits are sent 4-at-a-time, on both PSRAM chips
-                            io_psram_dinout[3:0] <= 4'h3;
-                            io_psram_dinout[7:4] <= 4'h3;
+                            dinout[3:0] <= 4'h3;
+                            dinout[7:4] <= 4'h3;
                             o_state <= WRITE_CMD_3_0;
                         end else begin
                             // A read from PSRAM is done by command EBH
                             // The command bits are sent 4-at-a-time, on both PSRAM chips
-                            io_psram_dinout[3:0] <= 4'hE;
-                            io_psram_dinout[7:4] <= 4'hE;
+                            dinout[3:0] <= 4'hE;
+                            dinout[7:4] <= 4'hE;
                             o_state <= READ_CMD_3_0;
                         end
                         o_psram_csn <= 0; // select
                         o_busy <= 1;
                         o_done <= 0;
+                        out_enable <= 1;
                     end
                 end
 
             READ_CMD_3_0: begin
-                    io_psram_dinout[3:0] <= 4'hB;
-                    io_psram_dinout[7:4] <= 4'hB;
+                    dinout[3:0] <= 4'hB;
+                    dinout[7:4] <= 4'hB;
                     o_state <= READ_ADDR_23_20;
                 end
 
             READ_ADDR_23_20: begin
-                    io_psram_dinout[3:0] <= i_addr[23:20];
-                    io_psram_dinout[7:4] <= i_addr[23:20];
+                    dinout[3:0] <= i_addr[23:20];
+                    dinout[7:4] <= i_addr[23:20];
                     o_state <= READ_ADDR_19_16;
                 end
 
             READ_ADDR_19_16: begin
-                    io_psram_dinout[3:0] <= i_addr[19:16];
-                    io_psram_dinout[7:4] <= i_addr[19:16];
+                    dinout[3:0] <= i_addr[19:16];
+                    dinout[7:4] <= i_addr[19:16];
                     o_state <= READ_ADDR_15_12;
                 end
 
             READ_ADDR_15_12: begin
-                    io_psram_dinout[3:0] <= i_addr[15:12];
-                    io_psram_dinout[7:4] <= i_addr[15:12];
+                    dinout[3:0] <= i_addr[15:12];
+                    dinout[7:4] <= i_addr[15:12];
                     o_state <= READ_ADDR_11_8;
                 end
 
             READ_ADDR_11_8: begin
-                    io_psram_dinout[3:0] <= i_addr[11:8];
-                    io_psram_dinout[7:4] <= i_addr[11:8];
+                    dinout[3:0] <= i_addr[11:8];
+                    dinout[7:4] <= i_addr[11:8];
                     o_state <= READ_ADDR_7_4;
                 end
 
             READ_ADDR_7_4: begin
-                    io_psram_dinout[3:0] <= i_addr[7:4];
-                    io_psram_dinout[7:4] <= i_addr[7:4];
+                    dinout[3:0] <= i_addr[7:4];
+                    dinout[7:4] <= i_addr[7:4];
                     o_state <= READ_ADDR_3_0;
                 end
 
             READ_ADDR_3_0: begin
-                    io_psram_dinout[3:0] <= i_addr[3:0];
-                    io_psram_dinout[7:4] <= i_addr[3:0];
+                    dinout[3:0] <= i_addr[3:0];
+                    dinout[7:4] <= i_addr[3:0];
                     short_delay <= 0;
                     o_state <= READ_WAIT;
                 end
 
             READ_WAIT: begin
+                    out_enable <= 0;
                     if (short_delay == 7)
                         o_state <= READ_DATA_7_4;
                     else
@@ -259,69 +259,68 @@ always @(posedge i_rst or posedge i_clk) begin
                     o_busy <= 0;
                     o_done <= 1;
                     o_state <= IDLE;
-                    io_psram_dinout <= 8'bZZZZZZZZ;
                 end
 
             WRITE_CMD_3_0: begin
-                    io_psram_dinout[3:0] <= 4'h8;
-                    io_psram_dinout[7:4] <= 4'h8;
+                    dinout[3:0] <= 4'h8;
+                    dinout[7:4] <= 4'h8;
                     o_state <= WRITE_ADDR_23_20;
                 end
 
             WRITE_ADDR_23_20: begin
-                    io_psram_dinout[3:0] <= i_addr[23:20];
-                    io_psram_dinout[7:4] <= i_addr[23:20];
+                    dinout[3:0] <= i_addr[23:20];
+                    dinout[7:4] <= i_addr[23:20];
                     o_state <= WRITE_ADDR_19_16;
                 end
 
             WRITE_ADDR_19_16: begin
-                    io_psram_dinout[3:0] <= i_addr[19:16];
-                    io_psram_dinout[7:4] <= i_addr[19:16];
+                    dinout[3:0] <= i_addr[19:16];
+                    dinout[7:4] <= i_addr[19:16];
                     o_state <= WRITE_ADDR_15_12;
                 end
 
             WRITE_ADDR_15_12: begin
-                    io_psram_dinout[3:0] <= i_addr[15:12];
-                    io_psram_dinout[7:4] <= i_addr[15:12];
+                    dinout[3:0] <= i_addr[15:12];
+                    dinout[7:4] <= i_addr[15:12];
                     o_state <= WRITE_ADDR_11_8;
                 end
 
             WRITE_ADDR_11_8: begin
-                    io_psram_dinout[3:0] <= i_addr[11:8];
-                    io_psram_dinout[7:4] <= i_addr[11:8];
+                    dinout[3:0] <= i_addr[11:8];
+                    dinout[7:4] <= i_addr[11:8];
                     o_state <= WRITE_ADDR_7_4;
                 end
 
             WRITE_ADDR_7_4: begin
-                    io_psram_dinout[3:0] <= i_addr[7:4];
-                    io_psram_dinout[7:4] <= i_addr[7:4];
+                    dinout[3:0] <= i_addr[7:4];
+                    dinout[7:4] <= i_addr[7:4];
                     o_state <= WRITE_ADDR_3_0;
                 end
 
             WRITE_ADDR_3_0: begin
-                    io_psram_dinout[3:0] <= i_addr[3:0];
-                    io_psram_dinout[7:4] <= i_addr[3:0];
+                    dinout[3:0] <= i_addr[3:0];
+                    dinout[7:4] <= i_addr[3:0];
                     o_state <= WRITE_DATA_7_4;
                 end
 
             WRITE_DATA_7_4: begin
-                    io_psram_dinout[7:4] <= i_din[15:12];
-                    io_psram_dinout[3:0] <= i_din[11:8];
+                    dinout[7:4] <= i_din[15:12];
+                    dinout[3:0] <= i_din[11:8];
                     o_state <= WRITE_DATA_3_0;
                 end
 
             WRITE_DATA_3_0: begin
-                    io_psram_dinout[7:4] <= i_din[7:4];
-                    io_psram_dinout[3:0] <= i_din[3:0];
+                    dinout[7:4] <= i_din[7:4];
+                    dinout[3:0] <= i_din[3:0];
                     o_psram_csn <= 1; // deselect
                     o_state <= WRITE_DESELECT;
+                    out_enable <= 0;
                 end
 
             WRITE_DESELECT: begin
                     o_busy <= 0;
                     o_done <= 1;
                     o_state <= IDLE;
-                    io_psram_dinout <= 8'bZZZZZZZZ;
                 end
         endcase
     end
