@@ -147,7 +147,7 @@ reg psram_busy;
 reg psram_done;
 reg [15:0] psram_dout;
 reg [5:0] psram_state;
-reg [7:0] psram_dinout;
+wire [7:0] psram_dinout;
 reg [2:0] test_state;
 reg finished;
 reg success;

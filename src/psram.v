@@ -172,13 +172,13 @@ always @(posedge i_rst or posedge i_clk) begin
             IDLE: begin
                     if (i_stb) begin
                         if (i_we) begin
-                            // A read from PSRAM is done by command 38H
+                            // A write to PSRAM is done by command 38H
                             // The command bits are sent 4-at-a-time, on both PSRAM chips
                             io_psram_dinout[3:0] <= 4'h3;
                             io_psram_dinout[7:4] <= 4'h3;
                             o_state <= WRITE_CMD_3_0;
                         end else begin
-                            // A write to PSRAM is done by command EBH
+                            // A read from PSRAM is done by command EBH
                             // The command bits are sent 4-at-a-time, on both PSRAM chips
                             io_psram_dinout[3:0] <= 4'hE;
                             io_psram_dinout[7:4] <= 4'hE;
@@ -191,8 +191,8 @@ always @(posedge i_rst or posedge i_clk) begin
                 end
 
             READ_CMD_3_0: begin
-                    io_psram_dinout[3:0] <= 4'hE;
-                    io_psram_dinout[7:4] <= 4'hE;
+                    io_psram_dinout[3:0] <= 4'hB;
+                    io_psram_dinout[7:4] <= 4'hB;
                     o_state <= READ_ADDR_23_20;
                 end
 
