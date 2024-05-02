@@ -62,7 +62,7 @@ module psram (
 	output  reg [15:0] o_dout,
     output  reg [5:0] o_state,
 	output  reg o_psram_csn,
-	output  reg o_psram_sclk,
+	output  wire o_psram_sclk,
 	inout   reg [7:0] io_psram_dinout
 );
 
