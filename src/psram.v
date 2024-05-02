@@ -13,8 +13,8 @@
 
 typedef enum {
     RESET_JUST_NOW = 0,
-    RESET_CLOCK_HIGH = 1,
-    RESET_CLOCK_LOW = 2,
+    RESET_CLOCK_WAIT = 1,
+    RESET_CLOCK_DONE = 2,
     MODE_SELECT_CMD_7 = 3,
     MODE_CMD_6 = 4,
     MODE_CMD_5 = 5,
@@ -72,6 +72,9 @@ module psram (
 reg [14:0] long_delay;
 
 reg [3:0] short_delay;
+reg hold_clk_lo;
+
+assign o_psram_sclk = (hold_clk_lo ? 0 : i_clk);
 
 always @(posedge i_rst or posedge i_clk) begin
     if (i_rst) begin
@@ -81,27 +84,26 @@ always @(posedge i_rst or posedge i_clk) begin
         o_busy <= 1;
         o_done <= 0;
         o_psram_csn <= 1; // deselect
-        o_psram_sclk <= 0;
+        hold_clk_lo <= 1;
         io_psram_dinout <= 8'd0;
     end else begin
         case (o_state)
             // Startup long_delay
             RESET_JUST_NOW: begin
                     if (long_delay == 19999)
-                        o_state <= RESET_CLOCK_HIGH;
+                        o_state <= RESET_CLOCK_WAIT;
                     else
                         long_delay <= long_delay + 1;
                 end
 
-            // Post-reset clock high
-            RESET_CLOCK_HIGH: begin
-                    o_psram_sclk <= 1;
-                    o_state <= RESET_CLOCK_LOW;
+            // Post-reset clock wait start
+            RESET_CLOCK_WAIT: begin
+                    hold_clk_lo <= 0;
+                    o_state <= RESET_CLOCK_DONE;
                 end
             
-            // Post-reset clock low
-            RESET_CLOCK_LOW: begin
-                    o_psram_sclk <= 0;
+            // Post-reset clock wait end
+            RESET_CLOCK_DONE: begin
                     o_busy <= 0;
                     io_psram_dinout <= 8'bZ;
                     o_state <= MODE_SELECT_CMD_7;
