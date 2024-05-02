@@ -142,11 +142,11 @@ canvas canvas_inst (
 reg psram_stb = 0;
 reg psram_we = 0;
 reg [23:0] psram_addr = 0;
-reg [15:0] psram_din = 0;
+reg [15:0] psram_din = 16'h8765;
 reg psram_busy;
 reg psram_done;
 reg [15:0] psram_dout;
-reg [4:0] psram_state;
+reg [5:0] psram_state;
 reg [7:0] psram_dinout;
 
 always @(psram_busy) begin
@@ -178,10 +178,71 @@ assign io_psram_data5 = psram_dinout[5];
 assign io_psram_data6 = psram_dinout[6];
 assign io_psram_data7 = psram_dinout[7];
 
+wire is_color_bar;
+wire is_past_states;
+wire is_din_area;
+wire is_dout_area;
+wire is_state;
+wire is_din;
+wire is_dout;
+wire [11:0] color_bar_color;
+wire [11:0] din_color;
+wire [11:0] dout_color;
+wire [11:0] state_color;
+
+assign is_color_bar = (v_count_s < 32);
+assign is_past_states = (h_count_s >= 16*35);
+assign is_din_area = (v_count_s >= 32 && v_count_s < 64);
+assign is_dout_area = (v_count_s >= 64 && v_count_s < 96);
+assign is_state = (h_count_s[9:4] == psram_state);
+
+assign is_din =
+	(h_count_s[9:4] == 0 && psram_din[15]) ||
+	(h_count_s[9:4] == 1 && psram_din[14]) ||
+	(h_count_s[9:4] == 2 && psram_din[13]) ||
+	(h_count_s[9:4] == 3 && psram_din[12]) ||
+	(h_count_s[9:4] == 4 && psram_din[11]) ||
+	(h_count_s[9:4] == 5 && psram_din[10]) ||
+	(h_count_s[9:4] == 6 && psram_din[9]) ||
+	(h_count_s[9:4] == 7 && psram_din[8]) ||
+	(h_count_s[9:4] == 8 && psram_din[7]) ||
+	(h_count_s[9:4] == 9 && psram_din[6]) ||
+	(h_count_s[9:4] == 10 && psram_din[5]) ||
+	(h_count_s[9:4] == 11 && psram_din[4]) ||
+	(h_count_s[9:4] == 12 && psram_din[3]) ||
+	(h_count_s[9:4] == 13 && psram_din[2]) ||
+	(h_count_s[9:4] == 14 && psram_din[1]) ||
+	(h_count_s[9:4] == 15 && psram_din[0]);
+
+assign is_dout =
+	(h_count_s[9:4] == 0 && psram_dout[15]) ||
+	(h_count_s[9:4] == 1 && psram_dout[14]) ||
+	(h_count_s[9:4] == 2 && psram_dout[13]) ||
+	(h_count_s[9:4] == 3 && psram_dout[12]) ||
+	(h_count_s[9:4] == 4 && psram_dout[11]) ||
+	(h_count_s[9:4] == 5 && psram_dout[10]) ||
+	(h_count_s[9:4] == 6 && psram_dout[9]) ||
+	(h_count_s[9:4] == 7 && psram_dout[8]) ||
+	(h_count_s[9:4] == 8 && psram_dout[7]) ||
+	(h_count_s[9:4] == 9 && psram_dout[6]) ||
+	(h_count_s[9:4] == 10 && psram_dout[5]) ||
+	(h_count_s[9:4] == 11 && psram_dout[4]) ||
+	(h_count_s[9:4] == 12 && psram_dout[3]) ||
+	(h_count_s[9:4] == 13 && psram_dout[2]) ||
+	(h_count_s[9:4] == 14 && psram_dout[1]) ||
+	(h_count_s[9:4] == 15 && psram_dout[0]);
+
+assign color_bar_color = ({h_count_s[8:5],h_count_s[7:4],h_count_s[8:5]});
+assign din_color = (is_din ? 12'hC00 : 12'h000);
+assign dout_color = (is_dout ? 12'h0C0 : 12'h000);
+assign state_color = (is_state ? 12'hCC0 : 12'h000);
+
 assign new_color =
-	(v_count_s < 32) ? {h_count_s[8:5],h_count_s[7:4],h_count_s[8:5]} :
-	(h_count_s >= 8*64) ? 12'h004 :
-	(h_count_s[8:4] == psram_state) ? 12'h880 : 12'h444;
+	is_color_bar ? color_bar_color :
+	is_past_states ? 12'h004 :
+	is_din_area ? din_color :
+	is_dout_area ? dout_color :
+	state_color;
 
 assign rst_s = ~rstn_i;
 assign o_led = 8'b0;

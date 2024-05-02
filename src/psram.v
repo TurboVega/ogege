@@ -11,42 +11,42 @@
 
 `default_nettype none
 
-typedef enum logic [4:0] {
-    RESET_JUST_NOW,     // 0
-    RESET_CLOCK_HIGH,   // 1
-    RESET_CLOCK_LOW,    // 2
-    MODE_SELECT_CMD_7,  // 3
-    MODE_CMD_6,         // 4
-    MODE_CMD_5,         // 5
-    MODE_CMD_4,         // 6
-    MODE_CMD_3,         // 7
-    MODE_CMD_2,         // 8
-    MODE_CMD_1,         // 9
-    MODE_CMD_0,         // 10
-    MODE_DESELECT,      // 11
-    IDLE,               // 12
-    READ_CMD_3_0,       // 13
-    READ_ADDR_23_20,    // 14
-    READ_ADDR_19_16,    // 15
-    READ_ADDR_15_12,    // 16
-    READ_ADDR_11_8,     // 17
-    READ_ADDR_7_4,      // 18
-    READ_ADDR_3_0,      // 19
-    READ_WAIT,          // 20
-    READ_DATA_7_4,      // 21
-    READ_DATA_3_0,      // 22
-    READ_DESELECT,      // 23
-    WRITE_CMD_3_0,      // 24
-    WRITE_ADDR_23_20,   // 25
-    WRITE_ADDR_19_16,   // 26
-    WRITE_ADDR_15_12,   // 27
-    WRITE_ADDR_11_8,    // 28
-    WRITE_ADDR_7_4,     // 29
-    WRITE_ADDR_3_0,     // 30
-    WRITE_WAIT,         // 31
-    WRITE_DATA_7_4,     // 32
-    WRITE_DATA_3_0,     // 33
-    WRITE_DESELECT      // 34
+typedef enum {
+    RESET_JUST_NOW = 0,
+    RESET_CLOCK_HIGH = 1,
+    RESET_CLOCK_LOW = 2,
+    MODE_SELECT_CMD_7 = 3,
+    MODE_CMD_6 = 4,
+    MODE_CMD_5 = 5,
+    MODE_CMD_4 = 6,
+    MODE_CMD_3 = 7,
+    MODE_CMD_2 = 8,
+    MODE_CMD_1 = 9,
+    MODE_CMD_0 = 10,
+    MODE_DESELECT = 11,
+    IDLE = 12,
+    READ_CMD_3_0 = 13,
+    READ_ADDR_23_20 = 14,
+    READ_ADDR_19_16 = 15,
+    READ_ADDR_15_12 = 16,
+    READ_ADDR_11_8 = 17,
+    READ_ADDR_7_4 = 18,
+    READ_ADDR_3_0 = 19,
+    READ_WAIT = 20,
+    READ_DATA_7_4 = 21,
+    READ_DATA_3_0 = 22,
+    READ_DESELECT = 23,
+    WRITE_CMD_3_0 = 24,
+    WRITE_ADDR_23_20 = 25,
+    WRITE_ADDR_19_16 = 26,
+    WRITE_ADDR_15_12 = 27,
+    WRITE_ADDR_11_8 = 28,
+    WRITE_ADDR_7_4 = 29,
+    WRITE_ADDR_3_0 = 30,
+    WRITE_WAIT = 31,
+    WRITE_DATA_7_4 = 32,
+    WRITE_DATA_3_0 = 33,
+    WRITE_DESELECT = 34
 } MachineState;
 
 
@@ -60,7 +60,7 @@ module psram (
     output  reg o_busy,
     output  reg o_done,
 	output  reg [15:0] o_dout,
-    output  reg [4:0] o_state,
+    output  reg [5:0] o_state,
 	output  reg o_psram_csn,
 	output  reg o_psram_sclk,
 	inout   reg [7:0] io_psram_dinout
