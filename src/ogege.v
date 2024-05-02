@@ -156,7 +156,7 @@ always @(posedge rst_s or posedge pix_clk) begin
 	if (rst_s) begin
 		psram_stb <= 0;
 		psram_we <= 0;
-		psram_addr <= 24'hABCDEF;
+		psram_addr <= 24'hABCDE6;
 		psram_din <= 0;
 		test_state <= 3'd0;
 		success <= 0;
@@ -212,7 +212,7 @@ wire [34:0] states_hit;
 
 psram psram_inst (
 	.i_rst(rst_s),
-	.i_clk(clk_100mhz),
+	.i_clk(pix_clk),
 	.i_stb(psram_stb),
 	.i_we(psram_we),
 	.i_addr(psram_addr),
@@ -263,8 +263,8 @@ assign is_hit_area = (v_count_s >= 32 && v_count_s < 64);
 assign is_din_area = (v_count_s >= 64 && v_count_s < 96);
 assign is_dout_area = (v_count_s >= 96 && v_count_s < 128);
 assign is_state = (graph_col == psram_state);
-assign is_hit = (graph_col < 35 && states_hit[graph_col]);
-assign is_past_states = (h_count_s >= 16*35);
+assign is_hit = (graph_col < 34 && states_hit[graph_col]);
+assign is_past_states = (h_count_s >= 16*34);
 assign is_din = (graph_col < 16 && psram_din[15-graph_col]);
 assign is_dout = (graph_col < 16 && psram_dout[15-graph_col]);
 assign is_address = (graph_col < 24 && psram_addr[23-graph_col]);

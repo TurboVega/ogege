@@ -43,10 +43,9 @@ typedef enum {
     WRITE_ADDR_11_8 = 28,
     WRITE_ADDR_7_4 = 29,
     WRITE_ADDR_3_0 = 30,
-    WRITE_WAIT = 31,
-    WRITE_DATA_7_4 = 32,
-    WRITE_DATA_3_0 = 33,
-    WRITE_DESELECT = 34
+    WRITE_DATA_7_4 = 31,
+    WRITE_DATA_3_0 = 32,
+    WRITE_DESELECT = 33
 } MachineState;
 
 
@@ -116,55 +115,55 @@ always @(posedge i_rst or posedge i_clk) begin
             // The command bits are sent 1-at-a-time, on both PSRAM chips
             MODE_SELECT_CMD_7: begin
                     o_psram_csn <= 0; // select
-                    io_psram_dinout[1] <= 0;
-                    io_psram_dinout[5] <= 0;
+                    io_psram_dinout[0] <= 0;
+                    io_psram_dinout[4] <= 0;
                     o_state <= MODE_CMD_6;
                 end
 
             MODE_CMD_6: begin
-                    io_psram_dinout[1] <= 0;
-                    io_psram_dinout[5] <= 0;
+                    io_psram_dinout[0] <= 0;
+                    io_psram_dinout[4] <= 0;
                     o_state <= MODE_CMD_5;
                 end
 
             MODE_CMD_5: begin
-                    io_psram_dinout[1] <= 1;
-                    io_psram_dinout[5] <= 1;
+                    io_psram_dinout[0] <= 1;
+                    io_psram_dinout[4] <= 1;
                     o_state <= MODE_CMD_4;
                 end
 
             MODE_CMD_4: begin
-                    io_psram_dinout[1] <= 1;
-                    io_psram_dinout[5] <= 1;
+                    io_psram_dinout[0] <= 1;
+                    io_psram_dinout[4] <= 1;
                     o_state <= MODE_CMD_3;
                 end
 
             MODE_CMD_3: begin
-                    io_psram_dinout[1] <= 0;
-                    io_psram_dinout[5] <= 0;
+                    io_psram_dinout[0] <= 0;
+                    io_psram_dinout[4] <= 0;
                     o_state <= MODE_CMD_2;
                 end
 
             MODE_CMD_2: begin
-                    io_psram_dinout[1] <= 1;
-                    io_psram_dinout[5] <= 1;
+                    io_psram_dinout[0] <= 1;
+                    io_psram_dinout[4] <= 1;
                     o_state <= MODE_CMD_1;
                 end
 
             MODE_CMD_1: begin
-                    io_psram_dinout[1] <= 0;
-                    io_psram_dinout[5] <= 0;
+                    io_psram_dinout[0] <= 0;
+                    io_psram_dinout[4] <= 0;
                     o_state <= MODE_CMD_0;
                 end
 
             MODE_CMD_0: begin
-                    io_psram_dinout[1] <= 1;
-                    io_psram_dinout[5] <= 1;
+                    io_psram_dinout[0] <= 1;
+                    io_psram_dinout[4] <= 1;
+                    o_psram_csn <= 1; // deselect
                     o_state <= MODE_DESELECT;
                 end
 
             MODE_DESELECT: begin
-                    o_psram_csn <= 1; // deselect
                     o_busy <= 0;
                     o_done <= 1;
                     o_state <= IDLE;
@@ -252,11 +251,11 @@ always @(posedge i_rst or posedge i_clk) begin
             READ_DATA_3_0: begin
                     o_dout[7:4] <= io_psram_dinout[7:4];
                     o_dout[3:0] <= io_psram_dinout[3:0];
+                    o_psram_csn <= 1; // deselect
                     o_state <= READ_DESELECT;
                 end
 
             READ_DESELECT: begin
-                    o_psram_csn <= 1; // deselect
                     o_busy <= 0;
                     o_done <= 1;
                     o_state <= IDLE;
@@ -314,11 +313,11 @@ always @(posedge i_rst or posedge i_clk) begin
             WRITE_DATA_3_0: begin
                     io_psram_dinout[7:4] <= i_din[7:4];
                     io_psram_dinout[3:0] <= i_din[3:0];
+                    o_psram_csn <= 1; // deselect
                     o_state <= WRITE_DESELECT;
                 end
 
             WRITE_DESELECT: begin
-                    o_psram_csn <= 1; // deselect
                     o_busy <= 0;
                     o_done <= 1;
                     o_state <= IDLE;
@@ -327,7 +326,5 @@ always @(posedge i_rst or posedge i_clk) begin
         endcase
     end
 end
-
-
 
 endmodule
