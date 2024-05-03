@@ -156,7 +156,7 @@ always @(posedge rst_s or posedge pix_clk) begin
 	if (rst_s) begin
 		psram_stb <= 0;
 		psram_we <= 0;
-		psram_addr <= 00;
+		psram_addr <= 0;
 		psram_din <= 0;
 		test_state <= 0;
 		success <= 0;
