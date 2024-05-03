@@ -156,9 +156,9 @@ always @(posedge rst_s or posedge pix_clk) begin
 	if (rst_s) begin
 		psram_stb <= 0;
 		psram_we <= 0;
-		psram_addr <= 24'd0;
+		psram_addr <= 00;
 		psram_din <= 0;
-		test_state <= 3'd0;
+		test_state <= 0;
 		success <= 0;
 	end else begin
 		case (test_state)
@@ -169,7 +169,6 @@ always @(posedge rst_s or posedge pix_clk) begin
 				end
 			3'd1: begin
 					// Write a 16-bit value
-					psram_din <= 16'h8765;
 					psram_we <= 1;
 					psram_stb <= 1;
 					test_state <= 3'd2;
@@ -199,9 +198,26 @@ always @(posedge rst_s or posedge pix_clk) begin
 			3'd5: begin
 					// Indicate completion
 					if (~psram_busy) begin
-						finished <= 1;
-						success <= (psram_din == psram_dout);
-						test_state <= 3'd6;
+						if (psram_din == psram_dout) begin
+							if (psram_addr == 24'hFFFFFF) begin
+								if (psram_din == 16'hFFFF) begin
+									finished <= 1;
+									success <= 1;
+									test_state <= 3'd6;
+								end else begin
+									psram_addr <= 0;
+									psram_din <= psram_din + 1;
+									test_state <= 3'd1;
+								end
+							end else begin
+								psram_addr <= psram_addr + 1;
+								test_state <= 3'd1;
+							end
+						end else begin
+							finished <= 1;
+							success <= 0;
+							test_state <= 3'd6;
+						end
 					end
 				end
 		endcase;
