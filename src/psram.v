@@ -172,11 +172,11 @@ always @(posedge i_rst or posedge i_clk) begin
 
             MODE_CMD_0: begin
                     data_to_chip <= 8'hFF;
-                    o_psram_csn <= 1; // deselect
                     o_state <= MODE_DESELECT;
                 end
 
             MODE_DESELECT: begin
+                    o_psram_csn <= 1; // deselect
                     out_enable <= 8'h00;
                     o_busy <= 0;
                     o_done <= 1;
@@ -251,7 +251,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
             READ_WAIT: begin
                     out_enable <= 8'h00;
-                    if (short_delay == 7)
+                    if (short_delay == 5)
                         o_state <= READ_DATA_7_4;
                     else
                         short_delay <= short_delay + 1;
@@ -278,11 +278,11 @@ always @(posedge i_rst or posedge i_clk) begin
                     o_dout[2] <= io_psram_data2;
                     o_dout[1] <= io_psram_data1;
                     o_dout[0] <= io_psram_data0;
-                    o_psram_csn <= 1; // deselect
                     o_state <= READ_DESELECT;
                 end
 
             READ_DESELECT: begin
+                    o_psram_csn <= 1; // deselect
                     o_busy <= 0;
                     o_done <= 1;
                     o_state <= IDLE;
@@ -337,11 +337,11 @@ always @(posedge i_rst or posedge i_clk) begin
 
             WRITE_DATA_3_0: begin
                     data_to_chip[7:0] <= i_din[7:0];
-                    o_psram_csn <= 1; // deselect
                     o_state <= WRITE_DESELECT;
                 end
 
             WRITE_DESELECT: begin
+                    o_psram_csn <= 1; // deselect
                     out_enable <= 8'h00;
                     o_busy <= 0;
                     o_done <= 1;
