@@ -159,6 +159,7 @@ always @(posedge rst_s or posedge pix_clk) begin
 		psram_addr <= 0;
 		psram_din <= 0;
 		test_state <= 0;
+		finished <= 0;
 		success <= 0;
 	end else begin
 		case (test_state)
