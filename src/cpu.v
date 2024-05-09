@@ -265,9 +265,24 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'hD8: tmp_inst = `{ CLD, IMP };
                         8'h58: tmp_inst = `{ CLI, IMP };
                         8'hB8: tmp_inst = `{ CLV, IMP };
-                        8'h: tmp_inst = `{ CMP, };
+
+                        8'hC1: tmp_inst = `{ CMP, ZIX };
+                        8'hC5: tmp_inst = `{ CMP, ZPG };
+                        8'hC9: tmp_inst = `{ CMP, IMM };
+                        8'hCD: tmp_inst = `{ CMP, ABS };
+                        8'hD1: tmp_inst = `{ CMP, ZIIY };
+                        8'hD2: tmp_inst = `{ CMP, ZPI };
+                        8'hD5: tmp_inst = `{ CMP, ZIX };
+                        8'hD9: tmp_inst = `{ CMP, AIY };
+                        8'hDD: tmp_inst = `{ CMP, AIX };
+
                         8'hE0: tmp_inst = `{ CPX, IMM };
+                        8'hE4: tmp_inst = `{ CPX, ZPG };
+                        8'hEC: tmp_inst = `{ CPX, ABS };
+
                         8'hC0: tmp_inst = `{ CPY, IMM };
+                        8'hC4: tmp_inst = `{ CPY, ZPG };
+                        8'hCC: tmp_inst = `{ CPY, ABS };
 
                         8'h3A: tmp_inst = `{ DEC, ACC };
                         8'hCA: tmp_inst = `{ DEX, IMP };
@@ -346,7 +361,17 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h6A: tmp_inst = `{ ROR, ACC };
                         8'h40: tmp_inst = `{ RTI, STK };
                         8'h60: tmp_inst = `{ RTS, STK };
-                        8'h: tmp_inst = `{ SBC, };
+
+                        8'hE1: tmp_inst = `{ SBC, ZII };
+                        8'hE5: tmp_inst = `{ SBC, ZPG };
+                        8'hE9: tmp_inst = `{ SBC, IMM };
+                        8'hED: tmp_inst = `{ SBC, ABS };
+                        8'hF1: tmp_inst = `{ SBC, ZIIY };
+                        8'hF2: tmp_inst = `{ SBC, ZPI };
+                        8'hF5: tmp_inst = `{ SBC, ZIX };
+                        8'hF9: tmp_inst = `{ SBC, AIY };
+                        8'hFD: tmp_inst = `{ SBC, AIX };
+
                         8'h38: tmp_inst = `{ SEC, IMP };
                         8'hF8: tmp_inst = `{ SED, IMP };
                         8'h78: tmp_inst = `{ SEI, IMP };
