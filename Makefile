@@ -33,6 +33,7 @@ OBJS += $(SOURCEDIR)/canvas.v
 OBJS += $(SOURCEDIR)/frame_buffer.v
 OBJS += $(SOURCEDIR)/gatemate_100MHz_pll.v
 OBJS += $(SOURCEDIR)/psram.v
+OBJS += $(SOURCEDIR)/cpu.v
 
 info:
 	@echo "       To build: make all"

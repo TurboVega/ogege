@@ -21,7 +21,7 @@ module ogege (
 	output wire       o_hsync,
 	output wire       o_clk,
 	output wire       o_rst,
-	output wire [7:0] o_led,
+	output wire [7:0] o_led/*,
 	output wire       o_psram_csn,
 	output wire       o_psram_sclk,
 	inout  wire       io_psram_data0,
@@ -31,7 +31,7 @@ module ogege (
 	inout  wire       io_psram_data4,
 	inout  wire       io_psram_data5,
 	inout  wire       io_psram_data6,
-	inout  wire       io_psram_data7
+	inout  wire       io_psram_data7*/
 );
 
 wire clk_100mhz, pix_clk, clk_locked;
@@ -139,6 +139,7 @@ canvas canvas_inst (
 );
 */
 
+/*
 reg psram_stb;
 reg psram_we;
 reg [23:0] psram_addr;
@@ -301,6 +302,13 @@ assign new_color =
 	is_din_area ? din_color :
 	is_dout_area ? dout_color :
 	state_color;
+*/
+
+cpu cpu_inst (
+	.i_clk(pix_clk)
+);
+
+assign new_color = 12'h123;
 
 assign rst_s = ~rstn_i;
 assign o_led = 8'b0;
