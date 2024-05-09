@@ -241,6 +241,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h2C: tmp_inst = `{ BIT, ABS };
                         8'h34: tmp_inst = `{ BIT, ZIX };
                         8'h3C: tmp_inst = `{ BIT, AIX };
+                        8'h89: tmp_inst = `{ BIT, IMM };
 
                         8'h0F, 8'h1F, 8'h2F, 8'h3F,
                         8'h4F, 8'h5F, 8'h6F, 8'h7F:
@@ -289,6 +290,11 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'hCC: tmp_inst = `{ CPY, ABS };
 
                         8'h3A: tmp_inst = `{ DEC, ACC };
+                        8'hC6: tmp_inst = `{ DEC, ZPG };
+                        8'hCE: tmp_inst = `{ DEC, ABS };
+                        8'hD6: tmp_inst = `{ DEC, ZIX };
+                        8'hDE: tmp_inst = `{ DEC, AIX };
+
                         8'hCA: tmp_inst = `{ DEX, IMP };
                         8'h88: tmp_inst = `{ DEY, IMP };
 
@@ -302,11 +308,19 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h59: tmp_inst = `{ EOR, AIY };
                         8'h5D: tmp_inst = `{ EOR, AIX };
 
-                        8'1Ah: tmp_inst = `{ INC, ACC };
+                        8'h1A: tmp_inst = `{ INC, ACC };
+                        8'hE6: tmp_inst = `{ INC, ZPG };
+                        8'hEE: tmp_inst = `{ INC, ABS };
+                        8'hF6: tmp_inst = `{ INC, ZIX };
+                        8'hFE: tmp_inst = `{ INC, AIX };
+
                         8'hE8: tmp_inst = `{ INX, IMP };
                         8'hC8: tmp_inst = `{ INY, IMP };
 
-                        8'h: tmp_inst = `{ JMP, };
+                        8'h4C: tmp_inst = `{ JMP, ABS };
+                        8'h6C: tmp_inst = `{ JMP, AIA };
+                        8'h7C: tmp_inst = `{ JMP, AII };
+
                         8'h20: tmp_inst = `{ JSR, ABS };
 
                         8'hA1: tmp_inst = `{ LDA, ZII };
@@ -427,7 +441,9 @@ always @(posedge i_rst or posedge i_clk) begin
 
                         8'hAA: tmp_inst = `{ TAX, IMP };
                         8'hA8: tmp_inst = `{ TAY, IMP };
+
                         8'h14: tmp_inst = `{ TRB, ZPG };
+                        8'h1B: tmp_inst = `{ TRB, ABS };
 
                         8'h04: tmp_inst = `{ TSB, ZPG };
                         8'h0C: tmp_inst = `{ TSB, ABS };
