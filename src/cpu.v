@@ -18,7 +18,7 @@ module cpu (
 );
 
 // Various data widths
-typedef enum {
+typedef enum bit [2:0] {
     DATA_WIDTH_8 = 0,
     DATA_WIDTH_16 = 1,
     DATA_WIDTH_32 = 2,
@@ -167,19 +167,44 @@ typedef enum bit [7:0] {
     WAI
 } Operation;
 
+typedef enum bit [2:0] {
+    Decode,         // Initial breakdown of opcode
+    ReadImmediate,  // Read immediate data
+    ReadAddress,    // Read address of data
+    Execute         // Execute the instruction
+} ProcessingStage;
+
 // 6502 Instructions
 
 // Processing registers
 
 reg [2:0] reg_stage;
+reg [7:0] reg_operation;
+reg [4:0] reg_address_mode;
+reg [2:0] reg_data_width;
+reg reg_enhanced_mode;
+reg [2:0] reg_src_bank;
+reg [3:0] reg_src_index;
+reg [2:0] reg_dst_bank;
+reg [3:0] reg_dst_index;
+reg [2:0] reg_which;
+reg [31:0] reg_address;
+reg [31:0] reg_src_data;
+reg [31:0] reg_dst_data;
+
+ProcessingStage tmp_next_stage;
 Operation tmp_operation;
 AddressMode tmp_addr_mode;
 DataWidth tmp_data_width;
+logic tmp_enhanced_mode;
 logic [2:0] tmp_src_bank;
 logic [3:0] tmp_src_index;
 logic [2:0] tmp_dst_bank;
 logic [3:0] tmp_dst_index;
 logic [2:0] tmp_which;
+logic [31:0] tmp_address;
+logic [31:0] tmp_src_data;
+logic [31:0] tmp_dst_data;
 
 always @(posedge i_rst or posedge i_clk) begin
     if (i_rst) begin
@@ -193,16 +218,19 @@ always @(posedge i_rst or posedge i_clk) begin
         tmp_data_width <= DATA_WIDTH_8;
         reg_ir <= 0;
         reg_stage <= 0;
+        reg_enhanced_mode <= 0;
     end else begin
         case (reg_stage)
-            0: begin
+            Decode: begin
                     // Decode instruction
+                    tmp_next_stage = Execute;
                     tmp_data_width = DATA_WIDTH_8;
                     tmp_src_bank = 0;
                     tmp_src_index = 0;
                     tmp_dst_bank = 0;
                     tmp_dst_index = 0;
                     tmp_which = 0;
+                    tmp_enhanced_mode = 0;
 
                     // Determine operation
                     case (`IR0)
@@ -1132,10 +1160,73 @@ always @(posedge i_rst or posedge i_clk) begin
 								tmp_operation = WAI;
 								tmp_addr_mode = IMP;
 							end
- 
-                    endcase
-                end
-        endcase
+                    endcase // IR0
+
+                    case (tmp_addr_mode)
+                        ABS: begin   // Absolute a
+                                tmp_next_stage = ReadAddress;
+                            end
+
+                        AII: begin   // Absolute Indexed Indirect (a,x)
+                            end
+
+                        AIX: begin   // Absolute Indexed with X a,x
+                            end
+
+                        AIY: begin   // Absolute Indexed with Y a,y
+                            end
+
+                        AIA: begin   // Absolute Indirect (a)
+                            end
+
+                        ACC: begin   // Accumulator A
+                            end
+
+                        IMM: begin   // Immediate Addressing #
+                            end
+
+                        IMP: begin   // Implied i
+                            end
+
+                        PCR: begin   // Program Counter Relative r
+                            end
+
+                        STK: begin   // Stack s
+                            end
+
+                        ZPG: begin   // Zero Page zp
+                            end
+
+                        ZII: begin   // Zero Page Indexed Indirect (zp,x)
+                            end
+
+                        ZIX: begin   // Zero Page Indexed with X zp,x
+                            end
+
+                        ZIY: begin   // Zero Page Indexed with Y zp,y
+                            end
+
+                        ZPI: begin   // Zero Page Indirect (zp)
+                            end
+
+                        ZIIY: begin  // Zero Page Indirect Indexed with Y (zp),y
+                            end
+                    endcase // tmp_addr_mode
+
+                    reg_stage <= tmp_next_stage;
+                    reg_enhanced_mode <= tmp_enhanced_mode;
+                    reg_operation <= tmp_operation;
+                    reg_address_mode <= tmp_addr_mode;
+                    reg_data_width <= tmp_data_width;
+                end // Decode
+
+            ReadImmediate: begin
+                end // ReadImmediate
+
+            ReadAddress: begin
+                end // ReadAddress
+
+        endcase // reg_stage
     end
 end
 
