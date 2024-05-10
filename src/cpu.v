@@ -75,7 +75,7 @@ reg [31:0] reg_ir;          // Instruction
 
 // 6502 Address modes
 
-typedef enum {
+typedef enum bit [4:0] {
     ABS,    // Absolute a
     AII,    // Absolute Indexed Indirect (a,x)
     AIX,    // Absolute Indexed with X a,x
@@ -94,7 +94,7 @@ typedef enum {
     ZIIY    // Zero Page Indirect Indexed with Y (zp),y
 } AddressMode;
 
-typedef enum {
+typedef enum bit [7:0] {
     ADC,
     AND,
     ASL,
@@ -171,13 +171,9 @@ typedef enum {
 
 // Processing registers
 
-typedef struct packed {
-    Operation       operation;
-    AddressMode     address_mode;
-} DecodedInstruction;
-
 reg [2:0] reg_stage;
-DecodedInstruction tmp_instr;
+Operation tmp_operation;
+AddressMode tmp_addr_mode;
 DataWidth tmp_data_width;
 logic [2:0] tmp_src_bank;
 logic [3:0] tmp_src_index;
@@ -209,250 +205,934 @@ always @(posedge i_rst or posedge i_clk) begin
                     tmp_which = 0;
 
                     // Determine operation
-                    case (IR0)
-                        8'h61: tmp_instr = '{ ADC, ZII };
-                        8'h65: tmp_instr = '{ ADC, ZPG };
-                        8'h69: tmp_instr = '{ ADC, IMM };
-                        8'h6D: tmp_instr = '{ ADC, ABS };
-                        8'h71: tmp_instr = '{ ADC, ZIIY };
-                        8'h72: tmp_instr = '{ ADC, ZPI };
-                        8'h75: tmp_instr = '{ ADC, ZIX };
-                        8'h79: tmp_instr = '{ ADC, AIY };
-                        8'h7D: tmp_instr = '{ ADC, AIX };
+                    case (`IR0)
+                        8'h61: begin
+								tmp_operation = ADC;
+								tmp_addr_mode = ZII;
+							end
 
-                        8'h22: tmp_instr = '{ AND, ZII };
-                        8'h25: tmp_instr = '{ AND, ZPG };
-                        8'h29: tmp_instr = '{ AND, IMM };
-                        8'h2D: tmp_instr = '{ AND, ABS };
-                        8'h32: tmp_instr = '{ AND, ZIIY };
-                        8'h33: tmp_instr = '{ AND, ZPI };
-                        8'h35: tmp_instr = '{ AND, ZIX };
-                        8'h39: tmp_instr = '{ AND, AIY };
-                        8'h3D: tmp_instr = '{ AND, AIX };
+                        8'h65: begin
+								tmp_operation = ADC;
+								tmp_addr_mode = ZPG;
+							end
 
-                        8'h06: tmp_instr = '{ ASL, ZPG };
-                        8'h0A: tmp_instr = '{ ASL, ACC };
-                        8'h0E: tmp_instr = '{ ASL, ABS };
-                        8'h16: tmp_instr = '{ ASL, ZIX };
+                        8'h69: begin
+								tmp_operation = ADC;
+								tmp_addr_mode = IMM;
+							end
 
-                        8'hF0: tmp_instr = '{ BEQ, IMM };
+                        8'h6D: begin
+								tmp_operation = ADC;
+								tmp_addr_mode = ABS;
+							end
 
-                        8'h24: tmp_instr = '{ BIT, ZPG };
-                        8'h2C: tmp_instr = '{ BIT, ABS };
-                        8'h34: tmp_instr = '{ BIT, ZIX };
-                        8'h3C: tmp_instr = '{ BIT, AIX };
-                        8'h89: tmp_instr = '{ BIT, IMM };
+                        8'h71: begin
+								tmp_operation = ADC;
+								tmp_addr_mode = ZIIY;
+							end
+
+                        8'h72: begin
+								tmp_operation = ADC;
+								tmp_addr_mode = ZIY;
+							end
+
+                        8'h75: begin
+								tmp_operation = ADC;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'h79: begin
+								tmp_operation = ADC;
+								tmp_addr_mode = AIY;
+							end
+
+                        8'h7D: begin
+								tmp_operation = ADC;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'h22: begin
+								tmp_operation = AND;
+								tmp_addr_mode = ZII;
+							end
+
+                        8'h25: begin
+								tmp_operation = AND;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'h29: begin
+								tmp_operation = AND;
+								tmp_addr_mode = IMM;
+							end
+
+                        8'h2D: begin
+								tmp_operation = AND;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'h32: begin
+								tmp_operation = AND;
+								tmp_addr_mode = ZIIY;
+							end
+
+                        8'h33: begin
+								tmp_operation = AND;
+								tmp_addr_mode = ZIY;
+							end
+
+                        8'h35: begin
+								tmp_operation = AND;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'h39: begin
+								tmp_operation = AND;
+								tmp_addr_mode = AIY;
+							end
+
+                        8'h3D: begin
+								tmp_operation = AND;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'h06: begin
+								tmp_operation = ASL;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'h0A: begin
+								tmp_operation = ASL;
+								tmp_addr_mode = ACC;
+							end
+
+                        8'h0E: begin
+								tmp_operation = ASL;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'h16: begin
+								tmp_operation = ASL;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'hF0: begin
+								tmp_operation = BEQ;
+								tmp_addr_mode = IMM;
+							end
+
+                        8'h24: begin
+								tmp_operation = BIT;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'h2C: begin
+								tmp_operation = BIT;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'h34: begin
+								tmp_operation = BIT;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'h3C: begin
+								tmp_operation = BIT;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'h89: begin
+								tmp_operation = BIT;
+								tmp_addr_mode = IMM;
+							end
 
                         8'h0F, 8'h1F, 8'h2F, 8'h3F,
                         8'h4F, 8'h5F, 8'h6F, 8'h7F:
                             begin
-                                tmp_instr = '{ BBR, PCR };
+								tmp_operation = BBR;
+								tmp_addr_mode = PCR;
                                 tmp_which = reg_ir[6:4];
                             end
 
-                        8'h8F, 8'h8F, 8'hAF, 8'hBF,
+                        8'h8F, 8'h9F, 8'hAF, 8'hBF,
                         8'hCF, 8'hDF, 8'hEF, 8'hFF:
                             begin
-                                tmp_instr = '{ BBS, PCR };
+								tmp_operation = BBS;
+								tmp_addr_mode = PCR;
                                 tmp_which = reg_ir[6:4];
                             end
 
-                        8'h90: tmp_instr = '{ BCC, PCR };
-                        8'hB0: tmp_instr = '{ BCS, PCR };
-                        8'h30: tmp_instr = '{ BMI, PCR };
-                        8'hD0: tmp_instr = '{ BNE, PCR };
-                        8'h10: tmp_instr = '{ BPL, PCR };
-                        8'h80: tmp_instr = '{ BRA, PCR };
-                        8'h00: tmp_instr = '{ BRK, STK };
-                        8'h50: tmp_instr = '{ BVC, PCR };
-                        8'h70: tmp_instr = '{ BVS, PCR };
-                        8'h18: tmp_instr = '{ CLC, IMP };
-                        8'hD8: tmp_instr = '{ CLD, IMP };
-                        8'h58: tmp_instr = '{ CLI, IMP };
-                        8'hB8: tmp_instr = '{ CLV, IMP };
+                        8'h90: begin
+								tmp_operation = BCC;
+								tmp_addr_mode = PCR;
+							end
 
-                        8'hC1: tmp_instr = '{ CMP, ZIX };
-                        8'hC5: tmp_instr = '{ CMP, ZPG };
-                        8'hC9: tmp_instr = '{ CMP, IMM };
-                        8'hCD: tmp_instr = '{ CMP, ABS };
-                        8'hD1: tmp_instr = '{ CMP, ZIIY };
-                        8'hD2: tmp_instr = '{ CMP, ZPI };
-                        8'hD5: tmp_instr = '{ CMP, ZIX };
-                        8'hD9: tmp_instr = '{ CMP, AIY };
-                        8'hDD: tmp_instr = '{ CMP, AIX };
+                        8'hB0: begin
+								tmp_operation = BCS;
+								tmp_addr_mode = PCR;
+							end
 
-                        8'hE0: tmp_instr = '{ CPX, IMM };
-                        8'hE4: tmp_instr = '{ CPX, ZPG };
-                        8'hEC: tmp_instr = '{ CPX, ABS };
+                        8'h30: begin
+								tmp_operation = BMI;
+								tmp_addr_mode = PCR;
+							end
 
-                        8'hC0: tmp_instr = '{ CPY, IMM };
-                        8'hC4: tmp_instr = '{ CPY, ZPG };
-                        8'hCC: tmp_instr = '{ CPY, ABS };
+                        8'hD0: begin
+								tmp_operation = BNE;
+								tmp_addr_mode = PCR;
+							end
 
-                        8'h3A: tmp_instr = '{ DEC, ACC };
-                        8'hC6: tmp_instr = '{ DEC, ZPG };
-                        8'hCE: tmp_instr = '{ DEC, ABS };
-                        8'hD6: tmp_instr = '{ DEC, ZIX };
-                        8'hDE: tmp_instr = '{ DEC, AIX };
+                        8'h10: begin
+								tmp_operation = BPL;
+								tmp_addr_mode = PCR;
+							end
 
-                        8'hCA: tmp_instr = '{ DEX, IMP };
-                        8'h88: tmp_instr = '{ DEY, IMP };
+                        8'h80: begin
+								tmp_operation = BRA;
+								tmp_addr_mode = PCR;
+							end
 
-                        8'h41: tmp_instr = '{ EOR, ZII };
-                        8'h45: tmp_instr = '{ EOR, ZPG };
-                        8'h49: tmp_instr = '{ EOR, IMM };
-                        8'h4D: tmp_instr = '{ EOR, ABS };
-                        8'h51: tmp_instr = '{ EOR, ZIIY };
-                        8'h52: tmp_instr = '{ EOR, ZPI };
-                        8'h55: tmp_instr = '{ EOR, ZIX };
-                        8'h59: tmp_instr = '{ EOR, AIY };
-                        8'h5D: tmp_instr = '{ EOR, AIX };
+                        8'h00: begin
+								tmp_operation = BRK;
+								tmp_addr_mode = STK;
+							end
 
-                        8'h1A: tmp_instr = '{ INC, ACC };
-                        8'hE6: tmp_instr = '{ INC, ZPG };
-                        8'hEE: tmp_instr = '{ INC, ABS };
-                        8'hF6: tmp_instr = '{ INC, ZIX };
-                        8'hFE: tmp_instr = '{ INC, AIX };
+                        8'h50: begin
+								tmp_operation = BVC;
+								tmp_addr_mode = PCR;
+							end
 
-                        8'hE8: tmp_instr = '{ INX, IMP };
-                        8'hC8: tmp_instr = '{ INY, IMP };
+                        8'h70: begin
+								tmp_operation = BVS;
+								tmp_addr_mode = PCR;
+							end
 
-                        8'h4C: tmp_instr = '{ JMP, ABS };
-                        8'h6C: tmp_instr = '{ JMP, AIA };
-                        8'h7C: tmp_instr = '{ JMP, AII };
+                        8'h18: begin
+								tmp_operation = CLC;
+								tmp_addr_mode = IMP;
+							end
 
-                        8'h20: tmp_instr = '{ JSR, ABS };
+                        8'hD8: begin
+								tmp_operation = CLD;
+								tmp_addr_mode = IMP;
+							end
 
-                        8'hA1: tmp_instr = '{ LDA, ZII };
-                        8'hA5: tmp_instr = '{ LDA, ZPG };
-                        8'hA9: tmp_instr = '{ LDA, IMM };
-                        8'hAD: tmp_instr = '{ LDA, ABS };
-                        8'hB1: tmp_instr = '{ LDA, ZIIY };
-                        8'hB2: tmp_instr = '{ LDA, ZPI };
-                        8'hB5: tmp_instr = '{ LDA, ZIX };
-                        8'hB9: tmp_instr = '{ LDA, AIY };
-                        8'hBD: tmp_instr = '{ LDA, AIX };
+                        8'h58: begin
+								tmp_operation = CLI;
+								tmp_addr_mode = IMP;
+							end
 
-                        8'hA2: tmp_instr = '{ LDX, IMM };
-                        8'hA6: tmp_instr = '{ LDX, ZPG };
-                        8'hAE: tmp_instr = '{ LDX, ABS };
-                        8'hB6: tmp_instr = '{ LDX, ZIY };
-                        8'hBE: tmp_instr = '{ LDX, AIY };
+                        8'hB8: begin
+								tmp_operation = CLV;
+								tmp_addr_mode = IMP;
+							end
 
-                        8'hA0: tmp_instr = '{ LDY, IMM };
-                        8'hA4: tmp_instr = '{ LDY, ZPG };
-                        8'hAC: tmp_instr = '{ LDY, ABS };
-                        8'hB4: tmp_instr = '{ LDY, ZIX };
-                        8'hBC: tmp_instr = '{ LDY, AIX };
+                        8'hC1: begin
+								tmp_operation = CMP;
+								tmp_addr_mode = ZIX;
+							end
 
-                        8'h46: tmp_instr = '{ LSR, ZPG };
-                        8'h4A: tmp_instr = '{ LSR, ACC };
-                        8'h4E: tmp_instr = '{ LSR, ABS };
-                        8'h56: tmp_instr = '{ LSR, ZIX };
-                        8'h5E: tmp_instr = '{ LSR, AIX };
+                        8'hC5: begin
+								tmp_operation = CMP;
+								tmp_addr_mode = ZPG;
+							end
 
-                        8'hEA: tmp_instr = '{ NOP, IMP };
+                        8'hC9: begin
+								tmp_operation = CMP;
+								tmp_addr_mode = IMM;
+							end
 
-                        8'h01: tmp_instr = '{ ORA, ZIX };
-                        8'h05: tmp_instr = '{ ORA, ZPG };
-                        8'h09: tmp_instr = '{ ORA, IMM };
-                        8'h0D: tmp_instr = '{ ORA, ABS };
-                        8'h11: tmp_instr = '{ ORA, ZIIY };
-                        8'h12: tmp_instr = '{ ORA, ZPI };
-                        8'h15: tmp_instr = '{ ORA, ZIX };
-                        8'h19: tmp_instr = '{ ORA, AIY };
-                        8'h1D: tmp_instr = '{ ORA, AIX };
+                        8'hCD: begin
+								tmp_operation = CMP;
+								tmp_addr_mode = ABS;
+							end
 
-                        8'h48: tmp_instr = '{ PHA, STK };
-                        8'h08: tmp_instr = '{ PHP, STK };
-                        8'hDA: tmp_instr = '{ PHX, STK };
-                        8'h5A: tmp_instr = '{ PHY, STK };
-                        8'h68: tmp_instr = '{ PLA, STK };
-                        8'h28: tmp_instr = '{ PLP, STK };
-                        8'hFA: tmp_instr = '{ PLX, STK };
-                        8'h7A: tmp_instr = '{ PLY, STK };
+                        8'hD1: begin
+								tmp_operation = CMP;
+								tmp_addr_mode = ZIIY;
+							end
+
+                        8'hD2: begin
+								tmp_operation = CMP;
+								tmp_addr_mode = ZIY;
+							end
+
+                        8'hD5: begin
+								tmp_operation = CMP;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'hD9: begin
+								tmp_operation = CMP;
+								tmp_addr_mode = AIY;
+							end
+
+                        8'hDD: begin
+								tmp_operation = CMP;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'hE0: begin
+								tmp_operation = CPX;
+								tmp_addr_mode = IMM;
+							end
+
+                        8'hE4: begin
+								tmp_operation = CPX;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'hEC: begin
+								tmp_operation = CPX;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'hC0: begin
+								tmp_operation = CPY;
+								tmp_addr_mode = IMM;
+							end
+
+                        8'hC4: begin
+								tmp_operation = CPY;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'hCC: begin
+								tmp_operation = CPY;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'h3A: begin
+								tmp_operation = DEC;
+								tmp_addr_mode = ACC;
+							end
+
+                        8'hC6: begin
+								tmp_operation = DEC;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'hCE: begin
+								tmp_operation = DEC;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'hD6: begin
+								tmp_operation = DEC;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'hDE: begin
+								tmp_operation = DEC;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'hCA: begin
+								tmp_operation = DEX;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'h88: begin
+								tmp_operation = DEY;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'h41: begin
+								tmp_operation = EOR;
+								tmp_addr_mode = ZII;
+							end
+
+                        8'h45: begin
+								tmp_operation = EOR;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'h49: begin
+								tmp_operation = EOR;
+								tmp_addr_mode = IMM;
+							end
+
+                        8'h4D: begin
+								tmp_operation = EOR;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'h51: begin
+								tmp_operation = EOR;
+								tmp_addr_mode = ZIIY;
+							end
+
+                        8'h52: begin
+								tmp_operation = EOR;
+								tmp_addr_mode = ZIY;
+							end
+
+                        8'h55: begin
+								tmp_operation = EOR;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'h59: begin
+								tmp_operation = EOR;
+								tmp_addr_mode = AIY;
+							end
+
+                        8'h5D: begin
+								tmp_operation = EOR;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'h1A: begin
+								tmp_operation = INC;
+								tmp_addr_mode = ACC;
+							end
+
+                        8'hE6: begin
+								tmp_operation = INC;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'hEE: begin
+								tmp_operation = INC;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'hF6: begin
+								tmp_operation = INC;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'hFE: begin
+								tmp_operation = INC;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'hE8: begin
+								tmp_operation = INX;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'hC8: begin
+								tmp_operation = INY;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'h4C: begin
+								tmp_operation = JMP;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'h6C: begin
+								tmp_operation = JMP;
+								tmp_addr_mode = AIA;
+							end
+
+                        8'h7C: begin
+								tmp_operation = JMP;
+								tmp_addr_mode = AII;
+							end
+
+                        8'h20: begin
+								tmp_operation = JSR;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'hA1: begin
+								tmp_operation = LDA;
+								tmp_addr_mode = ZII;
+							end
+
+                        8'hA5: begin
+								tmp_operation = LDA;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'hA9: begin
+								tmp_operation = LDA;
+								tmp_addr_mode = IMM;
+							end
+
+                        8'hAD: begin
+								tmp_operation = LDA;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'hB1: begin
+								tmp_operation = LDA;
+								tmp_addr_mode = ZIIY;
+							end
+
+                        8'hB2: begin
+								tmp_operation = LDA;
+								tmp_addr_mode = ZIY;
+							end
+
+                        8'hB5: begin
+								tmp_operation = LDA;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'hB9: begin
+								tmp_operation = LDA;
+								tmp_addr_mode = AIY;
+							end
+
+                        8'hBD: begin
+								tmp_operation = LDA;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'hA2: begin
+								tmp_operation = LDX;
+								tmp_addr_mode = IMM;
+							end
+
+                        8'hA6: begin
+								tmp_operation = LDX;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'hAE: begin
+								tmp_operation = LDX;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'hB6: begin
+								tmp_operation = LDX;
+								tmp_addr_mode = ZIY;
+							end
+
+                        8'hBE: begin
+								tmp_operation = LDX;
+								tmp_addr_mode = AIY;
+							end
+
+                        8'hA0: begin
+								tmp_operation = LDY;
+								tmp_addr_mode = IMM;
+							end
+
+                        8'hA4: begin
+								tmp_operation = LDY;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'hAC: begin
+								tmp_operation = LDY;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'hB4: begin
+								tmp_operation = LDY;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'hBC: begin
+								tmp_operation = LDY;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'h46: begin
+								tmp_operation = LSR;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'h4A: begin
+								tmp_operation = LSR;
+								tmp_addr_mode = ACC;
+							end
+
+                        8'h4E: begin
+								tmp_operation = LSR;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'h56: begin
+								tmp_operation = LSR;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'h5E: begin
+								tmp_operation = LSR;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'hEA: begin
+								tmp_operation = NOP;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'h01: begin
+								tmp_operation = ORA;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'h05: begin
+								tmp_operation = ORA;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'h09: begin
+								tmp_operation = ORA;
+								tmp_addr_mode = IMM;
+							end
+
+                        8'h0D: begin
+								tmp_operation = ORA;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'h11: begin
+								tmp_operation = ORA;
+								tmp_addr_mode = ZIIY;
+							end
+
+                        8'h12: begin
+								tmp_operation = ORA;
+								tmp_addr_mode = ZIY;
+							end
+
+                        8'h15: begin
+								tmp_operation = ORA;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'h19: begin
+								tmp_operation = ORA;
+								tmp_addr_mode = AIY;
+							end
+
+                        8'h1D: begin
+								tmp_operation = ORA;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'h48: begin
+								tmp_operation = PHA;
+								tmp_addr_mode = STK;
+							end
+
+                        8'h08: begin
+								tmp_operation = PHP;
+								tmp_addr_mode = STK;
+							end
+
+                        8'hDA: begin
+								tmp_operation = PHX;
+								tmp_addr_mode = STK;
+							end
+
+                        8'h5A: begin
+								tmp_operation = PHY;
+								tmp_addr_mode = STK;
+							end
+
+                        8'h68: begin
+								tmp_operation = PLA;
+								tmp_addr_mode = STK;
+							end
+
+                        8'h28: begin
+								tmp_operation = PLP;
+								tmp_addr_mode = STK;
+							end
+
+                        8'hFA: begin
+								tmp_operation = PLX;
+								tmp_addr_mode = STK;
+							end
+
+                        8'h7A: begin
+								tmp_operation = PLY;
+								tmp_addr_mode = STK;
+							end
 
                         8'h07, 8'h17, 8'h27, 8'h37,
                         8'h47, 8'h57, 8'h67, 8'h77:
                             begin
-                                tmp_instr = '{ RMB, ZPG };
+								tmp_operation = RMB;
+								tmp_addr_mode = ZPG;
                                 tmp_which = reg_ir[6:4];
                             end
 
-                        8'h26: tmp_instr = '{ ROL, ZPG };
-                        8'h2A: tmp_instr = '{ ROL, ACC };
-                        8'h2E: tmp_instr = '{ ROL, ABS };
-                        8'h36: tmp_instr = '{ ROL, ZIX };
-                        8'h3E: tmp_instr = '{ ROL, AIX };
+                        8'h26: begin
+								tmp_operation = ROL;
+								tmp_addr_mode = ZPG;
+							end
 
-                        8'h66: tmp_instr = '{ ROR, ZPG };
-                        8'h6A: tmp_instr = '{ ROR, ACC };
-                        8'h6E: tmp_instr = '{ ROR, ABS };
-                        8'h76: tmp_instr = '{ ROR, ZIX };
-                        8'h7E: tmp_instr = '{ ROR, AIXs };
+                        8'h2A: begin
+								tmp_operation = ROL;
+								tmp_addr_mode = ACC;
+							end
 
-                        8'h40: tmp_instr = '{ RTI, STK };
-                        8'h60: tmp_instr = '{ RTS, STK };
+                        8'h2E: begin
+								tmp_operation = ROL;
+								tmp_addr_mode = ABS;
+							end
 
-                        8'hE1: tmp_instr = '{ SBC, ZII };
-                        8'hE5: tmp_instr = '{ SBC, ZPG };
-                        8'hE9: tmp_instr = '{ SBC, IMM };
-                        8'hED: tmp_instr = '{ SBC, ABS };
-                        8'hF1: tmp_instr = '{ SBC, ZIIY };
-                        8'hF2: tmp_instr = '{ SBC, ZPI };
-                        8'hF5: tmp_instr = '{ SBC, ZIX };
-                        8'hF9: tmp_instr = '{ SBC, AIY };
-                        8'hFD: tmp_instr = '{ SBC, AIX };
+                        8'h36: begin
+								tmp_operation = ROL;
+								tmp_addr_mode = ZIX;
+							end
 
-                        8'h38: tmp_instr = '{ SEC, IMP };
-                        8'hF8: tmp_instr = '{ SED, IMP };
-                        8'h78: tmp_instr = '{ SEI, IMP };
+                        8'h3E: begin
+								tmp_operation = ROL;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'h66: begin
+								tmp_operation = ROR;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'h6A: begin
+								tmp_operation = ROR;
+								tmp_addr_mode = ACC;
+							end
+
+                        8'h6E: begin
+								tmp_operation = ROR;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'h76: begin
+								tmp_operation = ROR;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'h7E: begin
+								tmp_operation = ROR;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'h40: begin
+								tmp_operation = RTI;
+								tmp_addr_mode = STK;
+							end
+
+                        8'h60: begin
+								tmp_operation = RTS;
+								tmp_addr_mode = STK;
+							end
+
+                        8'hE1: begin
+								tmp_operation = SBC;
+								tmp_addr_mode = ZII;
+							end
+
+                        8'hE5: begin
+								tmp_operation = SBC;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'hE9: begin
+								tmp_operation = SBC;
+								tmp_addr_mode = IMM;
+							end
+
+                        8'hED: begin
+								tmp_operation = SBC;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'hF1: begin
+								tmp_operation = SBC;
+								tmp_addr_mode = ZIIY;
+							end
+
+                        8'hF2: begin
+								tmp_operation = SBC;
+								tmp_addr_mode = ZIY;
+							end
+
+                        8'hF5: begin
+								tmp_operation = SBC;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'hF9: begin
+								tmp_operation = SBC;
+								tmp_addr_mode = AIY;
+							end
+
+                        8'hFD: begin
+								tmp_operation = SBC;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'h38: begin
+								tmp_operation = SEC;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'hF8: begin
+								tmp_operation = SED;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'h78: begin
+								tmp_operation = SEI;
+								tmp_addr_mode = IMP;
+							end
 
                         8'h87, 8'h97, 8'hA7, 8'hB7,
                         8'hC7, 8'hD7, 8'hE7, 8'hF7:
                             begin
-                                tmp_instr = '{ SMB, ZPG };
+								tmp_operation = SMB;
+								tmp_addr_mode = ZPG;
                                 tmp_which = reg_ir[6:4];
                             end
 
-                        8'h81: tmp_instr = '{ STA, ZII };
-                        8'h85: tmp_instr = '{ STA, ZPG };
-                        8'h8D: tmp_instr = '{ STA, ABS };
-                        8'h91: tmp_instr = '{ STA, ZIIY };
-                        8'h92: tmp_instr = '{ STA, ZPI };
-                        8'h95: tmp_instr = '{ STA, ZIX };
-                        8'h99: tmp_instr = '{ STA, AIY };
-                        8'h9D: tmp_instr = '{ STA, AIX };
+                        8'h81: begin
+								tmp_operation = STA;
+								tmp_addr_mode = ZII;
+							end
 
-                        8'hDB: tmp_instr = '{ STP, IMP };
+                        8'h85: begin
+								tmp_operation = STA;
+								tmp_addr_mode = ZPG;
+							end
 
-                        8'h86: tmp_instr = '{ STX, ZPG };
-                        8'h8E: tmp_instr = '{ STX, ABS };
-                        8'h96: tmp_instr = '{ STX, ZIY };
+                        8'h8D: begin
+								tmp_operation = STA;
+								tmp_addr_mode = ABS;
+							end
 
-                        8'h84: tmp_instr = '{ STY, ZPG };
-                        8'h8C: tmp_instr = '{ STY, ABS };
-                        8'h94: tmp_instr = '{ STY, ZIX };
+                        8'h91: begin
+								tmp_operation = STA;
+								tmp_addr_mode = ZIIY;
+							end
 
-                        8'h64: tmp_instr = '{ STZ, ZPG };
-                        8'h74: tmp_instr = '{ STZ, ZIX };
-                        8'h9C: tmp_instr = '{ STZ, ABS };
-                        8'h9E: tmp_instr = '{ STZ, AIX };
+                        8'h92: begin
+								tmp_operation = STA;
+								tmp_addr_mode = ZIY;
+							end
 
-                        8'hAA: tmp_instr = '{ TAX, IMP };
-                        8'hA8: tmp_instr = '{ TAY, IMP };
+                        8'h95: begin
+								tmp_operation = STA;
+								tmp_addr_mode = ZIX;
+							end
 
-                        8'h14: tmp_instr = '{ TRB, ZPG };
-                        8'h1B: tmp_instr = '{ TRB, ABS };
+                        8'h99: begin
+								tmp_operation = STA;
+								tmp_addr_mode = AIY;
+							end
 
-                        8'h04: tmp_instr = '{ TSB, ZPG };
-                        8'h0C: tmp_instr = '{ TSB, ABS };
+                        8'h9D: begin
+								tmp_operation = STA;
+								tmp_addr_mode = AIX;
+							end
 
-                        8'hBA: tmp_instr = '{ TSX, IMP };
-                        8'h8A: tmp_instr = '{ TXA, IMP };
-                        8'h9A: tmp_instr = '{ TXS, IMP };
-                        8'h98: tmp_instr = '{ TYA, IMP };
-                        8'hCB: tmp_instr = '{ WAI, IMP }; 
+                        8'hDB: begin
+								tmp_operation = STP;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'h86: begin
+								tmp_operation = STX;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'h8E: begin
+								tmp_operation = STX;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'h96: begin
+								tmp_operation = STX;
+								tmp_addr_mode = ZIY;
+							end
+
+                        8'h84: begin
+								tmp_operation = STY;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'h8C: begin
+								tmp_operation = STY;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'h94: begin
+								tmp_operation = STY;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'h64: begin
+								tmp_operation = STZ;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'h74: begin
+								tmp_operation = STZ;
+								tmp_addr_mode = ZIX;
+							end
+
+                        8'h9C: begin
+								tmp_operation = STZ;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'h9E: begin
+								tmp_operation = STZ;
+								tmp_addr_mode = AIX;
+							end
+
+                        8'hAA: begin
+								tmp_operation = TAX;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'hA8: begin
+								tmp_operation = TAY;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'h14: begin
+								tmp_operation = TRB;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'h1B: begin
+								tmp_operation = TRB;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'h04: begin
+								tmp_operation = TSB;
+								tmp_addr_mode = ZPG;
+							end
+
+                        8'h0C: begin
+								tmp_operation = TSB;
+								tmp_addr_mode = ABS;
+							end
+
+                        8'hBA: begin
+								tmp_operation = TSX;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'h8A: begin
+								tmp_operation = TXA;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'h9A: begin
+								tmp_operation = TXS;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'h98: begin
+								tmp_operation = TYA;
+								tmp_addr_mode = IMP;
+							end
+
+                        8'hCB: begin
+								tmp_operation = WAI;
+								tmp_addr_mode = IMP;
+							end
+ 
                     endcase
                 end
         endcase
