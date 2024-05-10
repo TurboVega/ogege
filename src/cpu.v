@@ -13,8 +13,8 @@
 `default_nettype none
 
 module cpu (
-	input   wire i_rst,
-	input   wire i_clk
+	input   logic i_rst,
+	input   logic i_clk
 );
 
 // Various data widths
@@ -177,13 +177,13 @@ typedef struct packed {
 } DecodedInstruction;
 
 reg [2:0] reg_stage;
-wire DecodedInstruction tmp_instr;
-wire DataWidth tmp_data_width;
-wire [2:0] tmp_src_bank;
-wire [3:0] tmp_src_index;
-wire [2:0] tmp_dst_bank;
-wire [3:0] tmp_dst_index;
-wire [2:0] tmp_which;
+DecodedInstruction tmp_instr;
+DataWidth tmp_data_width;
+logic [2:0] tmp_src_bank;
+logic [3:0] tmp_src_index;
+logic [2:0] tmp_dst_bank;
+logic [3:0] tmp_dst_index;
+logic [2:0] tmp_which;
 
 always @(posedge i_rst or posedge i_clk) begin
     if (i_rst) begin
@@ -191,10 +191,10 @@ always @(posedge i_rst or posedge i_clk) begin
         reg_bank[1] <= 0;
         reg_bank[2] <= 0;
         reg_bank[3] <= 0;
-        reg_pc <= 8'h0000FFFC;
-        reg_sp <= 8'h00000100;
+        reg_pc <= 32'h0000FFFC;
+        reg_sp <= 32'h00000100;
         reg_status <= 8'b00110100;
-        reg_data_width <= DATA_WIDTH_8;
+        tmp_data_width <= DATA_WIDTH_8;
         reg_ir <= 0;
         reg_stage <= 0;
     end else begin
@@ -210,249 +210,249 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     // Determine operation
                     case (IR0)
-                        8'h61: tmp_inst = `{ ADC, ZII };
-                        8'h65: tmp_inst = `{ ADC, ZPG };
-                        8'h69: tmp_inst = `{ ADC, IMM };
-                        8'h6D: tmp_inst = `{ ADC, ABS };
-                        8'h71: tmp_inst = `{ ADC, ZIIY };
-                        8'h72: tmp_inst = `{ ADC, ZPI };
-                        8'h75: tmp_inst = `{ ADC, ZIX };
-                        8'h79: tmp_inst = `{ ADC, AIY };
-                        8'h7D: tmp_inst = `{ ADC, AIX };
+                        8'h61: tmp_instr = '{ ADC, ZII };
+                        8'h65: tmp_instr = '{ ADC, ZPG };
+                        8'h69: tmp_instr = '{ ADC, IMM };
+                        8'h6D: tmp_instr = '{ ADC, ABS };
+                        8'h71: tmp_instr = '{ ADC, ZIIY };
+                        8'h72: tmp_instr = '{ ADC, ZPI };
+                        8'h75: tmp_instr = '{ ADC, ZIX };
+                        8'h79: tmp_instr = '{ ADC, AIY };
+                        8'h7D: tmp_instr = '{ ADC, AIX };
 
-                        8'h22: tmp_inst = `{ AND, ZII };
-                        8'h25: tmp_inst = `{ AND, ZPG };
-                        8'h29: tmp_inst = `{ AND, IMM };
-                        8'h2D: tmp_inst = `{ AND, ABS };
-                        8'h32: tmp_inst = `{ AND, ZIIY };
-                        8'h33: tmp_inst = `{ AND, ZPI };
-                        8'h35: tmp_inst = `{ AND, ZIX };
-                        8'h39: tmp_inst = `{ AND, AIY };
-                        8'h3D: tmp_inst = `{ AND, AIX };
+                        8'h22: tmp_instr = '{ AND, ZII };
+                        8'h25: tmp_instr = '{ AND, ZPG };
+                        8'h29: tmp_instr = '{ AND, IMM };
+                        8'h2D: tmp_instr = '{ AND, ABS };
+                        8'h32: tmp_instr = '{ AND, ZIIY };
+                        8'h33: tmp_instr = '{ AND, ZPI };
+                        8'h35: tmp_instr = '{ AND, ZIX };
+                        8'h39: tmp_instr = '{ AND, AIY };
+                        8'h3D: tmp_instr = '{ AND, AIX };
 
-                        8'h06: tmp_inst = `{ ASL, ZPG };
-                        8'h0A: tmp_inst = `{ ASL, ACC };
-                        8'h0E: tmp_inst = `{ ASL, ABS };
-                        8'h16: tmp_inst = `{ ASL, ZIX };
+                        8'h06: tmp_instr = '{ ASL, ZPG };
+                        8'h0A: tmp_instr = '{ ASL, ACC };
+                        8'h0E: tmp_instr = '{ ASL, ABS };
+                        8'h16: tmp_instr = '{ ASL, ZIX };
 
-                        8'hF0: tmp_inst = `{ BEQ, IMM };
+                        8'hF0: tmp_instr = '{ BEQ, IMM };
 
-                        8'h24: tmp_inst = `{ BIT, ZPG };
-                        8'h2C: tmp_inst = `{ BIT, ABS };
-                        8'h34: tmp_inst = `{ BIT, ZIX };
-                        8'h3C: tmp_inst = `{ BIT, AIX };
-                        8'h89: tmp_inst = `{ BIT, IMM };
+                        8'h24: tmp_instr = '{ BIT, ZPG };
+                        8'h2C: tmp_instr = '{ BIT, ABS };
+                        8'h34: tmp_instr = '{ BIT, ZIX };
+                        8'h3C: tmp_instr = '{ BIT, AIX };
+                        8'h89: tmp_instr = '{ BIT, IMM };
 
                         8'h0F, 8'h1F, 8'h2F, 8'h3F,
                         8'h4F, 8'h5F, 8'h6F, 8'h7F:
                             begin
-                                tmp_inst = `{ BBR, PCR };
+                                tmp_instr = '{ BBR, PCR };
                                 tmp_which = reg_ir[6:4];
                             end
 
                         8'h8F, 8'h8F, 8'hAF, 8'hBF,
                         8'hCF, 8'hDF, 8'hEF, 8'hFF:
                             begin
-                                tmp_inst = `{ BBS, PCR };
+                                tmp_instr = '{ BBS, PCR };
                                 tmp_which = reg_ir[6:4];
                             end
 
-                        8'h90: tmp_inst = `{ BCC, PCR };
-                        8'hB0: tmp_inst = `{ BCS, PCR };
-                        8'h30: tmp_inst = `{ BMI, PCR };
-                        8'hD0: tmp_inst = `{ BNE, PCR };
-                        8'h10: tmp_inst = `{ BPL, PCR };
-                        8'h80: tmp_inst = `{ BRA, PCR };
-                        8'h00: tmp_inst = `{ BRK, STK };
-                        8'h50: tmp_inst = `{ BVC, PCR };
-                        8'h70: tmp_inst = `{ BVS, PCR };
-                        8'h18: tmp_inst = `{ CLC, IMP };
-                        8'hD8: tmp_inst = `{ CLD, IMP };
-                        8'h58: tmp_inst = `{ CLI, IMP };
-                        8'hB8: tmp_inst = `{ CLV, IMP };
+                        8'h90: tmp_instr = '{ BCC, PCR };
+                        8'hB0: tmp_instr = '{ BCS, PCR };
+                        8'h30: tmp_instr = '{ BMI, PCR };
+                        8'hD0: tmp_instr = '{ BNE, PCR };
+                        8'h10: tmp_instr = '{ BPL, PCR };
+                        8'h80: tmp_instr = '{ BRA, PCR };
+                        8'h00: tmp_instr = '{ BRK, STK };
+                        8'h50: tmp_instr = '{ BVC, PCR };
+                        8'h70: tmp_instr = '{ BVS, PCR };
+                        8'h18: tmp_instr = '{ CLC, IMP };
+                        8'hD8: tmp_instr = '{ CLD, IMP };
+                        8'h58: tmp_instr = '{ CLI, IMP };
+                        8'hB8: tmp_instr = '{ CLV, IMP };
 
-                        8'hC1: tmp_inst = `{ CMP, ZIX };
-                        8'hC5: tmp_inst = `{ CMP, ZPG };
-                        8'hC9: tmp_inst = `{ CMP, IMM };
-                        8'hCD: tmp_inst = `{ CMP, ABS };
-                        8'hD1: tmp_inst = `{ CMP, ZIIY };
-                        8'hD2: tmp_inst = `{ CMP, ZPI };
-                        8'hD5: tmp_inst = `{ CMP, ZIX };
-                        8'hD9: tmp_inst = `{ CMP, AIY };
-                        8'hDD: tmp_inst = `{ CMP, AIX };
+                        8'hC1: tmp_instr = '{ CMP, ZIX };
+                        8'hC5: tmp_instr = '{ CMP, ZPG };
+                        8'hC9: tmp_instr = '{ CMP, IMM };
+                        8'hCD: tmp_instr = '{ CMP, ABS };
+                        8'hD1: tmp_instr = '{ CMP, ZIIY };
+                        8'hD2: tmp_instr = '{ CMP, ZPI };
+                        8'hD5: tmp_instr = '{ CMP, ZIX };
+                        8'hD9: tmp_instr = '{ CMP, AIY };
+                        8'hDD: tmp_instr = '{ CMP, AIX };
 
-                        8'hE0: tmp_inst = `{ CPX, IMM };
-                        8'hE4: tmp_inst = `{ CPX, ZPG };
-                        8'hEC: tmp_inst = `{ CPX, ABS };
+                        8'hE0: tmp_instr = '{ CPX, IMM };
+                        8'hE4: tmp_instr = '{ CPX, ZPG };
+                        8'hEC: tmp_instr = '{ CPX, ABS };
 
-                        8'hC0: tmp_inst = `{ CPY, IMM };
-                        8'hC4: tmp_inst = `{ CPY, ZPG };
-                        8'hCC: tmp_inst = `{ CPY, ABS };
+                        8'hC0: tmp_instr = '{ CPY, IMM };
+                        8'hC4: tmp_instr = '{ CPY, ZPG };
+                        8'hCC: tmp_instr = '{ CPY, ABS };
 
-                        8'h3A: tmp_inst = `{ DEC, ACC };
-                        8'hC6: tmp_inst = `{ DEC, ZPG };
-                        8'hCE: tmp_inst = `{ DEC, ABS };
-                        8'hD6: tmp_inst = `{ DEC, ZIX };
-                        8'hDE: tmp_inst = `{ DEC, AIX };
+                        8'h3A: tmp_instr = '{ DEC, ACC };
+                        8'hC6: tmp_instr = '{ DEC, ZPG };
+                        8'hCE: tmp_instr = '{ DEC, ABS };
+                        8'hD6: tmp_instr = '{ DEC, ZIX };
+                        8'hDE: tmp_instr = '{ DEC, AIX };
 
-                        8'hCA: tmp_inst = `{ DEX, IMP };
-                        8'h88: tmp_inst = `{ DEY, IMP };
+                        8'hCA: tmp_instr = '{ DEX, IMP };
+                        8'h88: tmp_instr = '{ DEY, IMP };
 
-                        8'h41: tmp_inst = `{ EOR, ZII };
-                        8'h45: tmp_inst = `{ EOR, ZPG };
-                        8'h49: tmp_inst = `{ EOR, IMM };
-                        8'h4D: tmp_inst = `{ EOR, ABS };
-                        8'h51: tmp_inst = `{ EOR, ZIIY };
-                        8'h52: tmp_inst = `{ EOR, ZPI };
-                        8'h55: tmp_inst = `{ EOR, ZIX };
-                        8'h59: tmp_inst = `{ EOR, AIY };
-                        8'h5D: tmp_inst = `{ EOR, AIX };
+                        8'h41: tmp_instr = '{ EOR, ZII };
+                        8'h45: tmp_instr = '{ EOR, ZPG };
+                        8'h49: tmp_instr = '{ EOR, IMM };
+                        8'h4D: tmp_instr = '{ EOR, ABS };
+                        8'h51: tmp_instr = '{ EOR, ZIIY };
+                        8'h52: tmp_instr = '{ EOR, ZPI };
+                        8'h55: tmp_instr = '{ EOR, ZIX };
+                        8'h59: tmp_instr = '{ EOR, AIY };
+                        8'h5D: tmp_instr = '{ EOR, AIX };
 
-                        8'h1A: tmp_inst = `{ INC, ACC };
-                        8'hE6: tmp_inst = `{ INC, ZPG };
-                        8'hEE: tmp_inst = `{ INC, ABS };
-                        8'hF6: tmp_inst = `{ INC, ZIX };
-                        8'hFE: tmp_inst = `{ INC, AIX };
+                        8'h1A: tmp_instr = '{ INC, ACC };
+                        8'hE6: tmp_instr = '{ INC, ZPG };
+                        8'hEE: tmp_instr = '{ INC, ABS };
+                        8'hF6: tmp_instr = '{ INC, ZIX };
+                        8'hFE: tmp_instr = '{ INC, AIX };
 
-                        8'hE8: tmp_inst = `{ INX, IMP };
-                        8'hC8: tmp_inst = `{ INY, IMP };
+                        8'hE8: tmp_instr = '{ INX, IMP };
+                        8'hC8: tmp_instr = '{ INY, IMP };
 
-                        8'h4C: tmp_inst = `{ JMP, ABS };
-                        8'h6C: tmp_inst = `{ JMP, AIA };
-                        8'h7C: tmp_inst = `{ JMP, AII };
+                        8'h4C: tmp_instr = '{ JMP, ABS };
+                        8'h6C: tmp_instr = '{ JMP, AIA };
+                        8'h7C: tmp_instr = '{ JMP, AII };
 
-                        8'h20: tmp_inst = `{ JSR, ABS };
+                        8'h20: tmp_instr = '{ JSR, ABS };
 
-                        8'hA1: tmp_inst = `{ LDA, ZII };
-                        8'hA5: tmp_inst = `{ LDA, ZPG };
-                        8'hA9: tmp_inst = `{ LDA, IMM };
-                        8'hAD: tmp_inst = `{ LDA, ABS };
-                        8'hB1: tmp_inst = `{ LDA, ZIIY };
-                        8'hB2: tmp_inst = `{ LDA, ZPI };
-                        8'hB5: tmp_inst = `{ LDA, ZIX };
-                        8'hB9: tmp_inst = `{ LDA, AIY };
-                        8'hBD: tmp_inst = `{ LDA, AIX };
+                        8'hA1: tmp_instr = '{ LDA, ZII };
+                        8'hA5: tmp_instr = '{ LDA, ZPG };
+                        8'hA9: tmp_instr = '{ LDA, IMM };
+                        8'hAD: tmp_instr = '{ LDA, ABS };
+                        8'hB1: tmp_instr = '{ LDA, ZIIY };
+                        8'hB2: tmp_instr = '{ LDA, ZPI };
+                        8'hB5: tmp_instr = '{ LDA, ZIX };
+                        8'hB9: tmp_instr = '{ LDA, AIY };
+                        8'hBD: tmp_instr = '{ LDA, AIX };
 
-                        8'hA2: tmp_inst = `{ LDX, IMM };
-                        8'hA6: tmp_inst = `{ LDX, ZPG };
-                        8'hAE: tmp_inst = `{ LDX, ABS };
-                        8'hB6: tmp_inst = `{ LDX, ZIY };
-                        8'hBE: tmp_inst = `{ LDX, AIY };
+                        8'hA2: tmp_instr = '{ LDX, IMM };
+                        8'hA6: tmp_instr = '{ LDX, ZPG };
+                        8'hAE: tmp_instr = '{ LDX, ABS };
+                        8'hB6: tmp_instr = '{ LDX, ZIY };
+                        8'hBE: tmp_instr = '{ LDX, AIY };
 
-                        8'hA0: tmp_inst = `{ LDY, IMM };
-                        8'hA4: tmp_inst = `{ LDY, ZPG };
-                        8'hAC: tmp_inst = `{ LDY, ABS };
-                        8'hB4: tmp_inst = `{ LDY, ZIX };
-                        8'hBC: tmp_inst = `{ LDY, AIX };
+                        8'hA0: tmp_instr = '{ LDY, IMM };
+                        8'hA4: tmp_instr = '{ LDY, ZPG };
+                        8'hAC: tmp_instr = '{ LDY, ABS };
+                        8'hB4: tmp_instr = '{ LDY, ZIX };
+                        8'hBC: tmp_instr = '{ LDY, AIX };
 
-                        8'h46: tmp_inst = `{ LSR, ZPG };
-                        8'h4A: tmp_inst = `{ LSR, ACC };
-                        8'h4E: tmp_inst = `{ LSR, ABS };
-                        8'h56: tmp_inst = `{ LSR, ZIX };
-                        8'h5E: tmp_inst = `{ LSR, AIX };
+                        8'h46: tmp_instr = '{ LSR, ZPG };
+                        8'h4A: tmp_instr = '{ LSR, ACC };
+                        8'h4E: tmp_instr = '{ LSR, ABS };
+                        8'h56: tmp_instr = '{ LSR, ZIX };
+                        8'h5E: tmp_instr = '{ LSR, AIX };
 
-                        8'hEA: tmp_inst = `{ NOP, IMP };
+                        8'hEA: tmp_instr = '{ NOP, IMP };
 
-                        8'h01: tmp_inst = `{ ORA, ZIX };
-                        8'h05: tmp_inst = `{ ORA, ZPG };
-                        8'h09: tmp_inst = `{ ORA, IMM };
-                        8'h0D: tmp_inst = `{ ORA, ABS };
-                        8'h11: tmp_inst = `{ ORA, ZIIY };
-                        8'h12: tmp_inst = `{ ORA, ZPI };
-                        8'h15: tmp_inst = `{ ORA, ZIX };
-                        8'h19: tmp_inst = `{ ORA, AIY };
-                        8'h1D: tmp_inst = `{ ORA, AIX };
+                        8'h01: tmp_instr = '{ ORA, ZIX };
+                        8'h05: tmp_instr = '{ ORA, ZPG };
+                        8'h09: tmp_instr = '{ ORA, IMM };
+                        8'h0D: tmp_instr = '{ ORA, ABS };
+                        8'h11: tmp_instr = '{ ORA, ZIIY };
+                        8'h12: tmp_instr = '{ ORA, ZPI };
+                        8'h15: tmp_instr = '{ ORA, ZIX };
+                        8'h19: tmp_instr = '{ ORA, AIY };
+                        8'h1D: tmp_instr = '{ ORA, AIX };
 
-                        8'h48: tmp_inst = `{ PHA, STK };
-                        8'h08: tmp_inst = `{ PHP, STK };
-                        8'hDA: tmp_inst = `{ PHX, STK };
-                        8'h5A: tmp_inst = `{ PHY, STK };
-                        8'h68: tmp_inst = `{ PLA, STK };
-                        8'h28: tmp_inst = `{ PLP, STK };
-                        8'hFA: tmp_inst = `{ PLX, STK };
-                        8'h7A: tmp_inst = `{ PLY, STK };
+                        8'h48: tmp_instr = '{ PHA, STK };
+                        8'h08: tmp_instr = '{ PHP, STK };
+                        8'hDA: tmp_instr = '{ PHX, STK };
+                        8'h5A: tmp_instr = '{ PHY, STK };
+                        8'h68: tmp_instr = '{ PLA, STK };
+                        8'h28: tmp_instr = '{ PLP, STK };
+                        8'hFA: tmp_instr = '{ PLX, STK };
+                        8'h7A: tmp_instr = '{ PLY, STK };
 
                         8'h07, 8'h17, 8'h27, 8'h37,
                         8'h47, 8'h57, 8'h67, 8'h77:
                             begin
-                                tmp_inst = `{ RMB, ZPG };
+                                tmp_instr = '{ RMB, ZPG };
                                 tmp_which = reg_ir[6:4];
                             end
 
-                        8'h26: tmp_inst = `{ ROL, ZPG };
-                        8'h2A: tmp_inst = `{ ROL, ACC };
-                        8'h2E: tmp_inst = `{ ROL, ABS };
-                        8'h36: tmp_inst = `{ ROL, ZIX };
-                        8'h3E: tmp_inst = `{ ROL, AIX };
+                        8'h26: tmp_instr = '{ ROL, ZPG };
+                        8'h2A: tmp_instr = '{ ROL, ACC };
+                        8'h2E: tmp_instr = '{ ROL, ABS };
+                        8'h36: tmp_instr = '{ ROL, ZIX };
+                        8'h3E: tmp_instr = '{ ROL, AIX };
 
-                        8'h66: tmp_inst = `{ ROR, ZPG };
-                        8'h6A: tmp_inst = `{ ROR, ACC };
-                        8'h6E: tmp_inst = `{ ROR, ABS };
-                        8'h76: tmp_inst = `{ ROR, ZIX };
-                        8'h7E: tmp_inst = `{ ROR, AIXs };
+                        8'h66: tmp_instr = '{ ROR, ZPG };
+                        8'h6A: tmp_instr = '{ ROR, ACC };
+                        8'h6E: tmp_instr = '{ ROR, ABS };
+                        8'h76: tmp_instr = '{ ROR, ZIX };
+                        8'h7E: tmp_instr = '{ ROR, AIXs };
 
-                        8'h40: tmp_inst = `{ RTI, STK };
-                        8'h60: tmp_inst = `{ RTS, STK };
+                        8'h40: tmp_instr = '{ RTI, STK };
+                        8'h60: tmp_instr = '{ RTS, STK };
 
-                        8'hE1: tmp_inst = `{ SBC, ZII };
-                        8'hE5: tmp_inst = `{ SBC, ZPG };
-                        8'hE9: tmp_inst = `{ SBC, IMM };
-                        8'hED: tmp_inst = `{ SBC, ABS };
-                        8'hF1: tmp_inst = `{ SBC, ZIIY };
-                        8'hF2: tmp_inst = `{ SBC, ZPI };
-                        8'hF5: tmp_inst = `{ SBC, ZIX };
-                        8'hF9: tmp_inst = `{ SBC, AIY };
-                        8'hFD: tmp_inst = `{ SBC, AIX };
+                        8'hE1: tmp_instr = '{ SBC, ZII };
+                        8'hE5: tmp_instr = '{ SBC, ZPG };
+                        8'hE9: tmp_instr = '{ SBC, IMM };
+                        8'hED: tmp_instr = '{ SBC, ABS };
+                        8'hF1: tmp_instr = '{ SBC, ZIIY };
+                        8'hF2: tmp_instr = '{ SBC, ZPI };
+                        8'hF5: tmp_instr = '{ SBC, ZIX };
+                        8'hF9: tmp_instr = '{ SBC, AIY };
+                        8'hFD: tmp_instr = '{ SBC, AIX };
 
-                        8'h38: tmp_inst = `{ SEC, IMP };
-                        8'hF8: tmp_inst = `{ SED, IMP };
-                        8'h78: tmp_inst = `{ SEI, IMP };
+                        8'h38: tmp_instr = '{ SEC, IMP };
+                        8'hF8: tmp_instr = '{ SED, IMP };
+                        8'h78: tmp_instr = '{ SEI, IMP };
 
                         8'h87, 8'h97, 8'hA7, 8'hB7,
                         8'hC7, 8'hD7, 8'hE7, 8'hF7:
                             begin
-                                tmp_inst = `{ SMB, ZPG };
+                                tmp_instr = '{ SMB, ZPG };
                                 tmp_which = reg_ir[6:4];
                             end
 
-                        8'h81: tmp_inst = `{ STA, ZII };
-                        8'h85: tmp_inst = `{ STA, ZPG };
-                        8'h8D: tmp_inst = `{ STA, ABS };
-                        8'h91: tmp_inst = `{ STA, ZIIY };
-                        8'h92: tmp_inst = `{ STA, ZPI };
-                        8'h95: tmp_inst = `{ STA, ZIX };
-                        8'h99: tmp_inst = `{ STA, AIY };
-                        8'h9D: tmp_inst = `{ STA, AIX };
+                        8'h81: tmp_instr = '{ STA, ZII };
+                        8'h85: tmp_instr = '{ STA, ZPG };
+                        8'h8D: tmp_instr = '{ STA, ABS };
+                        8'h91: tmp_instr = '{ STA, ZIIY };
+                        8'h92: tmp_instr = '{ STA, ZPI };
+                        8'h95: tmp_instr = '{ STA, ZIX };
+                        8'h99: tmp_instr = '{ STA, AIY };
+                        8'h9D: tmp_instr = '{ STA, AIX };
 
-                        8'hDB: tmp_inst = `{ STP, IMP };
+                        8'hDB: tmp_instr = '{ STP, IMP };
 
-                        8'h86: tmp_inst = `{ STX, ZPG };
-                        8'h8E: tmp_inst = `{ STX, ABS };
-                        8'h96: tmp_inst = `{ STX, ZIY };
+                        8'h86: tmp_instr = '{ STX, ZPG };
+                        8'h8E: tmp_instr = '{ STX, ABS };
+                        8'h96: tmp_instr = '{ STX, ZIY };
 
-                        8'h84: tmp_inst = `{ STY, ZPG };
-                        8'h8C: tmp_inst = `{ STY, ABS };
-                        8'h94: tmp_inst = `{ STY, ZIX };
+                        8'h84: tmp_instr = '{ STY, ZPG };
+                        8'h8C: tmp_instr = '{ STY, ABS };
+                        8'h94: tmp_instr = '{ STY, ZIX };
 
-                        8'h64: tmp_inst = `{ STZ, ZPG };
-                        8'h74: tmp_inst = `{ STZ, ZIX };
-                        8'h9C: tmp_inst = `{ STZ, ABS };
-                        8'h9E: tmp_inst = `{ STZ, AIX };
+                        8'h64: tmp_instr = '{ STZ, ZPG };
+                        8'h74: tmp_instr = '{ STZ, ZIX };
+                        8'h9C: tmp_instr = '{ STZ, ABS };
+                        8'h9E: tmp_instr = '{ STZ, AIX };
 
-                        8'hAA: tmp_inst = `{ TAX, IMP };
-                        8'hA8: tmp_inst = `{ TAY, IMP };
+                        8'hAA: tmp_instr = '{ TAX, IMP };
+                        8'hA8: tmp_instr = '{ TAY, IMP };
 
-                        8'h14: tmp_inst = `{ TRB, ZPG };
-                        8'h1B: tmp_inst = `{ TRB, ABS };
+                        8'h14: tmp_instr = '{ TRB, ZPG };
+                        8'h1B: tmp_instr = '{ TRB, ABS };
 
-                        8'h04: tmp_inst = `{ TSB, ZPG };
-                        8'h0C: tmp_inst = `{ TSB, ABS };
+                        8'h04: tmp_instr = '{ TSB, ZPG };
+                        8'h0C: tmp_instr = '{ TSB, ABS };
 
-                        8'hBA: tmp_inst = `{ TSX, IMP };
-                        8'h8A: tmp_inst = `{ TXA, IMP };
-                        8'h9A: tmp_inst = `{ TXS, IMP };
-                        8'h98: tmp_inst = `{ TYA, IMP };
-                        8'hCB: tmp_inst = `{ WAI, IMP }; 
+                        8'hBA: tmp_instr = '{ TSX, IMP };
+                        8'h8A: tmp_instr = '{ TXA, IMP };
+                        8'h9A: tmp_instr = '{ TXS, IMP };
+                        8'h98: tmp_instr = '{ TYA, IMP };
+                        8'hCB: tmp_instr = '{ WAI, IMP }; 
                     endcase
                 end
         endcase
