@@ -255,65 +255,178 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     // Determine operation
                     case (`IR0)
+
+                        8'h00: begin
+                                tmp_operation = BRK;
+                                tmp_addr_mode = STK_s;
+                            end
+
+                        8'h01: begin
+                                tmp_operation = ORA;
+                                tmp_addr_mode = ZIX_zp_x;
+                                tmp_enh_mode = AIIX_A_X;
+                            end
+
                         8'h02: begin
                                 tmp_operation = ADD;
                                 tmp_addr_mode = ZIIX_ZP_X;
                             end
 
-                        8'h61: begin
-                                tmp_operation = ADC;
+                        8'h04: begin
+                                tmp_operation = TSB;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'h05: begin
+                                tmp_operation = ORA;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'h06: begin
+                                tmp_operation = ASL;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'h07, 8'h17, 8'h27, 8'h37,
+                        8'h47, 8'h57, 8'h67, 8'h77:
+                            begin
+                                tmp_operation = RMB;
+                                tmp_addr_mode = ZPG_zp;
+                                tmp_which = reg_ir[6:4];
+                            end
+
+                        8'h08: begin
+                                tmp_operation = PHP;
+                                tmp_addr_mode = STK_s;
+                            end
+
+                        8'h09: begin
+                                tmp_operation = ORA;
+                                tmp_addr_mode = IMM_m;
+                            end
+
+                        8'h0A: begin
+                                tmp_operation = ASL;
+                                tmp_addr_mode = ACC_A;
+                            end
+
+                        8'h0C: begin
+                                tmp_operation = TSB;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h0D: begin
+                                tmp_operation = ORA;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h0E: begin
+                                tmp_operation = ASL;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h0F, 8'h1F, 8'h2F, 8'h3F,
+                        8'h4F, 8'h5F, 8'h6F, 8'h7F:
+                            begin
+                                tmp_operation = BBR;
+                                tmp_addr_mode = PCR_r;
+                                tmp_which = reg_ir[6:4];
+                            end
+
+                        8'h10: begin
+                                tmp_operation = BPL;
+                                tmp_addr_mode = PCR_r;
+                            end
+
+                        8'h11: begin
+                                tmp_operation = ORA;
+                                tmp_addr_mode = ZIIY_ZP_y;
+                                tmp_enh_mode = AIIY_A_y;
+                            end
+
+                        8'h12: begin
+                                tmp_operation = ORA;
+                                tmp_addr_mode = ZIY_zp_y;
+                            end
+
+                        8'h14: begin
+                                tmp_operation = TRB;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'h15: begin
+                                tmp_operation = ORA;
+                                tmp_addr_mode = ZIX_zp_x;
+                            end
+
+                        8'h16: begin
+                                tmp_operation = ASL;
+                                tmp_addr_mode = ZIX_zp_x;
+                            end
+
+                        8'h18: begin
+                                tmp_operation = CLC;
+                                tmp_addr_mode = IMP_i;
+                            end
+
+                        8'h19: begin
+                                tmp_operation = ORA;
+                                tmp_addr_mode = AIY_a_y;
+                            end
+
+                        8'h1B: begin
+                                tmp_operation = TRB;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h1D: begin
+                                tmp_operation = ORA;
+                                tmp_addr_mode = AIX_a_x;
+                            end
+
+                        8'h1A: begin
+                                tmp_operation = INC;
+                                tmp_addr_mode = ACC_A;
+                            end
+
+                        8'h20: begin
+                                tmp_operation = JSR;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h??: begin
+                                tmp_operation = AND;
+                                tmp_addr_mode = ZIIX_ZP_X;
+                            end
+
+                        8'h22: begin
+                                tmp_operation = SUB;
                                 tmp_addr_mode = ZIIX_ZP_X;
                                 tmp_enh_mode = AIIX_A_X;
                             end
 
-                        8'h65: begin
-                                tmp_operation = ADC;
+                        8'h24: begin
+                                tmp_operation = BIT;
                                 tmp_addr_mode = ZPG_zp;
                             end
 
-                        8'h69: begin
-                                tmp_operation = ADC;
-                                tmp_addr_mode = IMM_m;
+                        8'h26: begin
+                                tmp_operation = ROL;
+                                tmp_addr_mode = ZPG_zp;
                             end
 
-                        8'h6D: begin
-                                tmp_operation = ADC;
+                        8'h2C: begin
+                                tmp_operation = BIT;
                                 tmp_addr_mode = ABS_a;
                             end
-
-                        8'h71: begin
-                                tmp_operation = ADC;
-                                tmp_addr_mode = ZIIY_ZP_y;
-                            end
-
-                        8'h72: begin
-                                tmp_operation = ADC;
-                                tmp_addr_mode = ZIY_zp_y;
-                            end
-
-                        8'h75: begin
-                                tmp_operation = ADC;
-                                tmp_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h79: begin
-                                tmp_operation = ADC;
-                                tmp_addr_mode = AIY_a_y;
-                            end
-
-                        8'h7D: begin
-                                tmp_operation = ADC;
-                                tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'h22: begin
-                                tmp_operation = AND;
-                                tmp_addr_mode = ZIIX_ZP_X;
-                            end
-
                         8'h25: begin
                                 tmp_operation = AND;
                                 tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'h28: begin
+                                tmp_operation = PLP;
+                                tmp_addr_mode = STK_s;
                             end
 
                         8'h29: begin
@@ -321,9 +434,24 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_addr_mode = IMM_m;
                             end
 
+                        8'h2A: begin
+                                tmp_operation = ROL;
+                                tmp_addr_mode = ACC_A;
+                            end
+
                         8'h2D: begin
                                 tmp_operation = AND;
                                 tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h2E: begin
+                                tmp_operation = ROL;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h30: begin
+                                tmp_operation = BMI;
+                                tmp_addr_mode = PCR_r;
                             end
 
                         8'h31: begin
@@ -337,9 +465,24 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_addr_mode = ZIY_zp_y;
                             end
 
+                        8'h34: begin
+                                tmp_operation = BIT;
+                                tmp_addr_mode = ZIX_zp_x;
+                            end
+
                         8'h35: begin
                                 tmp_operation = AND;
                                 tmp_addr_mode = ZIX_zp_x;
+                            end
+
+                        8'h36: begin
+                                tmp_operation = ROL;
+                                tmp_addr_mode = ZIX_zp_x;
+                            end
+
+                        8'h38: begin
+                                tmp_operation = SEC;
+                                tmp_addr_mode = IMP_i;
                             end
 
                         8'h39: begin
@@ -347,49 +490,9 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_addr_mode = AIY_a_y;
                             end
 
-                        8'h3D: begin
-                                tmp_operation = AND;
-                                tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'h06: begin
-                                tmp_operation = ASL;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'h0A: begin
-                                tmp_operation = ASL;
+                        8'h3A: begin
+                                tmp_operation = DEC;
                                 tmp_addr_mode = ACC_A;
-                            end
-
-                        8'h0E: begin
-                                tmp_operation = ASL;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'h16: begin
-                                tmp_operation = ASL;
-                                tmp_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'hF0: begin
-                                tmp_operation = BEQ;
-                                tmp_addr_mode = IMM_m;
-                            end
-
-                        8'h24: begin
-                                tmp_operation = BIT;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'h2C: begin
-                                tmp_operation = BIT;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'h34: begin
-                                tmp_operation = BIT;
-                                tmp_addr_mode = ZIX_zp_x;
                             end
 
                         8'h3C: begin
@@ -397,200 +500,19 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_addr_mode = AIX_a_x;
                             end
 
-                        8'h89: begin
-                                tmp_operation = BIT;
-                                tmp_addr_mode = IMM_m;
+                        8'h3D: begin
+                                tmp_operation = AND;
+                                tmp_addr_mode = AIX_a_x;
                             end
 
-                        8'h0F, 8'h1F, 8'h2F, 8'h3F,
-                        8'h4F, 8'h5F, 8'h6F, 8'h7F:
-                            begin
-                                tmp_operation = BBR;
-                                tmp_addr_mode = PCR_r;
-                                tmp_which = reg_ir[6:4];
+                        8'h3E: begin
+                                tmp_operation = ROL;
+                                tmp_addr_mode = AIX_a_x;
                             end
 
-                        8'h8F, 8'h9F, 8'hAF, 8'hBF,
-                        8'hCF, 8'hDF, 8'hEF, 8'hFF:
-                            begin
-                                tmp_operation = BBS;
-                                tmp_addr_mode = PCR_r;
-                                tmp_which = reg_ir[6:4];
-                            end
-
-                        8'h90: begin
-                                tmp_operation = BCC;
-                                tmp_addr_mode = PCR_r;
-                            end
-
-                        8'hB0: begin
-                                tmp_operation = BCS;
-                                tmp_addr_mode = PCR_r;
-                            end
-
-                        8'h30: begin
-                                tmp_operation = BMI;
-                                tmp_addr_mode = PCR_r;
-                            end
-
-                        8'hD0: begin
-                                tmp_operation = BNE;
-                                tmp_addr_mode = PCR_r;
-                            end
-
-                        8'h10: begin
-                                tmp_operation = BPL;
-                                tmp_addr_mode = PCR_r;
-                            end
-
-                        8'h80: begin
-                                tmp_operation = BRA;
-                                tmp_addr_mode = PCR_r;
-                            end
-
-                        8'h00: begin
-                                tmp_operation = BRK;
+                        8'h40: begin
+                                tmp_operation = RTI;
                                 tmp_addr_mode = STK_s;
-                            end
-
-                        8'h50: begin
-                                tmp_operation = BVC;
-                                tmp_addr_mode = PCR_r;
-                            end
-
-                        8'h70: begin
-                                tmp_operation = BVS;
-                                tmp_addr_mode = PCR_r;
-                            end
-
-                        8'h18: begin
-                                tmp_operation = CLC;
-                                tmp_addr_mode = IMP_i;
-                            end
-
-                        8'hD8: begin
-                                tmp_operation = CLD;
-                                tmp_addr_mode = IMP_i;
-                            end
-
-                        8'h58: begin
-                                tmp_operation = CLI;
-                                tmp_addr_mode = IMP_i;
-                            end
-
-                        8'hB8: begin
-                                tmp_operation = CLV;
-                                tmp_addr_mode = IMP_i;
-                            end
-
-                        8'hC1: begin
-                                tmp_operation = CMP;
-                                tmp_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'hC5: begin
-                                tmp_operation = CMP;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'hC9: begin
-                                tmp_operation = CMP;
-                                tmp_addr_mode = IMM_m;
-                            end
-
-                        8'hCD: begin
-                                tmp_operation = CMP;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'hD1: begin
-                                tmp_operation = CMP;
-                                tmp_addr_mode = ZIIY_ZP_y;
-                            end
-
-                        8'hD2: begin
-                                tmp_operation = CMP;
-                                tmp_addr_mode = ZIY_zp_y;
-                            end
-
-                        8'hD5: begin
-                                tmp_operation = CMP;
-                                tmp_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'hD9: begin
-                                tmp_operation = CMP;
-                                tmp_addr_mode = AIY_a_y;
-                            end
-
-                        8'hDD: begin
-                                tmp_operation = CMP;
-                                tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'hE0: begin
-                                tmp_operation = CPX;
-                                tmp_addr_mode = IMM_m;
-                            end
-
-                        8'hE4: begin
-                                tmp_operation = CPX;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'hEC: begin
-                                tmp_operation = CPX;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'hC0: begin
-                                tmp_operation = CPY;
-                                tmp_addr_mode = IMM_m;
-                            end
-
-                        8'hC4: begin
-                                tmp_operation = CPY;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'hCC: begin
-                                tmp_operation = CPY;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'h3A: begin
-                                tmp_operation = DEC;
-                                tmp_addr_mode = ACC_A;
-                            end
-
-                        8'hC6: begin
-                                tmp_operation = DEC;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'hCE: begin
-                                tmp_operation = DEC;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'hD6: begin
-                                tmp_operation = DEC;
-                                tmp_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'hDE: begin
-                                tmp_operation = DEC;
-                                tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'hCA: begin
-                                tmp_operation = DEX;
-                                tmp_addr_mode = IMP_i;
-                            end
-
-                        8'h88: begin
-                                tmp_operation = DEY;
-                                tmp_addr_mode = IMP_i;
                             end
 
                         8'h41: begin
@@ -604,14 +526,44 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_addr_mode = ZPG_zp;
                             end
 
+                        8'h46: begin
+                                tmp_operation = LSR;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'h48: begin
+                                tmp_operation = PHA;
+                                tmp_addr_mode = STK_s;
+                            end
+
                         8'h49: begin
                                 tmp_operation = EOR;
                                 tmp_addr_mode = IMM_m;
                             end
 
+                        8'h4A: begin
+                                tmp_operation = LSR;
+                                tmp_addr_mode = ACC_A;
+                            end
+
+                        8'h4C: begin
+                                tmp_operation = JMP;
+                                tmp_addr_mode = ABS_a;
+                            end
+
                         8'h4D: begin
                                 tmp_operation = EOR;
                                 tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h4E: begin
+                                tmp_operation = LSR;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h50: begin
+                                tmp_operation = BVC;
+                                tmp_addr_mode = PCR_r;
                             end
 
                         8'h51: begin
@@ -630,256 +582,19 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_addr_mode = ZIX_zp_x;
                             end
 
-                        8'h59: begin
-                                tmp_operation = EOR;
-                                tmp_addr_mode = AIY_a_y;
-                            end
-
-                        8'h5D: begin
-                                tmp_operation = EOR;
-                                tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'h1A: begin
-                                tmp_operation = INC;
-                                tmp_addr_mode = ACC_A;
-                            end
-
-                        8'hE6: begin
-                                tmp_operation = INC;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'hEE: begin
-                                tmp_operation = INC;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'hF6: begin
-                                tmp_operation = INC;
-                                tmp_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'hFE: begin
-                                tmp_operation = INC;
-                                tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'hE8: begin
-                                tmp_operation = INX;
-                                tmp_addr_mode = IMP_i;
-                            end
-
-                        8'hC8: begin
-                                tmp_operation = INY;
-                                tmp_addr_mode = IMP_i;
-                            end
-
-                        8'h4C: begin
-                                tmp_operation = JMP;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'h6C: begin
-                                tmp_operation = JMP;
-                                tmp_addr_mode = AIA_A;
-                            end
-
-                        8'h7C: begin
-                                tmp_operation = JMP;
-                                tmp_addr_mode = AIIX_A_X;
-                            end
-
-                        8'h20: begin
-                                tmp_operation = JSR;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'hA1: begin
-                                tmp_operation = LDA;
-                                tmp_addr_mode = ZIIX_ZP_X;
-                            end
-
-                        8'hA5: begin
-                                tmp_operation = LDA;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'hA9: begin
-                                tmp_operation = LDA;
-                                tmp_addr_mode = IMM_m;
-                            end
-
-                        8'hAD: begin
-                                tmp_operation = LDA;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'hB1: begin
-                                tmp_operation = LDA;
-                                tmp_addr_mode = ZIIY_ZP_y;
-                            end
-
-                        8'hB2: begin
-                                tmp_operation = LDA;
-                                tmp_addr_mode = ZIY_zp_y;
-                            end
-
-                        8'hB5: begin
-                                tmp_operation = LDA;
-                                tmp_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'hB9: begin
-                                tmp_operation = LDA;
-                                tmp_addr_mode = AIY_a_y;
-                            end
-
-                        8'hBD: begin
-                                tmp_operation = LDA;
-                                tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'hA2: begin
-                                tmp_operation = LDX;
-                                tmp_addr_mode = IMM_m;
-                            end
-
-                        8'hA6: begin
-                                tmp_operation = LDX;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'hAE: begin
-                                tmp_operation = LDX;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'hB6: begin
-                                tmp_operation = LDX;
-                                tmp_addr_mode = ZIY_zp_y;
-                            end
-
-                        8'hBE: begin
-                                tmp_operation = LDX;
-                                tmp_addr_mode = AIY_a_y;
-                            end
-
-                        8'hA0: begin
-                                tmp_operation = LDY;
-                                tmp_addr_mode = IMM_m;
-                            end
-
-                        8'hA4: begin
-                                tmp_operation = LDY;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'hAC: begin
-                                tmp_operation = LDY;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'hB4: begin
-                                tmp_operation = LDY;
-                                tmp_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'hBC: begin
-                                tmp_operation = LDY;
-                                tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'h46: begin
-                                tmp_operation = LSR;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'h4A: begin
-                                tmp_operation = LSR;
-                                tmp_addr_mode = ACC_A;
-                            end
-
-                        8'h4E: begin
-                                tmp_operation = LSR;
-                                tmp_addr_mode = ABS_a;
-                            end
-
                         8'h56: begin
                                 tmp_operation = LSR;
                                 tmp_addr_mode = ZIX_zp_x;
                             end
 
-                        8'h5E: begin
-                                tmp_operation = LSR;
-                                tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'hEA: begin
-                                tmp_operation = NOP;
+                        8'h58: begin
+                                tmp_operation = CLI;
                                 tmp_addr_mode = IMP_i;
                             end
 
-                        8'h01: begin
-                                tmp_operation = ORA;
-                                tmp_addr_mode = ZIX_zp_x;
-                                tmp_enh_mode = AIIX_A_X;
-                            end
-
-                        8'h05: begin
-                                tmp_operation = ORA;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'h09: begin
-                                tmp_operation = ORA;
-                                tmp_addr_mode = IMM_m;
-                            end
-
-                        8'h0D: begin
-                                tmp_operation = ORA;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'h11: begin
-                                tmp_operation = ORA;
-                                tmp_addr_mode = ZIIY_ZP_y;
-                                tmp_enh_mode = AIIY_A_y;
-                            end
-
-                        8'h12: begin
-                                tmp_operation = ORA;
-                                tmp_addr_mode = ZIY_zp_y;
-                            end
-
-                        8'h15: begin
-                                tmp_operation = ORA;
-                                tmp_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h19: begin
-                                tmp_operation = ORA;
+                        8'h59: begin
+                                tmp_operation = EOR;
                                 tmp_addr_mode = AIY_a_y;
-                            end
-
-                        8'h1D: begin
-                                tmp_operation = ORA;
-                                tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'h48: begin
-                                tmp_operation = PHA;
-                                tmp_addr_mode = STK_s;
-                            end
-
-                        8'h08: begin
-                                tmp_operation = PHP;
-                                tmp_addr_mode = STK_s;
-                            end
-
-                        8'hDA: begin
-                                tmp_operation = PHX;
-                                tmp_addr_mode = STK_s;
                             end
 
                         8'h5A: begin
@@ -887,87 +602,14 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_addr_mode = STK_s;
                             end
 
-                        8'h68: begin
-                                tmp_operation = PLA;
-                                tmp_addr_mode = STK_s;
-                            end
-
-                        8'h28: begin
-                                tmp_operation = PLP;
-                                tmp_addr_mode = STK_s;
-                            end
-
-                        8'hFA: begin
-                                tmp_operation = PLX;
-                                tmp_addr_mode = STK_s;
-                            end
-
-                        8'h7A: begin
-                                tmp_operation = PLY;
-                                tmp_addr_mode = STK_s;
-                            end
-
-                        8'h07, 8'h17, 8'h27, 8'h37,
-                        8'h47, 8'h57, 8'h67, 8'h77:
-                            begin
-                                tmp_operation = RMB;
-                                tmp_addr_mode = ZPG_zp;
-                                tmp_which = reg_ir[6:4];
-                            end
-
-                        8'h26: begin
-                                tmp_operation = ROL;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'h2A: begin
-                                tmp_operation = ROL;
-                                tmp_addr_mode = ACC_A;
-                            end
-
-                        8'h2E: begin
-                                tmp_operation = ROL;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'h36: begin
-                                tmp_operation = ROL;
-                                tmp_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h3E: begin
-                                tmp_operation = ROL;
+                        8'h5D: begin
+                                tmp_operation = EOR;
                                 tmp_addr_mode = AIX_a_x;
                             end
 
-                        8'h66: begin
-                                tmp_operation = ROR;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'h6A: begin
-                                tmp_operation = ROR;
-                                tmp_addr_mode = ACC_A;
-                            end
-
-                        8'h6E: begin
-                                tmp_operation = ROR;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'h76: begin
-                                tmp_operation = ROR;
-                                tmp_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h7E: begin
-                                tmp_operation = ROR;
+                        8'h5E: begin
+                                tmp_operation = LSR;
                                 tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'h40: begin
-                                tmp_operation = RTI;
-                                tmp_addr_mode = STK_s;
                             end
 
                         8'h60: begin
@@ -975,64 +617,140 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_addr_mode = STK_s;
                             end
 
-                        8'hE1: begin
-                                tmp_operation = SBC;
+                        8'h61: begin
+                                tmp_operation = ADC;
                                 tmp_addr_mode = ZIIX_ZP_X;
+                                tmp_enh_mode = AIIX_A_X;
                             end
 
-                        8'hE5: begin
-                                tmp_operation = SBC;
+                        8'h64: begin
+                                tmp_operation = STZ;
                                 tmp_addr_mode = ZPG_zp;
                             end
 
-                        8'hE9: begin
-                                tmp_operation = SBC;
+                        8'h65: begin
+                                tmp_operation = ADC;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'h66: begin
+                                tmp_operation = ROR;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'h68: begin
+                                tmp_operation = PLA;
+                                tmp_addr_mode = STK_s;
+                            end
+
+                        8'h69: begin
+                                tmp_operation = ADC;
                                 tmp_addr_mode = IMM_m;
                             end
 
-                        8'hED: begin
-                                tmp_operation = SBC;
+                        8'h6A: begin
+                                tmp_operation = ROR;
+                                tmp_addr_mode = ACC_A;
+                            end
+
+                        8'h6C: begin
+                                tmp_operation = JMP;
+                                tmp_addr_mode = AIA_A;
+                            end
+
+                        8'h6D: begin
+                                tmp_operation = ADC;
                                 tmp_addr_mode = ABS_a;
                             end
 
-                        8'hF1: begin
-                                tmp_operation = SBC;
+                        8'h6E: begin
+                                tmp_operation = ROR;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h70: begin
+                                tmp_operation = BVS;
+                                tmp_addr_mode = PCR_r;
+                            end
+
+                        8'h71: begin
+                                tmp_operation = ADC;
                                 tmp_addr_mode = ZIIY_ZP_y;
                             end
 
-                        8'hF2: begin
-                                tmp_operation = SBC;
+                        8'h72: begin
+                                tmp_operation = ADC;
                                 tmp_addr_mode = ZIY_zp_y;
                             end
 
-                        8'hF5: begin
-                                tmp_operation = SBC;
+                        8'h74: begin
+                                tmp_operation = STZ;
                                 tmp_addr_mode = ZIX_zp_x;
                             end
 
-                        8'hF9: begin
-                                tmp_operation = SBC;
-                                tmp_addr_mode = AIY_a_y;
+                        8'h75: begin
+                                tmp_operation = ADC;
+                                tmp_addr_mode = ZIX_zp_x;
                             end
 
-                        8'hFD: begin
-                                tmp_operation = SBC;
-                                tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'h38: begin
-                                tmp_operation = SEC;
-                                tmp_addr_mode = IMP_i;
-                            end
-
-                        8'hF8: begin
-                                tmp_operation = SED;
-                                tmp_addr_mode = IMP_i;
+                        8'h76: begin
+                                tmp_operation = ROR;
+                                tmp_addr_mode = ZIX_zp_x;
                             end
 
                         8'h78: begin
                                 tmp_operation = SEI;
                                 tmp_addr_mode = IMP_i;
+                            end
+
+                        8'h79: begin
+                                tmp_operation = ADC;
+                                tmp_addr_mode = AIY_a_y;
+                            end
+
+                        8'h7A: begin
+                                tmp_operation = PLY;
+                                tmp_addr_mode = STK_s;
+                            end
+
+                        8'h7C: begin
+                                tmp_operation = JMP;
+                                tmp_addr_mode = AIIX_A_X;
+                            end
+
+                        8'h7D: begin
+                                tmp_operation = ADC;
+                                tmp_addr_mode = AIX_a_x;
+                            end
+
+                        8'h7E: begin
+                                tmp_operation = ROR;
+                                tmp_addr_mode = AIX_a_x;
+                            end
+
+                        8'h80: begin
+                                tmp_operation = BRA;
+                                tmp_addr_mode = PCR_r;
+                            end
+
+                        8'h81: begin
+                                tmp_operation = STA;
+                                tmp_addr_mode = ZIIX_ZP_X;
+                            end
+
+                        8'h84: begin
+                                tmp_operation = STY;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'h85: begin
+                                tmp_operation = STA;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'h86: begin
+                                tmp_operation = STX;
+                                tmp_addr_mode = ZPG_zp;
                             end
 
                         8'h87, 8'h97, 8'hA7, 8'hB7,
@@ -1043,19 +761,47 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_which = reg_ir[6:4];
                             end
 
-                        8'h81: begin
-                                tmp_operation = STA;
-                                tmp_addr_mode = ZIIX_ZP_X;
+                        8'h88: begin
+                                tmp_operation = DEY;
+                                tmp_addr_mode = IMP_i;
                             end
 
-                        8'h85: begin
-                                tmp_operation = STA;
-                                tmp_addr_mode = ZPG_zp;
+                        8'h89: begin
+                                tmp_operation = BIT;
+                                tmp_addr_mode = IMM_m;
                             end
 
                         8'h8D: begin
                                 tmp_operation = STA;
                                 tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h8A: begin
+                                tmp_operation = TXA;
+                                tmp_addr_mode = IMP_i;
+                            end
+
+                        8'h8C: begin
+                                tmp_operation = STY;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h8E: begin
+                                tmp_operation = STX;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h8F, 8'h9F, 8'hAF, 8'hBF,
+                        8'hCF, 8'hDF, 8'hEF, 8'hFF:
+                            begin
+                                tmp_operation = BBS;
+                                tmp_addr_mode = PCR_r;
+                                tmp_which = reg_ir[6:4];
+                            end
+
+                        8'h90: begin
+                                tmp_operation = BCC;
+                                tmp_addr_mode = PCR_r;
                             end
 
                         8'h91: begin
@@ -1068,34 +814,14 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_addr_mode = ZIY_zp_y;
                             end
 
-                        8'h95: begin
-                                tmp_operation = STA;
+                        8'h94: begin
+                                tmp_operation = STY;
                                 tmp_addr_mode = ZIX_zp_x;
                             end
 
-                        8'h99: begin
+                        8'h95: begin
                                 tmp_operation = STA;
-                                tmp_addr_mode = AIY_a_y;
-                            end
-
-                        8'h9D: begin
-                                tmp_operation = STA;
-                                tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'hDB: begin
-                                tmp_operation = STP;
-                                tmp_addr_mode = IMP_i;
-                            end
-
-                        8'h86: begin
-                                tmp_operation = STX;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'h8E: begin
-                                tmp_operation = STX;
-                                tmp_addr_mode = ABS_a;
+                                tmp_addr_mode = ZIX_zp_x;
                             end
 
                         8'h96: begin
@@ -1103,85 +829,14 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_addr_mode = ZIY_zp_y;
                             end
 
-                        8'h84: begin
-                                tmp_operation = STY;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'h8C: begin
-                                tmp_operation = STY;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'h94: begin
-                                tmp_operation = STY;
-                                tmp_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h64: begin
-                                tmp_operation = STZ;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'h74: begin
-                                tmp_operation = STZ;
-                                tmp_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h9C: begin
-                                tmp_operation = STZ;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'h9E: begin
-                                tmp_operation = STZ;
-                                tmp_addr_mode = AIX_a_x;
-                            end
-
-                        8'h22: begin
-                                tmp_operation = SUB;
-                                tmp_addr_mode = ZIIX_ZP_X;
-                                tmp_enh_mode = AIIX_A_X;
-                            end
-
-                        8'hAA: begin
-                                tmp_operation = TAX;
+                        8'h98: begin
+                                tmp_operation = TYA;
                                 tmp_addr_mode = IMP_i;
                             end
 
-                        8'hA8: begin
-                                tmp_operation = TAY;
-                                tmp_addr_mode = IMP_i;
-                            end
-
-                        8'h14: begin
-                                tmp_operation = TRB;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'h1B: begin
-                                tmp_operation = TRB;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'h04: begin
-                                tmp_operation = TSB;
-                                tmp_addr_mode = ZPG_zp;
-                            end
-
-                        8'h0C: begin
-                                tmp_operation = TSB;
-                                tmp_addr_mode = ABS_a;
-                            end
-
-                        8'hBA: begin
-                                tmp_operation = TSX;
-                                tmp_addr_mode = IMP_i;
-                            end
-
-                        8'h8A: begin
-                                tmp_operation = TXA;
-                                tmp_addr_mode = IMP_i;
+                        8'h99: begin
+                                tmp_operation = STA;
+                                tmp_addr_mode = AIY_a_y;
                             end
 
                         8'h9A: begin
@@ -1189,8 +844,243 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_addr_mode = IMP_i;
                             end
 
-                        8'h98: begin
-                                tmp_operation = TYA;
+                        8'h9C: begin
+                                tmp_operation = STZ;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'h9D: begin
+                                tmp_operation = STA;
+                                tmp_addr_mode = AIX_a_x;
+                            end
+
+                        8'h9E: begin
+                                tmp_operation = STZ;
+                                tmp_addr_mode = AIX_a_x;
+                            end
+
+                        8'hA0: begin
+                                tmp_operation = LDY;
+                                tmp_addr_mode = IMM_m;
+                            end
+
+                        8'hA1: begin
+                                tmp_operation = LDA;
+                                tmp_addr_mode = ZIIX_ZP_X;
+                            end
+
+                        8'hA2: begin
+                                tmp_operation = LDX;
+                                tmp_addr_mode = IMM_m;
+                            end
+
+                        8'hA4: begin
+                                tmp_operation = LDY;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'hA5: begin
+                                tmp_operation = LDA;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'hA6: begin
+                                tmp_operation = LDX;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'hA8: begin
+                                tmp_operation = TAY;
+                                tmp_addr_mode = IMP_i;
+                            end
+
+                        8'hA9: begin
+                                tmp_operation = LDA;
+                                tmp_addr_mode = IMM_m;
+                            end
+
+                        8'hAA: begin
+                                tmp_operation = TAX;
+                                tmp_addr_mode = IMP_i;
+                            end
+
+                        8'hAC: begin
+                                tmp_operation = LDY;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'hAD: begin
+                                tmp_operation = LDA;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'hAE: begin
+                                tmp_operation = LDX;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'hB0: begin
+                                tmp_operation = BCS;
+                                tmp_addr_mode = PCR_r;
+                            end
+
+                        8'hB1: begin
+                                tmp_operation = LDA;
+                                tmp_addr_mode = ZIIY_ZP_y;
+                            end
+
+                        8'hB2: begin
+                                tmp_operation = LDA;
+                                tmp_addr_mode = ZIY_zp_y;
+                            end
+
+                        8'hB4: begin
+                                tmp_operation = LDY;
+                                tmp_addr_mode = ZIX_zp_x;
+                            end
+
+                        8'hB5: begin
+                                tmp_operation = LDA;
+                                tmp_addr_mode = ZIX_zp_x;
+                            end
+
+                        8'hB6: begin
+                                tmp_operation = LDX;
+                                tmp_addr_mode = ZIY_zp_y;
+                            end
+
+                        8'hB8: begin
+                                tmp_operation = CLV;
+                                tmp_addr_mode = IMP_i;
+                            end
+
+                        8'hB9: begin
+                                tmp_operation = LDA;
+                                tmp_addr_mode = AIY_a_y;
+                            end
+
+                        8'hBA: begin
+                                tmp_operation = TSX;
+                                tmp_addr_mode = IMP_i;
+                            end
+
+                        8'hBC: begin
+                                tmp_operation = LDY;
+                                tmp_addr_mode = AIX_a_x;
+                            end
+
+                        8'hBD: begin
+                                tmp_operation = LDA;
+                                tmp_addr_mode = AIX_a_x;
+                            end
+
+                        8'hBE: begin
+                                tmp_operation = LDX;
+                                tmp_addr_mode = AIY_a_y;
+                            end
+
+                        8'hC0: begin
+                                tmp_operation = CPY;
+                                tmp_addr_mode = IMM_m;
+                            end
+
+                        8'hC1: begin
+                                tmp_operation = CMP;
+                                tmp_addr_mode = ZIX_zp_x;
+                            end
+
+                        8'hC4: begin
+                                tmp_operation = CPY;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'hC5: begin
+                                tmp_operation = CMP;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'hC6: begin
+                                tmp_operation = DEC;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'hC8: begin
+                                tmp_operation = INY;
+                                tmp_addr_mode = IMP_i;
+                            end
+
+                        8'hC9: begin
+                                tmp_operation = CMP;
+                                tmp_addr_mode = IMM_m;
+                            end
+
+                        8'hCA: begin
+                                tmp_operation = DEX;
+                                tmp_addr_mode = IMP_i;
+                            end
+
+                        8'hCB: begin
+                                tmp_operation = WAI;
+                                tmp_addr_mode = IMP_i;
+                            end
+
+                        8'hCC: begin
+                                tmp_operation = CPY;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'hCD: begin
+                                tmp_operation = CMP;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'hCE: begin
+                                tmp_operation = DEC;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'hD0: begin
+                                tmp_operation = BNE;
+                                tmp_addr_mode = PCR_r;
+                            end
+
+                        8'hD1: begin
+                                tmp_operation = CMP;
+                                tmp_addr_mode = ZIIY_ZP_y;
+                            end
+
+                        8'hD2: begin
+                                tmp_operation = CMP;
+                                tmp_addr_mode = ZIY_zp_y;
+                            end
+
+                        8'hD5: begin
+                                tmp_operation = CMP;
+                                tmp_addr_mode = ZIX_zp_x;
+                            end
+
+                        8'hD6: begin
+                                tmp_operation = DEC;
+                                tmp_addr_mode = ZIX_zp_x;
+                            end
+
+                        8'hD8: begin
+                                tmp_operation = CLD;
+                                tmp_addr_mode = IMP_i;
+                            end
+
+                        8'hD9: begin
+                                tmp_operation = CMP;
+                                tmp_addr_mode = AIY_a_y;
+                            end
+
+                        8'hDA: begin
+                                tmp_operation = PHX;
+                                tmp_addr_mode = STK_s;
+                            end
+
+                        8'hDB: begin
+                                tmp_operation = STP;
                                 tmp_addr_mode = IMP_i;
                             end
 
@@ -1199,14 +1089,124 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_addr_mode = IMP_i;
                             end
 
+                        8'hDD: begin
+                                tmp_operation = CMP;
+                                tmp_addr_mode = AIX_a_x;
+                            end
+
+                        8'hDE: begin
+                                tmp_operation = DEC;
+                                tmp_addr_mode = AIX_a_x;
+                            end
+
+                        8'hE0: begin
+                                tmp_operation = CPX;
+                                tmp_addr_mode = IMM_m;
+                            end
+
+                        8'hE1: begin
+                                tmp_operation = SBC;
+                                tmp_addr_mode = ZIIX_ZP_X;
+                            end
+
+                        8'hE4: begin
+                                tmp_operation = CPX;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'hE5: begin
+                                tmp_operation = SBC;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'hE6: begin
+                                tmp_operation = INC;
+                                tmp_addr_mode = ZPG_zp;
+                            end
+
+                        8'hE8: begin
+                                tmp_operation = INX;
+                                tmp_addr_mode = IMP_i;
+                            end
+
+                        8'hEC: begin
+                                tmp_operation = CPX;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'hE9: begin
+                                tmp_operation = SBC;
+                                tmp_addr_mode = IMM_m;
+                            end
+
+                        8'hEA: begin
+                                tmp_operation = NOP;
+                                tmp_addr_mode = IMP_i;
+                            end
+
+                        8'hED: begin
+                                tmp_operation = SBC;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'hEE: begin
+                                tmp_operation = INC;
+                                tmp_addr_mode = ABS_a;
+                            end
+
+                        8'hF0: begin
+                                tmp_operation = BEQ;
+                                tmp_addr_mode = IMM_m;
+                            end
+
+                        8'hF1: begin
+                                tmp_operation = SBC;
+                                tmp_addr_mode = ZIIY_ZP_y;
+                            end
+
+                        8'hF5: begin
+                                tmp_operation = SBC;
+                                tmp_addr_mode = ZIX_zp_x;
+                            end
+
+                        8'hF6: begin
+                                tmp_operation = INC;
+                                tmp_addr_mode = ZIX_zp_x;
+                            end
+
+                        8'hF8: begin
+                                tmp_operation = SED;
+                                tmp_addr_mode = IMP_i;
+                            end
+
+                        8'hF9: begin
+                                tmp_operation = SBC;
+                                tmp_addr_mode = AIY_a_y;
+                            end
+
+                        8'hFA: begin
+                                tmp_operation = PLX;
+                                tmp_addr_mode = STK_s;
+                            end
+
+                        8'hFB: begin
+                                tmp_operation = SBC;
+                                tmp_addr_mode = ZIY_zp_y;
+                            end
+
                         8'hFC: begin
                                 tmp_operation = UEM;
                                 tmp_addr_mode = IMP_i;
                             end
 
-                        8'hCB: begin
-                                tmp_operation = WAI;
-                                tmp_addr_mode = IMP_i;
+                        8'hFD: begin
+                                tmp_operation = SBC;
+                                tmp_addr_mode = AIX_a_x;
+                            end
+
+                        8'hFE: begin
+                                tmp_operation = INC;
+                                tmp_addr_mode = AIX_a_x;
                             end
                     endcase // IR0
 
