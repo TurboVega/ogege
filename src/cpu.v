@@ -209,6 +209,9 @@ reg [2:0] reg_which;
 reg [31:0] reg_address;
 reg [31:0] reg_src_data;
 reg [31:0] reg_dst_data;
+reg [7:0] reg_code_cache [0:17];
+reg [4:0] reg_cache_count;
+reg [4:0] reg_need_count;
 
 // Temporary variables
 ProcessingStage tmp_next_stage;
@@ -231,7 +234,9 @@ logic tmp_store_half_word;
 logic tmp_store_word;
 logic tmp_store_double_word;
 logic tmp_store_quad_word;
-logic [31:0] tmp_code_word [0:1];
+logic [7:0] tmp_code_cache [0:17];
+logic [4:0] tmp_cache_count;
+logic [4:0] tmp_need_count;
 logic [2:0] tmp_src_bank;
 logic [3:0] tmp_src_index;
 logic [2:0] tmp_dst_bank;
@@ -241,8 +246,12 @@ logic [31:0] tmp_address;
 logic [31:0] tmp_src_data;
 logic [31:0] tmp_dst_data;
 logic [31:0] tmp_pc;
+logic [31:0] tmp_code_word [0:1];
+logic [13:0] tmp_next_address;
 
 reg [31:0] reg_ram[0:16383];
+
+initial $readmemh("../ram/ram.bits", reg_ram);
 
 always @(posedge i_rst or posedge i_clk) begin
     integer i;
@@ -271,6 +280,9 @@ always @(posedge i_rst or posedge i_clk) begin
         reg_address <= 0;
         reg_src_data <= 0;
         reg_dst_data <= 0;
+        reg_code_cache <= 0;
+        reg_cache_count <= 0;
+        reg_need_count <= 1;
     end else begin
         case (reg_stage)
             Decode: begin
@@ -298,14 +310,36 @@ always @(posedge i_rst or posedge i_clk) begin
                     tmp_store_word = 0;
                     tmp_store_double_word = 0;
                     tmp_store_quad_word = 0;
-
                     tmp_pc = reg_pc;
-                    tmp_code_word[0] = reg_ram[tmp_pc[15:2]];
-                    tmp_code_word[1] = reg_ram[tmp_pc[15:2] + 1];
+                    tmp_next_address reg_pc + 4;
+                    tmp_code_cache = reg_code_cache;
+                    tmp_cache_count = reg_cache_count;
+
+                    case (tmp_cache_count)
+                        0: begin
+                            tmp_code_word[0] = reg_ram[tmp_pc[15:2]];
+                            tmp_code_cache[1] = reg_ram[tmp_pc[15:2] + 1];
+                            end
+                        1: begin
+                            end
+                        2: begin
+                            end
+                        3: begin
+                            end
+                        4: begin
+                            end
+                        5: begin
+                            end
+                        6: begin
+                            end
+                        7: begin
+                            end
+                    endcase;
+
                     tmp_pc = reg_pc + 1;
 
                     // Determine operation
-                    case (tmp_code_word[0][7:0])
+                    case (tmp_code_cache[0][7:0])
 
                         8'h00: begin
                                 tmp_operation = BRK;
@@ -344,7 +378,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = RMB;
                                 tmp_6502_addr_mode = ZPG_zp;
-                                tmp_which = tmp_code_word[0][6:4];
+                                tmp_which = tmp_code_cache[0][6:4];
                             end
 
                         8'h08: begin
@@ -392,7 +426,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = BBR;
                                 tmp_6502_addr_mode = PCR_r;
-                                tmp_which = tmp_code_word[0][6:4];
+                                tmp_which = tmp_code_cache[0][6:4];
                             end
 
                         8'h10: begin
@@ -907,7 +941,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = SMB;
                                 tmp_6502_addr_mode = ZPG_zp;
-                                tmp_which = tmp_code_word[0][6:4];
+                                tmp_which = tmp_code_cache[0][6:4];
                             end
 
                         8'h88: begin
@@ -951,7 +985,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = BBS;
                                 tmp_6502_addr_mode = PCR_r;
-                                tmp_which = tmp_code_word[0][6:4];
+                                tmp_which = tmp_code_cache[0][6:4];
                             end
 
                         8'h90: begin
@@ -1419,7 +1453,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_operation = INC;
                                 tmp_6502_addr_mode = AIX_a_x;
                             end
-                    endcase // tmp_code_word[0][7:0]
+                    endcase // tmp_code_cache[0][7:0]
 
                     // See what to do next based on decoding thus far
                     if (tmp_load_code_byte) begin
