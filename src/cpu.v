@@ -209,8 +209,9 @@ reg [2:0] reg_which;
 reg [31:0] reg_address;
 reg [31:0] reg_src_data;
 reg [31:0] reg_dst_data;
-reg [7:0] reg_code_cache [0:17];
+reg [191:0] reg_code_cache; // 24 bytes
 reg [4:0] reg_cache_count;
+reg [4:0] reg_used_count;
 reg [4:0] reg_need_count;
 
 // Temporary variables
@@ -234,9 +235,6 @@ logic tmp_store_half_word;
 logic tmp_store_word;
 logic tmp_store_double_word;
 logic tmp_store_quad_word;
-logic [7:0] tmp_code_cache [0:17];
-logic [4:0] tmp_cache_count;
-logic [4:0] tmp_need_count;
 logic [2:0] tmp_src_bank;
 logic [3:0] tmp_src_index;
 logic [2:0] tmp_dst_bank;
@@ -246,12 +244,88 @@ logic [31:0] tmp_address;
 logic [31:0] tmp_src_data;
 logic [31:0] tmp_dst_data;
 logic [31:0] tmp_pc;
-logic [31:0] tmp_code_word [0:1];
-logic [13:0] tmp_next_address;
+logic [31:0] tmp_new_code;
+logic [191:0] tmp_code_cache; // 24 bytes
+logic [4:0] tmp_cache_count;
+logic [4:0] tmp_need_count;
 
 reg [31:0] reg_ram[0:16383];
 
 initial $readmemh("../ram/ram.bits", reg_ram);
+
+always @(posedge i_rst or posedge i_clk) begin
+    if (i_rst) begin
+        reg_code_cache <= 0;
+        reg_cache_count <= 0;
+        reg_need_count <= 1;
+    end else begin
+        tmp_code_cache = reg_code_cache;
+        case (reg_used_count)
+            1: tmp_code_cache = tmp_code_cache >> 1*8;
+            2: tmp_code_cache = tmp_code_cache >> 2*8;
+            3: tmp_code_cache = tmp_code_cache >> 3*8;
+            4: tmp_code_cache = tmp_code_cache >> 4*8;
+            5: tmp_code_cache = tmp_code_cache >> 5*8;
+            6: tmp_code_cache = tmp_code_cache >> 6*8;
+            7: tmp_code_cache = tmp_code_cache >> 7*8;
+            8: tmp_code_cache = tmp_code_cache >> 8*8;
+            9: tmp_code_cache = tmp_code_cache >> 9*8;
+            10: tmp_code_cache = tmp_code_cache >> 10*8;
+            11: tmp_code_cache = tmp_code_cache >> 11*8;
+            12: tmp_code_cache = tmp_code_cache >> 12*8;
+            13: tmp_code_cache = tmp_code_cache >> 13*8;
+            14: tmp_code_cache = tmp_code_cache >> 14*8;
+            15: tmp_code_cache = tmp_code_cache >> 15*8;
+            16: tmp_code_cache = tmp_code_cache >> 16*8;
+            17: tmp_code_cache = tmp_code_cache >> 17*8;
+            18: tmp_code_cache = tmp_code_cache >> 18*8;
+        endcase;
+
+        tmp_cache_count = tmp_cache_count - reg_used_count;
+
+        if (tmp_cache_count < 20) begin
+            tmp_new_code = reg_ram[reg_pc[15:2]];
+
+            case (reg_pc[1:0])
+                1: begin // 3 new bytes just loaded
+                        tmp_new_code = tmp_new_code >> 8;
+                    end
+                2: begin // 2 new bytes just loaded
+                        tmp_new_code = tmp_new_code >> 16;
+                    end
+                3: begin // 1 new byte just loaded
+                        tmp_new_code = tmp_new_code >> 24;
+                    end
+            endcase;
+
+            case (reg_cache_count)
+                0: tmp_code_cache[31+0*8:0+0*8] = tmp_new_code;
+                1: tmp_code_cache[31+1*8:0+1*8] = tmp_new_code;
+                2: tmp_code_cache[31+2*8:0+2*8] = tmp_new_code;
+                3: tmp_code_cache[31+3*8:0+3*8] = tmp_new_code;
+                4: tmp_code_cache[31+4*8:0+4*8] = tmp_new_code;
+                5: tmp_code_cache[31+5*8:0+5*8] = tmp_new_code;
+                6: tmp_code_cache[31+6*8:0+6*8] = tmp_new_code;
+                7: tmp_code_cache[31+7*8:0+7*8] = tmp_new_code;
+                8: tmp_code_cache[31+8*8:0+8*8] = tmp_new_code;
+                9: tmp_code_cache[31+9*8:0+9*8] = tmp_new_code;
+                10: tmp_code_cache[31+10*8:0+10*8] = tmp_new_code;
+                11: tmp_code_cache[31+11*8:0+11*8] = tmp_new_code;
+                12: tmp_code_cache[31+12*8:0+12*8] = tmp_new_code;
+                13: tmp_code_cache[31+13*8:0+13*8] = tmp_new_code;
+                14: tmp_code_cache[31+14*8:0+14*8] = tmp_new_code;
+                15: tmp_code_cache[31+15*8:0+15*8] = tmp_new_code;
+                16: tmp_code_cache[31+16*8:0+16*8] = tmp_new_code;
+                17: tmp_code_cache[31+17*8:0+17*8] = tmp_new_code;
+                18: tmp_code_cache[31+18*8:0+18*8] = tmp_new_code;
+                19: tmp_code_cache[31+19*8:0+19*8] = tmp_new_code;
+            endcase;
+        end
+
+        reg_code_cache <= tmp_code_cache;
+        reg_cache_count <= tmp_cache_count;
+    end
+end
 
 always @(posedge i_rst or posedge i_clk) begin
     integer i;
@@ -280,10 +354,12 @@ always @(posedge i_rst or posedge i_clk) begin
         reg_address <= 0;
         reg_src_data <= 0;
         reg_dst_data <= 0;
-        reg_code_cache <= 0;
-        reg_cache_count <= 0;
-        reg_need_count <= 1;
+        reg_used_count <= 0;
+    end else if (reg_need_count != 0) begin
+        // Make sure we have the correct number of code bytes loaded
+
     end else begin
+
         case (reg_stage)
             Decode: begin
                     // Decode instruction
@@ -311,35 +387,14 @@ always @(posedge i_rst or posedge i_clk) begin
                     tmp_store_double_word = 0;
                     tmp_store_quad_word = 0;
                     tmp_pc = reg_pc;
-                    tmp_next_address reg_pc + 4;
                     tmp_code_cache = reg_code_cache;
                     tmp_cache_count = reg_cache_count;
-
-                    case (tmp_cache_count)
-                        0: begin
-                            tmp_code_word[0] = reg_ram[tmp_pc[15:2]];
-                            tmp_code_cache[1] = reg_ram[tmp_pc[15:2] + 1];
-                            end
-                        1: begin
-                            end
-                        2: begin
-                            end
-                        3: begin
-                            end
-                        4: begin
-                            end
-                        5: begin
-                            end
-                        6: begin
-                            end
-                        7: begin
-                            end
-                    endcase;
+                    tmp_need_count = reg_need_count;
 
                     tmp_pc = reg_pc + 1;
 
                     // Determine operation
-                    case (tmp_code_cache[0][7:0])
+                    case (tmp_code_cache[7:0])
 
                         8'h00: begin
                                 tmp_operation = BRK;
@@ -378,7 +433,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = RMB;
                                 tmp_6502_addr_mode = ZPG_zp;
-                                tmp_which = tmp_code_cache[0][6:4];
+                                tmp_which = tmp_code_cache[6:4];
                             end
 
                         8'h08: begin
@@ -426,7 +481,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = BBR;
                                 tmp_6502_addr_mode = PCR_r;
-                                tmp_which = tmp_code_cache[0][6:4];
+                                tmp_which = tmp_code_cache[6:4];
                             end
 
                         8'h10: begin
@@ -941,7 +996,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = SMB;
                                 tmp_6502_addr_mode = ZPG_zp;
-                                tmp_which = tmp_code_cache[0][6:4];
+                                tmp_which = tmp_code_cache[6:4];
                             end
 
                         8'h88: begin
@@ -985,7 +1040,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = BBS;
                                 tmp_6502_addr_mode = PCR_r;
-                                tmp_which = tmp_code_cache[0][6:4];
+                                tmp_which = tmp_code_cache[6:4];
                             end
 
                         8'h90: begin
@@ -1453,7 +1508,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_operation = INC;
                                 tmp_6502_addr_mode = AIX_a_x;
                             end
-                    endcase // tmp_code_cache[0][7:0]
+                    endcase // tmp_code_cache[7:0]
 
                     // See what to do next based on decoding thus far
                     if (tmp_load_code_byte) begin
@@ -1519,6 +1574,8 @@ always @(posedge i_rst or posedge i_clk) begin
                     reg_address_mode <= tmp_6502_addr_mode;
                     reg_data_width <= tmp_data_width;
                     reg_pc <= tmp_pc;
+                    reg_cache_count = tmp_cache_count;
+                    reg_need_count = tmp_need_count;
                 end // Decode
 
         endcase // reg_stage
