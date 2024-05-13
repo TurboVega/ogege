@@ -889,11 +889,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h9A: begin
-                                if (tmp_6502)
-                                    tmp_operation = TXS;
-                                else
-                                    tmp_operation = TSX;
-
+                                tmp_operation = TXS;
                                 tmp_6502_addr_mode = IMP_i;
                             end
 
