@@ -289,6 +289,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h06: begin
                                 tmp_operation = ASL;
                                 tmp_6502_addr_mode = ZPG_zp;
+                                tmp_65832_addr_mode = ABS_a;
                             end
 
                         8'h07, 8'h17, 8'h27, 8'h37,
@@ -351,6 +352,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h12: begin
                                 tmp_operation = ORA;
                                 tmp_6502_addr_mode = ZPI_ZP;
+                                tmp_65832_addr_mode = AIA_A;
                             end
 
                         8'h14: begin
@@ -366,6 +368,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h16: begin
                                 tmp_operation = ASL;
                                 tmp_6502_addr_mode = ZIX_zp_x;
+                                tmp_65832_addr_mode = AIX_a_x;
                             end
 
                         8'h18: begin
@@ -406,9 +409,15 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h21: begin
                                 tmp_operation = AND;
                                 tmp_6502_addr_mode = ZIIX_ZP_X;
+                                tmp_65832_addr_mode = AIIX_A_X;
                             end
 
                         8'h22: begin
+                                tmp_operation = JSR;
+                                tmp_6502_addr_mode = AIA_A;
+                            end
+
+                        8'h23: begin
                                 tmp_operation = SUB;
                                 tmp_6502_addr_mode = ZIIX_ZP_X;
                                 tmp_65832_addr_mode = AIIX_A_X;
@@ -427,6 +436,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h26: begin
                                 tmp_operation = ROL;
                                 tmp_6502_addr_mode = ZPG_zp;
+                                tmp_65832_addr_mode = ABS_a;
                             end
 
                         8'h25: begin
@@ -483,6 +493,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h32: begin
                                 tmp_operation = AND;
                                 tmp_6502_addr_mode = ZPI_ZP;
+                                tmp_65832_addr_mode = AIA_A;
                             end
 
                         8'h34: begin
@@ -498,6 +509,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h36: begin
                                 tmp_operation = ROL;
                                 tmp_6502_addr_mode = ZIX_zp_x;
+                                tmp_65832_addr_mode = AIX_a_x;
                             end
 
                         8'h38: begin
@@ -549,6 +561,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h46: begin
                                 tmp_operation = LSR;
                                 tmp_6502_addr_mode = ZPG_zp;
+                                tmp_65832_addr_mode = ABS_a;
                             end
 
                         8'h48: begin
@@ -595,6 +608,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h52: begin
                                 tmp_operation = EOR;
                                 tmp_6502_addr_mode = ZPG_zp;
+                                tmp_65832_addr_mode = AIA_A;
                             end
 
                         8'h55: begin
@@ -605,6 +619,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h56: begin
                                 tmp_operation = LSR;
                                 tmp_6502_addr_mode = ZIX_zp_x;
+                                tmp_65832_addr_mode = AIX_a_x;
                             end
 
                         8'h58: begin
@@ -620,6 +635,11 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h5A: begin
                                 tmp_operation = PHY;
                                 tmp_6502_addr_mode = STK_s;
+                            end
+
+                        8'h5C: begin
+                                tmp_operation = JSR;
+                                tmp_6502_addr_mode = AIIX_A_X;
                             end
 
                         8'h5D: begin
@@ -656,6 +676,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h66: begin
                                 tmp_operation = ROR;
                                 tmp_6502_addr_mode = ZPG_zp;
+                                tmp_65832_addr_mode = ABS_a;
                             end
 
                         8'h68: begin
@@ -696,11 +717,13 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h71: begin
                                 tmp_operation = ADC;
                                 tmp_6502_addr_mode = ZIIY_ZP_y;
+                                tmp_65832_addr_mode = AIIY_A_y;
                             end
 
                         8'h72: begin
                                 tmp_operation = ADC;
                                 tmp_6502_addr_mode = ZPI_ZP;
+                                tmp_65832_addr_mode = AIA_A;
                             end
 
                         8'h74: begin
@@ -716,6 +739,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h76: begin
                                 tmp_operation = ROR;
                                 tmp_6502_addr_mode = ZIX_zp_x;
+                                tmp_65832_addr_mode = AIX_a_x;
                             end
 
                         8'h78: begin
@@ -756,6 +780,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h81: begin
                                 tmp_operation = STA;
                                 tmp_6502_addr_mode = ZIIX_ZP_X;
+                                tmp_65832_addr_mode = AIIX_A_X;
                             end
 
                         8'h84: begin
@@ -771,6 +796,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h86: begin
                                 tmp_operation = STX;
                                 tmp_6502_addr_mode = ZPG_zp;
+                                tmp_65832_addr_mode = ABS_a;
                             end
 
                         8'h87, 8'h97, 8'hA7, 8'hB7,
@@ -827,11 +853,13 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h91: begin
                                 tmp_operation = STA;
                                 tmp_6502_addr_mode = ZIIY_ZP_y;
+                                tmp_65832_addr_mode = AIIY_A_y;
                             end
 
                         8'h92: begin
                                 tmp_operation = STA;
                                 tmp_6502_addr_mode = ZIY_zp_y;
+                                tmp_65832_addr_mode = AIA_A;
                             end
 
                         8'h94: begin
@@ -847,6 +875,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'h96: begin
                                 tmp_operation = STX;
                                 tmp_6502_addr_mode = ZIY_zp_y;
+                                tmp_65832_addr_mode = AIX_a_x;
                             end
 
                         8'h98: begin
@@ -860,13 +889,22 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h9A: begin
-                                tmp_operation = TXS;
+                                if (tmp_6502)
+                                    tmp_operation = TXS;
+                                else
+                                    tmp_operation = TSX;
+
                                 tmp_6502_addr_mode = IMP_i;
                             end
 
                         8'h9C: begin
-                                tmp_operation = STZ;
-                                tmp_6502_addr_mode = ABS_a;
+                                if (tmp_6502) begin
+                                    tmp_operation = STZ;
+                                    tmp_6502_addr_mode = ABS_a;
+                                end else begin
+                                    tmp_operation = STY;
+                                    tmp_65832_addr_mode = AIX_a_x;
+                                end
                             end
 
                         8'h9D: begin
@@ -875,8 +913,13 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h9E: begin
-                                tmp_operation = STZ;
-                                tmp_6502_addr_mode = AIX_a_x;
+                                if (tmp_6502) begin
+                                    tmp_operation = STZ;
+                                    tmp_6502_addr_mode = AIX_a_x;
+                                end else begin
+                                    tmp_operation = STX;
+                                    tmp_65832_addr_mode = AIY_a_y;
+                                end
                             end
 
                         8'hA0: begin
@@ -887,6 +930,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'hA1: begin
                                 tmp_operation = LDA;
                                 tmp_6502_addr_mode = ZIIX_ZP_X;
+                                tmp_65832_addr_mode = AIIX_A_X;
                             end
 
                         8'hA2: begin
@@ -947,11 +991,13 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'hB1: begin
                                 tmp_operation = LDA;
                                 tmp_6502_addr_mode = ZIIY_ZP_y;
+                                tmp_65832_addr_mode = AIIY_A_y;
                             end
 
                         8'hB2: begin
                                 tmp_operation = LDA;
                                 tmp_6502_addr_mode = ZPI_ZP;
+                                tmp_65832_addr_mode = AIA_A;
                             end
 
                         8'hB4: begin
@@ -1007,6 +1053,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'hC1: begin
                                 tmp_operation = CMP;
                                 tmp_6502_addr_mode = ZIIX_ZP_X;
+                                tmp_65832_addr_mode = AIIX_A_X;
                             end
 
                         8'hC4: begin
@@ -1022,6 +1069,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'hC6: begin
                                 tmp_operation = DEC;
                                 tmp_6502_addr_mode = ZPG_zp;
+                                tmp_65832_addr_mode = ABS_a;
                             end
 
                         8'hC8: begin
@@ -1067,11 +1115,13 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'hD1: begin
                                 tmp_operation = CMP;
                                 tmp_6502_addr_mode = ZIIY_ZP_y;
+                                tmp_65832_addr_mode = AIIY_A_y;
                             end
 
                         8'hD2: begin
                                 tmp_operation = CMP;
                                 tmp_6502_addr_mode = ZPI_ZP;
+                                tmp_65832_addr_mode = AIA_A;
                             end
 
                         8'hD5: begin
@@ -1082,6 +1132,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'hD6: begin
                                 tmp_operation = DEC;
                                 tmp_6502_addr_mode = ZIX_zp_x;
+                                tmp_65832_addr_mode = AIX_a_x;
                             end
 
                         8'hD8: begin
@@ -1122,6 +1173,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'hE1: begin
                                 tmp_operation = SBC;
                                 tmp_6502_addr_mode = ZIIX_ZP_X;
+                                tmp_65832_addr_mode = AIIX_A_X;
                             end
 
                         8'hE4: begin
@@ -1137,6 +1189,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'hE6: begin
                                 tmp_operation = INC;
                                 tmp_6502_addr_mode = ZPG_zp;
+                                tmp_65832_addr_mode = ABS_a;
                             end
 
                         8'hE8: begin
@@ -1171,17 +1224,19 @@ always @(posedge i_rst or posedge i_clk) begin
 
                         8'hF0: begin
                                 tmp_operation = BEQ;
-                                tmp_6502_addr_mode = IMM_m;
+                                tmp_6502_addr_mode = PCR_r;
                             end
 
                         8'hF1: begin
                                 tmp_operation = SBC;
                                 tmp_6502_addr_mode = ZIIY_ZP_y;
+                                tmp_65832_addr_mode = AIIY_A_y;
                             end
 
                         8'hF2: begin
                                 tmp_operation = SBC;
                                 tmp_6502_addr_mode = ZPI_ZP;
+                                tmp_65832_addr_mode = AIA_A;
                             end
 
                         8'hF5: begin
@@ -1192,6 +1247,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         8'hF6: begin
                                 tmp_operation = INC;
                                 tmp_6502_addr_mode = ZIX_zp_x;
+                                tmp_65832_addr_mode = AIX_a_x;
                             end
 
                         8'hF8: begin
