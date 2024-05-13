@@ -188,7 +188,8 @@ typedef enum bit [2:0] {
     DST_X_8,
     DST_X_32,
     DST_Y_8,
-    DST_Y_32
+    DST_Y_32,
+    DST_P_8
 } DestinationRegister;
 
 // Processing registers
@@ -208,8 +209,6 @@ reg [2:0] reg_which;
 reg [31:0] reg_address;
 reg [31:0] reg_src_data;
 reg [31:0] reg_dst_data;
-reg [7:0] reg_instr_cache [0:31];
-reg [4:0] reg_cache_index;
 
 // Temporary variables
 ProcessingStage tmp_next_stage;
@@ -222,18 +221,17 @@ DestinationRegister tmp_dst_reg;
 logic tmp_6502;
 logic tmp_65832;
 logic tmp_overlay;
-logic tmp_load_byte;
-logic tmp_load_half_word;
-logic tmp_load_word;
-logic tmp_load_double_word;
-logic tmp_load_quad_word;
+logic tmp_load_code_byte;
+logic tmp_load_code_half_word;
+logic tmp_load_code_word;
+logic tmp_load_code_double_word;
+logic tmp_load_code_quad_word;
 logic tmp_store_byte;
 logic tmp_store_half_word;
 logic tmp_store_word;
 logic tmp_store_double_word;
 logic tmp_store_quad_word;
-logic [7:0] tmp_instr_byte;
-logic [4:0] tmp_cache_index;
+logic [31:0] tmp_code_word [0:1];
 logic [2:0] tmp_src_bank;
 logic [3:0] tmp_src_index;
 logic [2:0] tmp_dst_bank;
@@ -242,6 +240,9 @@ logic [2:0] tmp_which;
 logic [31:0] tmp_address;
 logic [31:0] tmp_src_data;
 logic [31:0] tmp_dst_data;
+logic [31:0] tmp_pc;
+
+reg [31:0] reg_ram[0:16383];
 
 always @(posedge i_rst or posedge i_clk) begin
     integer i;
@@ -251,7 +252,7 @@ always @(posedge i_rst or posedge i_clk) begin
         reg_bank[1] <= 0;
         reg_bank[2] <= 0;
         reg_bank[3] <= 0;
-        reg_pc <= 32'h0000FFFC;
+        reg_pc <= 32'd0; //32'h0000FFFC;
         reg_sp <= 32'h00000100;
         reg_status <= 8'b00110100;
         reg_data_width <= DATA_WIDTH_8;
@@ -270,10 +271,6 @@ always @(posedge i_rst or posedge i_clk) begin
         reg_address <= 0;
         reg_src_data <= 0;
         reg_dst_data <= 0;
-        reg_cache_index <= 0;
-
-        for (i = 0; i < 16; i++)
-            reg_instr_cache[i] <= 0;
     end else begin
         case (reg_stage)
             Decode: begin
@@ -289,25 +286,26 @@ always @(posedge i_rst or posedge i_clk) begin
                     tmp_6502 = reg_6502;
                     tmp_65832 = reg_65832;
                     tmp_overlay = reg_overlay;
-                    tmp_cache_index = reg_cache_index;
                     tmp_6502_addr_mode = AM_INVALID;
                     tmp_65832_addr_mode = AM_INVALID;
-                    tmp_load_byte = 0;
-                    tmp_load_half_word = 0;
-                    tmp_load_word = 0;
-                    tmp_load_double_word = 0;
-                    tmp_load_quad_word = 0;
+                    tmp_load_code_byte = 0;
+                    tmp_load_code_half_word = 0;
+                    tmp_load_code_word = 0;
+                    tmp_load_code_double_word = 0;
+                    tmp_load_code_quad_word = 0;
                     tmp_store_byte = 0;
                     tmp_store_half_word = 0;
                     tmp_store_word = 0;
                     tmp_store_double_word = 0;
                     tmp_store_quad_word = 0;
 
-                    tmp_instr_byte = reg_instr_cache[tmp_cache_index];
-                    tmp_cache_index = tmp_cache_index + 1;
+                    tmp_pc = reg_pc;
+                    tmp_code_word[0] = reg_ram[tmp_pc[15:2]];
+                    tmp_code_word[1] = reg_ram[tmp_pc[15:2] + 1];
+                    tmp_pc = reg_pc + 1;
 
                     // Determine operation
-                    case (tmp_instr_byte)
+                    case (tmp_code_word[0][7:0])
 
                         8'h00: begin
                                 tmp_operation = BRK;
@@ -346,7 +344,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = RMB;
                                 tmp_6502_addr_mode = ZPG_zp;
-                                tmp_which = tmp_instr_byte[6:4];
+                                tmp_which = tmp_code_word[0][6:4];
                             end
 
                         8'h08: begin
@@ -394,7 +392,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = BBR;
                                 tmp_6502_addr_mode = PCR_r;
-                                tmp_which = tmp_instr_byte[6:4];
+                                tmp_which = tmp_code_word[0][6:4];
                             end
 
                         8'h10: begin
@@ -508,8 +506,18 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h28: begin
-                                tmp_operation = PLP;
-                                tmp_6502_addr_mode = STK_s;
+                                // PLP
+                                if (tmp_6502) begin
+                                    tmp_address = {`ZERO_24,`SP};
+                                    tmp_dst_reg = DST_P_8;
+                                    tmp_load_code_byte = 1;
+                                    reg_sp <= {`ZERO_24,`SP + 1};
+                                end else if (tmp_65832) begin
+                                    tmp_address = reg_sp;
+                                    tmp_dst_reg = DST_P_8;
+                                    tmp_load_code_byte = 1;
+                                    reg_sp <= tmp_address + 4;
+                                end
                             end
 
                         8'h29: begin
@@ -760,12 +768,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                 if (tmp_6502) begin
                                     tmp_address = {`ZERO_24,`SP};
                                     tmp_dst_reg = DST_A_8;
-                                    tmp_load_byte = 1;
+                                    tmp_load_code_byte = 1;
                                     reg_sp <= {`ZERO_24,`SP + 1};
                                 end else if (tmp_65832) begin
                                     tmp_address = reg_sp;
                                     tmp_dst_reg = DST_A_32;
-                                    tmp_load_word = 1;
+                                    tmp_load_code_word = 1;
                                     reg_sp <= tmp_address + 4;
                                 end
                             end
@@ -842,12 +850,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                 if (tmp_6502) begin
                                     tmp_address = {`ZERO_24,`SP};
                                     tmp_dst_reg = DST_Y_8;
-                                    tmp_load_byte = 1;
+                                    tmp_load_code_byte = 1;
                                     reg_sp <= {`ZERO_24,`SP + 1};
                                 end else if (tmp_65832) begin
                                     tmp_address = reg_sp;
                                     tmp_dst_reg = DST_Y_32;
-                                    tmp_load_word = 1;
+                                    tmp_load_code_word = 1;
                                     reg_sp <= tmp_address + 4;
                                 end
                             end
@@ -899,7 +907,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = SMB;
                                 tmp_6502_addr_mode = ZPG_zp;
-                                tmp_which = tmp_instr_byte[6:4];
+                                tmp_which = tmp_code_word[0][6:4];
                             end
 
                         8'h88: begin
@@ -943,7 +951,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = BBS;
                                 tmp_6502_addr_mode = PCR_r;
-                                tmp_which = tmp_instr_byte[6:4];
+                                tmp_which = tmp_code_word[0][6:4];
                             end
 
                         8'h90: begin
@@ -1392,12 +1400,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                 if (tmp_6502) begin
                                     tmp_address = {`ZERO_24,`SP};
                                     tmp_dst_reg = DST_X_8;
-                                    tmp_load_byte = 1;
+                                    tmp_load_code_byte = 1;
                                     reg_sp <= {`ZERO_24,`SP + 1};
                                 end else if (tmp_65832) begin
                                     tmp_address = reg_sp;
                                     tmp_dst_reg = DST_X_32;
-                                    tmp_load_word = 1;
+                                    tmp_load_code_word = 1;
                                     reg_sp <= tmp_address + 4;
                                 end
                             end
@@ -1411,7 +1419,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_operation = INC;
                                 tmp_6502_addr_mode = AIX_a_x;
                             end
-                    endcase // tmp_instr_byte
+                    endcase // tmp_code_word[0][7:0]
+
+                    // See what to do next based on decoding thus far
+                    if (tmp_load_code_byte) begin
+                        tmp_src_data[7:0] = reg_ram[tmp_address];
+                    end
 
                     // See what needs to happen based on the address mode
                     case (tmp_6502_addr_mode)
@@ -1471,6 +1484,7 @@ always @(posedge i_rst or posedge i_clk) begin
                     reg_operation <= tmp_operation;
                     reg_address_mode <= tmp_6502_addr_mode;
                     reg_data_width <= tmp_data_width;
+                    reg_pc <= tmp_pc;
                 end // Decode
 
         endcase // reg_stage
