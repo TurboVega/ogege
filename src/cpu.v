@@ -29,9 +29,11 @@ typedef enum bit [2:0] {
 // CPU registers
 
 reg [127:0] reg_bank [2:0]; // Data registers for ALU
+reg [31:0] reg_a;           // Accumulator
+reg [31:0] reg_x;           // X index
+reg [31:0] reg_y;           // Y index
 reg [31:0] reg_pc;          // Program counter
 reg [31:0] reg_sp;          // Stack pointer
-reg [31:0] reg_ir;          // Instruction
 reg [7:0] reg_status;       // Processor status
 
 /*
@@ -48,21 +50,10 @@ reg [7:0] reg_status;       // Processor status
 `define RD(bank,index) reg_bank[bank][index*64+63:index*64] // each bank has 2 double-words
 `define RQ(bank) reg_bank[bank]                             // each bank has 1 quad-word
 
-`define IR0 reg_ir[7:0]     // Instruction register part 0
-`define IR1 reg_ir[15:8]    // Instruction register part 1
-`define IR2 reg_ir[23:16]   // Instruction register part 2
-`define IR3 reg_ir[31:24]   // Instruction register part 3
-
-// 6502 Registers
-
-`define A   `RB(0,0)        // Accumulator
-`define X   `RB(1,0)        // Index X
-`define Y   `RB(2,0)        // Index Y
-`define S   reg_sp[7:0]     // Stack pointer
-`define PC  reg_pc[15:0]    // Program counter
-`define PCH reg_pc[15:8]    // Program counter high
-`define PCL reg_pc[7:0]     // Program counter low
-
+`define A   reg_a[7:0]      // Accumulator (6502)
+`define X   reg_x[7:0]      // X index (6502)
+`define Y   reg_y[7:0]      // Y index (6502)
+`define SP  reg_sp[7:0]     // Stack pointer
 `define P   reg_status      // Processor status
 `define N   reg_status[7]   // Negative
 `define V   reg_status[6]   // Overflow
@@ -73,8 +64,10 @@ reg [7:0] reg_status;       // Processor status
 `define Z   reg_status[1]   // Zero
 `define C   reg_status[0]   // Carry
 
-// 6502 Address modes
+`define ZERO_24 24'd0       // 24 zero bits, for value extension
+`define ONE_24 24'hFFFFFF   // 24 zero bits, for value extension
 
+// Address modes
 typedef enum bit [4:0] {
     AM_INVALID, // Invalid (none)
     ABS_a,      // Absolute a
@@ -96,6 +89,7 @@ typedef enum bit [4:0] {
     ZIIY_ZP_y   // Zero Page Indirect Indexed with Y (zp),y
 } AddressMode;
 
+// Instruction (operation) mnemonics
 typedef enum bit [7:0] {
     ADD,
     ADC,
@@ -171,21 +165,38 @@ typedef enum bit [7:0] {
     WAI
 } Operation;
 
+// Processing stages
 typedef enum bit [2:0] {
-    Decode,         // Initial breakdown of opcode
-    ReadImmediate,  // Read immediate data
-    ReadAddress,    // Read address of data
-    Execute         // Execute the instruction
+    Decode,
+    LoadByte,
+    LoadHalfWord,
+    LoadWord,
+    LoadDoubleWord,
+    LoadQuadWord,
+    StoreByte,
+    StoreHalfWord,
+    StoreWord,
+    StoreDoubleWord,
+    StoreQuadWord
 } ProcessingStage;
 
-// 6502 Instructions
+// Classic destination registers
+typedef enum bit [2:0] {
+    DST_NONE,
+    DST_A_8,
+    DST_A_32,
+    DST_X_8,
+    DST_X_32,
+    DST_Y_8,
+    DST_Y_32
+} DestinationRegister;
 
 // Processing registers
-
 reg [2:0] reg_stage;
 reg [7:0] reg_operation;
 reg [4:0] reg_address_mode;
 reg [2:0] reg_data_width;
+reg [2:0] reg_dst_reg;
 reg reg_6502;
 reg reg_65832;
 reg reg_overlay;
@@ -197,16 +208,32 @@ reg [2:0] reg_which;
 reg [31:0] reg_address;
 reg [31:0] reg_src_data;
 reg [31:0] reg_dst_data;
+reg [7:0] reg_instr_cache [0:31];
+reg [4:0] reg_cache_index;
 
+// Temporary variables
 ProcessingStage tmp_next_stage;
 Operation tmp_operation;
 AddressMode tmp_6502_addr_mode;
 AddressMode tmp_65832_addr_mode;
 AddressMode tmp_overlay_addr_mode;
 DataWidth tmp_data_width;
+DestinationRegister tmp_dst_reg;
 logic tmp_6502;
 logic tmp_65832;
 logic tmp_overlay;
+logic tmp_load_byte;
+logic tmp_load_half_word;
+logic tmp_load_word;
+logic tmp_load_double_word;
+logic tmp_load_quad_word;
+logic tmp_store_byte;
+logic tmp_store_half_word;
+logic tmp_store_word;
+logic tmp_store_double_word;
+logic tmp_store_quad_word;
+logic [7:0] tmp_instr_byte;
+logic [4:0] tmp_cache_index;
 logic [2:0] tmp_src_bank;
 logic [3:0] tmp_src_index;
 logic [2:0] tmp_dst_bank;
@@ -217,6 +244,8 @@ logic [31:0] tmp_src_data;
 logic [31:0] tmp_dst_data;
 
 always @(posedge i_rst or posedge i_clk) begin
+    integer i;
+
     if (i_rst) begin
         reg_bank[0] <= 0;
         reg_bank[1] <= 0;
@@ -225,9 +254,8 @@ always @(posedge i_rst or posedge i_clk) begin
         reg_pc <= 32'h0000FFFC;
         reg_sp <= 32'h00000100;
         reg_status <= 8'b00110100;
-        tmp_data_width <= DATA_WIDTH_8;
-        reg_ir <= 0;
-
+        reg_data_width <= DATA_WIDTH_8;
+        reg_dst_reg <= DST_NONE;
         reg_stage <= 0;
         reg_operation <= 0;
         reg_address_mode <= 0;
@@ -242,12 +270,17 @@ always @(posedge i_rst or posedge i_clk) begin
         reg_address <= 0;
         reg_src_data <= 0;
         reg_dst_data <= 0;
+        reg_cache_index <= 0;
+
+        for (i = 0; i < 16; i++)
+            reg_instr_cache[i] <= 0;
     end else begin
         case (reg_stage)
             Decode: begin
                     // Decode instruction
-                    tmp_next_stage = Execute;
+                    tmp_next_stage = reg_stage;
                     tmp_data_width = DATA_WIDTH_8;
+                    tmp_dst_reg = DST_NONE;
                     tmp_src_bank = 0;
                     tmp_src_index = 0;
                     tmp_dst_bank = 0;
@@ -256,9 +289,25 @@ always @(posedge i_rst or posedge i_clk) begin
                     tmp_6502 = reg_6502;
                     tmp_65832 = reg_65832;
                     tmp_overlay = reg_overlay;
+                    tmp_cache_index = reg_cache_index;
+                    tmp_6502_addr_mode = AM_INVALID;
+                    tmp_65832_addr_mode = AM_INVALID;
+                    tmp_load_byte = 0;
+                    tmp_load_half_word = 0;
+                    tmp_load_word = 0;
+                    tmp_load_double_word = 0;
+                    tmp_load_quad_word = 0;
+                    tmp_store_byte = 0;
+                    tmp_store_half_word = 0;
+                    tmp_store_word = 0;
+                    tmp_store_double_word = 0;
+                    tmp_store_quad_word = 0;
+
+                    tmp_instr_byte = reg_instr_cache[tmp_cache_index];
+                    tmp_cache_index = tmp_cache_index + 1;
 
                     // Determine operation
-                    case (`IR0)
+                    case (tmp_instr_byte)
 
                         8'h00: begin
                                 tmp_operation = BRK;
@@ -297,12 +346,22 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = RMB;
                                 tmp_6502_addr_mode = ZPG_zp;
-                                tmp_which = reg_ir[6:4];
+                                tmp_which = tmp_instr_byte[6:4];
                             end
 
                         8'h08: begin
-                                tmp_operation = PHP;
-                                tmp_6502_addr_mode = STK_s;
+                                // PHP
+                                if (tmp_6502) begin
+                                    tmp_address = {`ZERO_24,`SP - 1};
+                                    tmp_dst_data = `P;
+                                    tmp_store_byte = 1;
+                                    reg_sp <= tmp_address;
+                                end else if (tmp_65832) begin
+                                    tmp_address = reg_sp - 1;
+                                    tmp_dst_data = `P;
+                                    tmp_store_byte = 1;
+                                    reg_sp <= tmp_address;
+                                end
                             end
 
                         8'h09: begin
@@ -335,7 +394,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = BBR;
                                 tmp_6502_addr_mode = PCR_r;
-                                tmp_which = reg_ir[6:4];
+                                tmp_which = tmp_instr_byte[6:4];
                             end
 
                         8'h10: begin
@@ -372,8 +431,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h18: begin
-                                tmp_operation = CLC;
-                                tmp_6502_addr_mode = IMP_i;
+                                `C <= 0; // CLC
                             end
 
                         8'h19: begin
@@ -513,8 +571,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h38: begin
-                                tmp_operation = SEC;
-                                tmp_6502_addr_mode = IMP_i;
+                                `C <= 1; // SEC
                             end
 
                         8'h39: begin
@@ -565,8 +622,18 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h48: begin
-                                tmp_operation = PHA;
-                                tmp_6502_addr_mode = STK_s;
+                                // PHA
+                                if (tmp_6502) begin
+                                    tmp_address = {`ZERO_24,`SP - 1};
+                                    tmp_dst_data = `A;
+                                    tmp_store_byte = 1;
+                                    reg_sp <= tmp_address;
+                                end else if (tmp_65832) begin
+                                    tmp_address = reg_sp - 4;
+                                    tmp_dst_data = reg_a;
+                                    tmp_store_word = 1;
+                                    reg_sp <= tmp_address;
+                                end
                             end
 
                         8'h49: begin
@@ -623,8 +690,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h58: begin
-                                tmp_operation = CLI;
-                                tmp_6502_addr_mode = IMP_i;
+                                `I <= 0; // CLI
                             end
 
                         8'h59: begin
@@ -633,8 +699,18 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h5A: begin
-                                tmp_operation = PHY;
-                                tmp_6502_addr_mode = STK_s;
+                                // PHY
+                                if (tmp_6502) begin
+                                    tmp_address = {`ZERO_24,`SP - 1};
+                                    tmp_dst_data = `Y;
+                                    tmp_store_byte = 1;
+                                    reg_sp <= tmp_address;
+                                end else if (tmp_65832) begin
+                                    tmp_address = reg_sp - 4;
+                                    tmp_dst_data = reg_y;
+                                    tmp_store_word = 1;
+                                    reg_sp <= tmp_address;
+                                end
                             end
 
                         8'h5C: begin
@@ -680,8 +756,18 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h68: begin
-                                tmp_operation = PLA;
-                                tmp_6502_addr_mode = STK_s;
+                                // PLA
+                                if (tmp_6502) begin
+                                    tmp_address = {`ZERO_24,`SP};
+                                    tmp_dst_reg = DST_A_8;
+                                    tmp_load_byte = 1;
+                                    reg_sp <= {`ZERO_24,`SP + 1};
+                                end else if (tmp_65832) begin
+                                    tmp_address = reg_sp;
+                                    tmp_dst_reg = DST_A_32;
+                                    tmp_load_word = 1;
+                                    reg_sp <= tmp_address + 4;
+                                end
                             end
 
                         8'h69: begin
@@ -743,8 +829,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h78: begin
-                                tmp_operation = SEI;
-                                tmp_6502_addr_mode = IMP_i;
+                                `I <= 1; // SEI
                             end
 
                         8'h79: begin
@@ -753,8 +838,18 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h7A: begin
-                                tmp_operation = PLY;
-                                tmp_6502_addr_mode = STK_s;
+                                // PLY
+                                if (tmp_6502) begin
+                                    tmp_address = {`ZERO_24,`SP};
+                                    tmp_dst_reg = DST_Y_8;
+                                    tmp_load_byte = 1;
+                                    reg_sp <= {`ZERO_24,`SP + 1};
+                                end else if (tmp_65832) begin
+                                    tmp_address = reg_sp;
+                                    tmp_dst_reg = DST_Y_32;
+                                    tmp_load_word = 1;
+                                    reg_sp <= tmp_address + 4;
+                                end
                             end
 
                         8'h7C: begin
@@ -804,12 +899,15 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = SMB;
                                 tmp_6502_addr_mode = ZPG_zp;
-                                tmp_which = reg_ir[6:4];
+                                tmp_which = tmp_instr_byte[6:4];
                             end
 
                         8'h88: begin
-                                tmp_operation = DEY;
-                                tmp_6502_addr_mode = IMP_i;
+                                // DEY
+                                if (tmp_6502)
+                                    `Y <= `Y - 1;
+                                else if (tmp_65832)
+                                    reg_y <= reg_y - 1;
                             end
 
                         8'h89: begin
@@ -818,8 +916,11 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h8A: begin
-                                tmp_operation = TXA;
-                                tmp_6502_addr_mode = IMP_i;
+                                // TXA
+                                if (tmp_6502)
+                                    `A <= `X;
+                                else if (tmp_65832)
+                                    reg_a <= reg_x;
                             end
 
                         8'h8C: begin
@@ -842,7 +943,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             begin
                                 tmp_operation = BBS;
                                 tmp_6502_addr_mode = PCR_r;
-                                tmp_which = reg_ir[6:4];
+                                tmp_which = tmp_instr_byte[6:4];
                             end
 
                         8'h90: begin
@@ -879,8 +980,11 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h98: begin
-                                tmp_operation = TYA;
-                                tmp_6502_addr_mode = IMP_i;
+                                // TYA
+                                if (tmp_6502)
+                                    `A <= `Y;
+                                else if (tmp_65832)
+                                    reg_a <= reg_y;
                             end
 
                         8'h99: begin
@@ -889,8 +993,11 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'h9A: begin
-                                tmp_operation = TXS;
-                                tmp_6502_addr_mode = IMP_i;
+                                // TXS
+                                if (tmp_6502)
+                                    `SP <= `X;
+                                else if (tmp_65832)
+                                    reg_sp <= reg_x;
                             end
 
                         8'h9C: begin
@@ -950,8 +1057,11 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'hA8: begin
-                                tmp_operation = TAY;
-                                tmp_6502_addr_mode = IMP_i;
+                                // TAY
+                                if (tmp_6502)
+                                    `Y <= `A;
+                                else if (tmp_65832)
+                                    reg_y <= reg_a;
                             end
 
                         8'hA9: begin
@@ -960,8 +1070,11 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'hAA: begin
-                                tmp_operation = TAX;
-                                tmp_6502_addr_mode = IMP_i;
+                                // TAX
+                                if (tmp_6502)
+                                    `X <= `A;
+                                else if (tmp_65832)
+                                    reg_x <= reg_a;
                             end
 
                         8'hAC: begin
@@ -1012,8 +1125,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'hB8: begin
-                                tmp_operation = CLV;
-                                tmp_6502_addr_mode = IMP_i;
+                                `V <= 0; // CLV
                             end
 
                         8'hB9: begin
@@ -1022,8 +1134,11 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'hBA: begin
-                                tmp_operation = TSX;
-                                tmp_6502_addr_mode = IMP_i;
+                                // TSX
+                                if (tmp_6502)
+                                    `X <= `SP;
+                                else if (tmp_65832)
+                                    reg_x <= reg_sp;
                             end
 
                         8'hBC: begin
@@ -1069,8 +1184,11 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'hC8: begin
-                                tmp_operation = INY;
-                                tmp_6502_addr_mode = IMP_i;
+                                // INY
+                                if (tmp_6502)
+                                    `Y <= `Y + 1;
+                                else if (tmp_65832)
+                                    reg_y <= reg_y + 1;
                             end
 
                         8'hC9: begin
@@ -1079,8 +1197,11 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'hCA: begin
-                                tmp_operation = DEX;
-                                tmp_6502_addr_mode = IMP_i;
+                                // DEX
+                                if (tmp_6502)
+                                    `X <= `X - 1;
+                                else if (tmp_65832)
+                                    reg_x <= reg_x - 1;
                             end
 
                         8'hCB: begin
@@ -1132,8 +1253,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'hD8: begin
-                                tmp_operation = CLD;
-                                tmp_6502_addr_mode = IMP_i;
+                                `D <= 0; // CLD
                             end
 
                         8'hD9: begin
@@ -1142,8 +1262,18 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'hDA: begin
-                                tmp_operation = PHX;
-                                tmp_6502_addr_mode = STK_s;
+                                // PHX
+                                if (tmp_6502) begin
+                                    tmp_address = {`ZERO_24,`SP - 1};
+                                    tmp_dst_data = `X;
+                                    tmp_store_byte = 1;
+                                    reg_sp <= tmp_address;
+                                end else if (tmp_65832) begin
+                                    tmp_address = reg_sp - 4;
+                                    tmp_dst_data = reg_x;
+                                    tmp_store_word = 1;
+                                    reg_sp <= tmp_address;
+                                end
                             end
 
                         8'hDB: begin
@@ -1189,8 +1319,11 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'hE8: begin
-                                tmp_operation = INX;
-                                tmp_6502_addr_mode = IMP_i;
+                                // INX
+                                if (tmp_6502)
+                                    `X <= `X + 1;
+                                else if (tmp_65832)
+                                    reg_x <= reg_x + 1;
                             end
 
                         8'hE9: begin
@@ -1199,8 +1332,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'hEA: begin
-                                tmp_operation = NOP;
-                                tmp_6502_addr_mode = IMP_i;
+                                // NOP
                             end
 
                         8'hEC: begin
@@ -1247,8 +1379,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'hF8: begin
-                                tmp_operation = SED;
-                                tmp_6502_addr_mode = IMP_i;
+                                `D <= 1; // SED
                             end
 
                         8'hF9: begin
@@ -1257,8 +1388,18 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
 
                         8'hFA: begin
-                                tmp_operation = PLX;
-                                tmp_6502_addr_mode = STK_s;
+                                // PLX
+                                if (tmp_6502) begin
+                                    tmp_address = {`ZERO_24,`SP};
+                                    tmp_dst_reg = DST_X_8;
+                                    tmp_load_byte = 1;
+                                    reg_sp <= {`ZERO_24,`SP + 1};
+                                end else if (tmp_65832) begin
+                                    tmp_address = reg_sp;
+                                    tmp_dst_reg = DST_X_32;
+                                    tmp_load_word = 1;
+                                    reg_sp <= tmp_address + 4;
+                                end
                             end
 
                         8'hFD: begin
@@ -1270,11 +1411,11 @@ always @(posedge i_rst or posedge i_clk) begin
                                 tmp_operation = INC;
                                 tmp_6502_addr_mode = AIX_a_x;
                             end
-                    endcase // IR0
+                    endcase // tmp_instr_byte
 
+                    // See what needs to happen based on the address mode
                     case (tmp_6502_addr_mode)
                         ABS_a: begin   // Absolute a
-                                tmp_next_stage = ReadAddress;
                             end
 
                         AIIX_A_X: begin   // Absolute Indexed Indirect (a,x)
@@ -1331,12 +1472,6 @@ always @(posedge i_rst or posedge i_clk) begin
                     reg_address_mode <= tmp_6502_addr_mode;
                     reg_data_width <= tmp_data_width;
                 end // Decode
-
-            ReadImmediate: begin
-                end // ReadImmediate
-
-            ReadAddress: begin
-                end // ReadAddress
 
         endcase // reg_stage
     end
