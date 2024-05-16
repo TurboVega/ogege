@@ -167,7 +167,9 @@ typedef enum bit [7:0] {
 
 // Processing stages
 typedef enum bit [2:0] {
+    FetchOpcode,
     Decode,
+    FetchParams,
     LoadByte,
     LoadHalfWord,
     LoadWord,
@@ -198,6 +200,7 @@ reg [7:0] reg_operation;
 reg [4:0] reg_address_mode;
 reg [2:0] reg_data_width;
 reg [2:0] reg_dst_reg;
+reg [31:0] reg_load_pc;
 reg reg_6502;
 reg reg_65832;
 reg reg_overlay;
@@ -212,7 +215,7 @@ reg [31:0] reg_dst_data;
 reg [191:0] reg_code_cache; // 24 bytes
 reg [4:0] reg_cache_count;
 reg [4:0] reg_used_count;
-reg [4:0] reg_need_count;
+reg [4:0] reg_instr_size;
 
 // Temporary variables
 ProcessingStage tmp_next_stage;
@@ -253,13 +256,10 @@ reg [31:0] reg_ram[0:16383];
 
 initial $readmemh("../ram/ram.bits", reg_ram);
 
+/*
 always @(posedge i_rst or posedge i_clk) begin
     if (i_rst) begin
-        reg_code_cache <= 0;
-        reg_cache_count <= 0;
-        reg_need_count <= 1;
     end else begin
-        tmp_code_cache = reg_code_cache;
         case (reg_used_count)
             1: tmp_code_cache = tmp_code_cache >> 1*8;
             2: tmp_code_cache = tmp_code_cache >> 2*8;
@@ -283,18 +283,71 @@ always @(posedge i_rst or posedge i_clk) begin
 
         tmp_cache_count = tmp_cache_count - reg_used_count;
 
-        if (tmp_cache_count < 20) begin
-            tmp_new_code = reg_ram[reg_pc[15:2]];
+        reg_code_cache <= tmp_code_cache;
+        reg_cache_count <= tmp_cache_count;
+    end
+end
+*/
 
-            case (reg_pc[1:0])
+always @(posedge i_rst or posedge i_clk) begin
+    integer i;
+    reg_used_count <= 0;
+
+    if (i_rst) begin
+        reg_bank[0] <= 0;
+        reg_bank[1] <= 0;
+        reg_bank[2] <= 0;
+        reg_bank[3] <= 0;
+        reg_pc <= 32'd0; //32'h0000FFFC;
+        reg_load_pc <= 32'd0; //32'h0000FFFC;
+        reg_sp <= 32'h00000100;
+        reg_status <= 8'b00110100;
+        reg_data_width <= DATA_WIDTH_8;
+        reg_dst_reg <= DST_NONE;
+        reg_stage <= FetchOpcode;
+        reg_operation <= 0;
+        reg_address_mode <= 0;
+        reg_data_width <= 0;
+        reg_6502 <= 1;
+        reg_65832 <= 0;
+        reg_src_bank <= 0;
+        reg_src_index <= 0;
+        reg_dst_bank <= 0;
+        reg_dst_index <= 0;
+        reg_which <= 0;
+        reg_address <= 0;
+        reg_src_data <= 0;
+        reg_dst_data <= 0;
+        reg_code_cache <= 0;
+        reg_cache_count <= 0;
+        reg_used_count <= 0;
+        reg_instr_size <= 1;
+    end else begin
+
+        // Fill the instruction cache as far as possible
+        tmp_code_cache = reg_code_cache;
+        if (reg_cache_count < 20) begin
+            tmp_new_code = reg_ram[reg_load_pc[15:2]];
+
+            case (reg_load_pc[1:0])
+                0: begin // 4 new bytes just loaded
+                        reg_cache_count <= reg_cache_count + 4;
+                        reg_load_pc <= reg_load_pc + 4;
+                    end
                 1: begin // 3 new bytes just loaded
                         tmp_new_code = tmp_new_code >> 8;
+                        reg_cache_count <= reg_cache_count + 3;
+                        reg_load_pc <= reg_load_pc + 3;
                     end
                 2: begin // 2 new bytes just loaded
                         tmp_new_code = tmp_new_code >> 16;
+                        reg_cache_count <= reg_cache_count + 2;
+                        reg_load_pc <= reg_load_pc + 2;
                     end
                 3: begin // 1 new byte just loaded
                         tmp_new_code = tmp_new_code >> 24;
+                        reg_cache_count <= reg_cache_count + 1;
+                        reg_load_pc <= reg_load_pc + 1;
                     end
             endcase;
 
@@ -322,48 +375,1142 @@ always @(posedge i_rst or posedge i_clk) begin
             endcase;
         end
 
-        reg_code_cache <= tmp_code_cache;
-        reg_cache_count <= tmp_cache_count;
-    end
-end
-
-always @(posedge i_rst or posedge i_clk) begin
-    integer i;
-
-    if (i_rst) begin
-        reg_bank[0] <= 0;
-        reg_bank[1] <= 0;
-        reg_bank[2] <= 0;
-        reg_bank[3] <= 0;
-        reg_pc <= 32'd0; //32'h0000FFFC;
-        reg_sp <= 32'h00000100;
-        reg_status <= 8'b00110100;
-        reg_data_width <= DATA_WIDTH_8;
-        reg_dst_reg <= DST_NONE;
-        reg_stage <= 0;
-        reg_operation <= 0;
-        reg_address_mode <= 0;
-        reg_data_width <= 0;
-        reg_6502 <= 1;
-        reg_65832 <= 0;
-        reg_src_bank <= 0;
-        reg_src_index <= 0;
-        reg_dst_bank <= 0;
-        reg_dst_index <= 0;
-        reg_which <= 0;
-        reg_address <= 0;
-        reg_src_data <= 0;
-        reg_dst_data <= 0;
-        reg_used_count <= 0;
-    end else if (reg_need_count != 0) begin
         // Make sure we have the correct number of code bytes loaded
+        if (reg_instr_size != 0 && reg_cache_count < reg_instr_size) begin
+            // Load more code on the next cycle
+        end else if (reg_stage == Decode) begin
+            tmp_pc = reg_pc + 1;
+
+            // Determine operation
+            case (tmp_code_cache[7:0])
+
+                8'h00: begin
+                        // BRK
+                        if (tmp_6502) begin
+                            tmp_push_count = 3;
+                            tmp_push_data[0] = tmp_pc[15:8];
+                            tmp_push_data[1] = tmp_pc[7:0];
+                            tmp_push_data[2] = {reg_status[7:5],1'b1,reg_status[3:0]};
+                            `I <= 1;
+                        end else if (tmp_65832) begin
+                            tmp_push_count = 5;
+                            tmp_push_data[0] = tmp_pc[31:24];
+                            tmp_push_data[1] = tmp_pc[23:16];
+                            tmp_push_data[2] = tmp_pc[15:8];
+                            tmp_push_data[3] = tmp_pc[7:0];
+                            tmp_push_data[4] = {reg_status[7:5],1'b1,reg_status[3:0]};
+                            `I <= 1;
+                        end
+                    end
+
+                8'h01: begin
+                        tmp_operation = ORA;
+                        tmp_6502_addr_mode = ZIIX_ZP_X;
+                        tmp_65832_addr_mode = AIIX_A_X;
+                    end
+
+                8'h02: begin
+                        tmp_operation = ADD;
+                        tmp_6502_addr_mode = ZIIX_ZP_X;
+                    end
+
+                8'h04: begin
+                        tmp_operation = TSB;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'h05: begin
+                        tmp_operation = ORA;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'h06: begin
+                        tmp_operation = ASL;
+                        tmp_6502_addr_mode = ZPG_zp;
+                        tmp_65832_addr_mode = ABS_a;
+                    end
+
+                8'h07, 8'h17, 8'h27, 8'h37,
+                8'h47, 8'h57, 8'h67, 8'h77:
+                    begin
+                        tmp_operation = RMB;
+                        tmp_6502_addr_mode = ZPG_zp;
+                        tmp_which = tmp_code_cache[6:4];
+                    end
+
+                8'h08: begin
+                        // PHP
+                        if (tmp_6502) begin
+                            tmp_push_count = 1;
+                            tmp_push_data[0] = `P;
+                        end else if (tmp_65832) begin
+                            tmp_push_count = 1;
+                            tmp_push_data[0] = `P;
+                        end
+                    end
+
+                8'h09: begin
+                        tmp_operation = ORA;
+                        tmp_6502_addr_mode = IMM_m;
+                    end
+
+                8'h0A: begin
+                        tmp_operation = ASL;
+                        tmp_6502_addr_mode = ACC_A;
+                    end
+
+                8'h0C: begin
+                        tmp_operation = TSB;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h0D: begin
+                        tmp_operation = ORA;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h0E: begin
+                        tmp_operation = ASL;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h0F, 8'h1F, 8'h2F, 8'h3F,
+                8'h4F, 8'h5F, 8'h6F, 8'h7F:
+                    begin
+                        tmp_operation = BBR;
+                        tmp_6502_addr_mode = PCR_r;
+                        tmp_which = tmp_code_cache[6:4];
+                    end
+
+                8'h10: begin
+                        tmp_operation = BPL;
+                        tmp_6502_addr_mode = PCR_r;
+                    end
+
+                8'h11: begin
+                        tmp_operation = ORA;
+                        tmp_6502_addr_mode = ZIIY_ZP_y;
+                        tmp_65832_addr_mode = AIIY_A_y;
+                    end
+
+                8'h12: begin
+                        tmp_operation = ORA;
+                        tmp_6502_addr_mode = ZPI_ZP;
+                        tmp_65832_addr_mode = AIA_A;
+                    end
+
+                8'h14: begin
+                        tmp_operation = TRB;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'h15: begin
+                        tmp_operation = ORA;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                    end
+
+                8'h16: begin
+                        tmp_operation = ASL;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                        tmp_65832_addr_mode = AIX_a_x;
+                    end
+
+                8'h18: begin
+                        `C <= 0; // CLC
+                    end
+
+                8'h19: begin
+                        tmp_operation = ORA;
+                        tmp_6502_addr_mode = AIY_a_y;
+                    end
+
+                8'h1A: begin
+                        tmp_operation = INC;
+                        tmp_6502_addr_mode = ACC_A;
+                    end
+
+                8'h1C: begin
+                        tmp_operation = TRB;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h1D: begin
+                        tmp_operation = ORA;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'h1E: begin
+                        tmp_operation = ASL;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'h20: begin
+                        tmp_operation = JSR;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h21: begin
+                        tmp_operation = AND;
+                        tmp_6502_addr_mode = ZIIX_ZP_X;
+                        tmp_65832_addr_mode = AIIX_A_X;
+                    end
+
+                8'h22: begin
+                        tmp_operation = JSR;
+                        tmp_6502_addr_mode = AIA_A;
+                    end
+
+                8'h23: begin
+                        tmp_operation = SUB;
+                        tmp_6502_addr_mode = ZIIX_ZP_X;
+                        tmp_65832_addr_mode = AIIX_A_X;
+                    end
+
+                8'h24: begin
+                        tmp_operation = BIT;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'h25: begin
+                        tmp_operation = AND;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'h26: begin
+                        tmp_operation = ROL;
+                        tmp_6502_addr_mode = ZPG_zp;
+                        tmp_65832_addr_mode = ABS_a;
+                    end
+
+                8'h25: begin
+                        tmp_operation = AND;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'h26: begin
+                        tmp_operation = ROL;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'h28: begin
+                        // PLP
+                        if (tmp_6502) begin
+                            tmp_address = {`ZERO_24,`SP};
+                            tmp_dst_reg = DST_P_8;
+                            tmp_load_code_byte = 1;
+                            reg_sp <= {`ZERO_24,`SP + 1};
+                        end else if (tmp_65832) begin
+                            tmp_address = reg_sp;
+                            tmp_dst_reg = DST_P_8;
+                            tmp_load_code_byte = 1;
+                            reg_sp <= tmp_address + 4;
+                        end
+                    end
+
+                8'h29: begin
+                        tmp_operation = AND;
+                        tmp_6502_addr_mode = IMM_m;
+                    end
+
+                8'h2A: begin
+                        tmp_operation = ROL;
+                        tmp_6502_addr_mode = ACC_A;
+                    end
+
+                8'h2C: begin
+                        tmp_operation = BIT;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h2D: begin
+                        tmp_operation = AND;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h2E: begin
+                        tmp_operation = ROL;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h30: begin
+                        tmp_operation = BMI;
+                        tmp_6502_addr_mode = PCR_r;
+                    end
+
+                8'h31: begin
+                        tmp_operation = AND;
+                        tmp_6502_addr_mode = ZIIY_ZP_y;
+                        tmp_65832_addr_mode = AIIY_A_y;
+                    end
+
+                8'h32: begin
+                        tmp_operation = AND;
+                        tmp_6502_addr_mode = ZPI_ZP;
+                        tmp_65832_addr_mode = AIA_A;
+                    end
+
+                8'h34: begin
+                        tmp_operation = BIT;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                    end
+
+                8'h35: begin
+                        tmp_operation = AND;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                    end
+
+                8'h36: begin
+                        tmp_operation = ROL;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                        tmp_65832_addr_mode = AIX_a_x;
+                    end
+
+                8'h38: begin
+                        `C <= 1; // SEC
+                    end
+
+                8'h39: begin
+                        tmp_operation = AND;
+                        tmp_6502_addr_mode = AIY_a_y;
+                    end
+
+                8'h3A: begin
+                        tmp_operation = DEC;
+                        tmp_6502_addr_mode = ACC_A;
+                    end
+
+                8'h3C: begin
+                        tmp_operation = BIT;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'h3D: begin
+                        tmp_operation = AND;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'h3E: begin
+                        tmp_operation = ROL;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'h40: begin
+                        tmp_operation = RTI;
+                        tmp_6502_addr_mode = STK_s;
+                    end
+
+                8'h41: begin
+                        tmp_operation = EOR;
+                        tmp_6502_addr_mode = ZIIX_ZP_X;
+                        tmp_65832_addr_mode = AIIX_A_X;
+                    end
+
+                8'h45: begin
+                        tmp_operation = EOR;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'h46: begin
+                        tmp_operation = LSR;
+                        tmp_6502_addr_mode = ZPG_zp;
+                        tmp_65832_addr_mode = ABS_a;
+                    end
+
+                8'h48: begin
+                        // PHA
+                        if (tmp_6502) begin
+                            tmp_push_count = 1;
+                            tmp_push_data[0] = `A;
+                        end else if (tmp_65832) begin
+                            tmp_push_count = 1;
+                            tmp_push_data[0] = `A;
+                        end
+                    end
+
+                8'h49: begin
+                        tmp_operation = EOR;
+                        tmp_6502_addr_mode = IMM_m;
+                    end
+
+                8'h4A: begin
+                        tmp_operation = LSR;
+                        tmp_6502_addr_mode = ACC_A;
+                    end
+
+                8'h4C: begin
+                        tmp_operation = JMP;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h4D: begin
+                        tmp_operation = EOR;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h4E: begin
+                        tmp_operation = LSR;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h50: begin
+                        tmp_operation = BVC;
+                        tmp_6502_addr_mode = PCR_r;
+                    end
+
+                8'h51: begin
+                        tmp_operation = EOR;
+                        tmp_6502_addr_mode = ZIIY_ZP_y;
+                        tmp_65832_addr_mode = AIIY_A_y;
+                    end
+
+                8'h52: begin
+                        tmp_operation = EOR;
+                        tmp_6502_addr_mode = ZPG_zp;
+                        tmp_65832_addr_mode = AIA_A;
+                    end
+
+                8'h55: begin
+                        tmp_operation = EOR;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                    end
+
+                8'h56: begin
+                        tmp_operation = LSR;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                        tmp_65832_addr_mode = AIX_a_x;
+                    end
+
+                8'h58: begin
+                        `I <= 0; // CLI
+                    end
+
+                8'h59: begin
+                        tmp_operation = EOR;
+                        tmp_6502_addr_mode = AIY_a_y;
+                    end
+
+                8'h5A: begin
+                        // PHY
+                        if (tmp_6502) begin
+                            tmp_push_count = 1;
+                            tmp_push_data[0] = `Y;
+                        end else if (tmp_65832) begin
+                            tmp_push_count = 1;
+                            tmp_push_data[0] = `Y;
+                        end
+                    end
+
+                8'h5C: begin
+                        tmp_operation = JSR;
+                        tmp_6502_addr_mode = AIIX_A_X;
+                    end
+
+                8'h5D: begin
+                        tmp_operation = EOR;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'h5E: begin
+                        tmp_operation = LSR;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'h60: begin
+                        tmp_operation = RTS;
+                        tmp_6502_addr_mode = STK_s;
+                    end
+
+                8'h61: begin
+                        tmp_operation = ADC;
+                        tmp_6502_addr_mode = ZIIX_ZP_X;
+                        tmp_65832_addr_mode = AIIX_A_X;
+                    end
+
+                8'h64: begin
+                        tmp_operation = STZ;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'h65: begin
+                        tmp_operation = ADC;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'h66: begin
+                        tmp_operation = ROR;
+                        tmp_6502_addr_mode = ZPG_zp;
+                        tmp_65832_addr_mode = ABS_a;
+                    end
+
+                8'h68: begin
+                        // PLA
+                        if (tmp_6502) begin
+                            tmp_pull_count = 1;
+                            tmp_pull_reg[0] = REG_A;
+                        end else if (tmp_65832) begin
+                            tmp_pull_count = 1;
+                            tmp_pull_reg[0] = REG_A;
+                        end
+                        if (tmp_6502) begin
+                            tmp_address = {`ZERO_24,`SP};
+                            tmp_dst_reg = DST_A_8;
+                            tmp_load_code_byte = 1;
+                            reg_sp <= {`ZERO_24,`SP + 1};
+                        end else if (tmp_65832) begin
+                            tmp_address = reg_sp;
+                            tmp_dst_reg = DST_A_32;
+                            tmp_load_code_word = 1;
+                            reg_sp <= tmp_address + 4;
+                        end
+                    end
+
+                8'h69: begin
+                        tmp_operation = ADC;
+                        tmp_6502_addr_mode = IMM_m;
+                    end
+
+                8'h6A: begin
+                        tmp_operation = ROR;
+                        tmp_6502_addr_mode = ACC_A;
+                    end
+
+                8'h6C: begin
+                        tmp_operation = JMP;
+                        tmp_6502_addr_mode = AIA_A;
+                    end
+
+                8'h6D: begin
+                        tmp_operation = ADC;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h6E: begin
+                        tmp_operation = ROR;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h70: begin
+                        tmp_operation = BVS;
+                        tmp_6502_addr_mode = PCR_r;
+                    end
+
+                8'h71: begin
+                        tmp_operation = ADC;
+                        tmp_6502_addr_mode = ZIIY_ZP_y;
+                        tmp_65832_addr_mode = AIIY_A_y;
+                    end
+
+                8'h72: begin
+                        tmp_operation = ADC;
+                        tmp_6502_addr_mode = ZPI_ZP;
+                        tmp_65832_addr_mode = AIA_A;
+                    end
+
+                8'h74: begin
+                        tmp_operation = STZ;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                    end
+
+                8'h75: begin
+                        tmp_operation = ADC;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                    end
+
+                8'h76: begin
+                        tmp_operation = ROR;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                        tmp_65832_addr_mode = AIX_a_x;
+                    end
+
+                8'h78: begin
+                        `I <= 1; // SEI
+                    end
+
+                8'h79: begin
+                        tmp_operation = ADC;
+                        tmp_6502_addr_mode = AIY_a_y;
+                    end
+
+                8'h7A: begin
+                        // PLY
+                        if (tmp_6502) begin
+                            tmp_address = {`ZERO_24,`SP};
+                            tmp_dst_reg = DST_Y_8;
+                            tmp_load_code_byte = 1;
+                            reg_sp <= {`ZERO_24,`SP + 1};
+                        end else if (tmp_65832) begin
+                            tmp_address = reg_sp;
+                            tmp_dst_reg = DST_Y_32;
+                            tmp_load_code_word = 1;
+                            reg_sp <= tmp_address + 4;
+                        end
+                    end
+
+                8'h7C: begin
+                        tmp_operation = JMP;
+                        tmp_6502_addr_mode = AIIX_A_X;
+                    end
+
+                8'h7D: begin
+                        tmp_operation = ADC;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'h7E: begin
+                        tmp_operation = ROR;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'h80: begin
+                        tmp_operation = BRA;
+                        tmp_6502_addr_mode = PCR_r;
+                    end
+
+                8'h81: begin
+                        tmp_operation = STA;
+                        tmp_6502_addr_mode = ZIIX_ZP_X;
+                        tmp_65832_addr_mode = AIIX_A_X;
+                    end
+
+                8'h84: begin
+                        tmp_operation = STY;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'h85: begin
+                        tmp_operation = STA;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'h86: begin
+                        tmp_operation = STX;
+                        tmp_6502_addr_mode = ZPG_zp;
+                        tmp_65832_addr_mode = ABS_a;
+                    end
+
+                8'h87, 8'h97, 8'hA7, 8'hB7,
+                8'hC7, 8'hD7, 8'hE7, 8'hF7:
+                    begin
+                        tmp_operation = SMB;
+                        tmp_6502_addr_mode = ZPG_zp;
+                        tmp_which = tmp_code_cache[6:4];
+                    end
+
+                8'h88: begin
+                        // DEY
+                        if (tmp_6502)
+                            `Y <= `Y - 1;
+                        else if (tmp_65832)
+                            reg_y <= reg_y - 1;
+                    end
+
+                8'h89: begin
+                        tmp_operation = BIT;
+                        tmp_6502_addr_mode = IMM_m;
+                    end
+
+                8'h8A: begin
+                        // TXA
+                        if (tmp_6502)
+                            `A <= `X;
+                        else if (tmp_65832)
+                            reg_a <= reg_x;
+                    end
+
+                8'h8C: begin
+                        tmp_operation = STY;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h8D: begin
+                        tmp_operation = STA;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h8E: begin
+                        tmp_operation = STX;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'h8F, 8'h9F, 8'hAF, 8'hBF,
+                8'hCF, 8'hDF, 8'hEF, 8'hFF:
+                    begin
+                        tmp_operation = BBS;
+                        tmp_6502_addr_mode = PCR_r;
+                        tmp_which = tmp_code_cache[6:4];
+                    end
+
+                8'h90: begin
+                        tmp_operation = BCC;
+                        tmp_6502_addr_mode = PCR_r;
+                    end
+
+                8'h91: begin
+                        tmp_operation = STA;
+                        tmp_6502_addr_mode = ZIIY_ZP_y;
+                        tmp_65832_addr_mode = AIIY_A_y;
+                    end
+
+                8'h92: begin
+                        tmp_operation = STA;
+                        tmp_6502_addr_mode = ZIY_zp_y;
+                        tmp_65832_addr_mode = AIA_A;
+                    end
+
+                8'h94: begin
+                        tmp_operation = STY;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                    end
+
+                8'h95: begin
+                        tmp_operation = STA;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                    end
+
+                8'h96: begin
+                        tmp_operation = STX;
+                        tmp_6502_addr_mode = ZIY_zp_y;
+                        tmp_65832_addr_mode = AIX_a_x;
+                    end
+
+                8'h98: begin
+                        // TYA
+                        if (tmp_6502)
+                            `A <= `Y;
+                        else if (tmp_65832)
+                            reg_a <= reg_y;
+                    end
+
+                8'h99: begin
+                        tmp_operation = STA;
+                        tmp_6502_addr_mode = AIY_a_y;
+                    end
+
+                8'h9A: begin
+                        // TXS
+                        if (tmp_6502)
+                            `SP <= `X;
+                        else if (tmp_65832)
+                            reg_sp <= reg_x;
+                    end
+
+                8'h9C: begin
+                        if (tmp_6502) begin
+                            tmp_operation = STZ;
+                            tmp_6502_addr_mode = ABS_a;
+                        end else begin
+                            tmp_operation = STY;
+                            tmp_65832_addr_mode = AIX_a_x;
+                        end
+                    end
+
+                8'h9D: begin
+                        tmp_operation = STA;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'h9E: begin
+                        if (tmp_6502) begin
+                            tmp_operation = STZ;
+                            tmp_6502_addr_mode = AIX_a_x;
+                        end else begin
+                            tmp_operation = STX;
+                            tmp_65832_addr_mode = AIY_a_y;
+                        end
+                    end
+
+                8'hA0: begin
+                        tmp_operation = LDY;
+                        tmp_6502_addr_mode = IMM_m;
+                    end
+
+                8'hA1: begin
+                        tmp_operation = LDA;
+                        tmp_6502_addr_mode = ZIIX_ZP_X;
+                        tmp_65832_addr_mode = AIIX_A_X;
+                    end
+
+                8'hA2: begin
+                        tmp_operation = LDX;
+                        tmp_6502_addr_mode = IMM_m;
+                    end
+
+                8'hA4: begin
+                        tmp_operation = LDY;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'hA5: begin
+                        tmp_operation = LDA;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'hA6: begin
+                        tmp_operation = LDX;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'hA8: begin
+                        // TAY
+                        if (tmp_6502)
+                            `Y <= `A;
+                        else if (tmp_65832)
+                            reg_y <= reg_a;
+                    end
+
+                8'hA9: begin
+                        tmp_operation = LDA;
+                        tmp_6502_addr_mode = IMM_m;
+                    end
+
+                8'hAA: begin
+                        // TAX
+                        if (tmp_6502)
+                            `X <= `A;
+                        else if (tmp_65832)
+                            reg_x <= reg_a;
+                    end
+
+                8'hAC: begin
+                        tmp_operation = LDY;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'hAD: begin
+                        tmp_operation = LDA;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'hAE: begin
+                        tmp_operation = LDX;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'hB0: begin
+                        tmp_operation = BCS;
+                        tmp_6502_addr_mode = PCR_r;
+                    end
+
+                8'hB1: begin
+                        tmp_operation = LDA;
+                        tmp_6502_addr_mode = ZIIY_ZP_y;
+                        tmp_65832_addr_mode = AIIY_A_y;
+                    end
+
+                8'hB2: begin
+                        tmp_operation = LDA;
+                        tmp_6502_addr_mode = ZPI_ZP;
+                        tmp_65832_addr_mode = AIA_A;
+                    end
+
+                8'hB4: begin
+                        tmp_operation = LDY;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                    end
+
+                8'hB5: begin
+                        tmp_operation = LDA;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                    end
+
+                8'hB6: begin
+                        tmp_operation = LDX;
+                        tmp_6502_addr_mode = ZIY_zp_y;
+                    end
+
+                8'hB8: begin
+                        `V <= 0; // CLV
+                    end
+
+                8'hB9: begin
+                        tmp_operation = LDA;
+                        tmp_6502_addr_mode = AIY_a_y;
+                    end
+
+                8'hBA: begin
+                        // TSX
+                        if (tmp_6502)
+                            `X <= `SP;
+                        else if (tmp_65832)
+                            reg_x <= reg_sp;
+                    end
+
+                8'hBC: begin
+                        tmp_operation = LDY;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'hBD: begin
+                        tmp_operation = LDA;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'hBE: begin
+                        tmp_operation = LDX;
+                        tmp_6502_addr_mode = AIY_a_y;
+                    end
+
+                8'hC0: begin
+                        tmp_operation = CPY;
+                        tmp_6502_addr_mode = IMM_m;
+                    end
+
+                8'hC1: begin
+                        tmp_operation = CMP;
+                        tmp_6502_addr_mode = ZIIX_ZP_X;
+                        tmp_65832_addr_mode = AIIX_A_X;
+                    end
+
+                8'hC4: begin
+                        tmp_operation = CPY;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'hC5: begin
+                        tmp_operation = CMP;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'hC6: begin
+                        tmp_operation = DEC;
+                        tmp_6502_addr_mode = ZPG_zp;
+                        tmp_65832_addr_mode = ABS_a;
+                    end
+
+                8'hC8: begin
+                        // INY
+                        if (tmp_6502)
+                            `Y <= `Y + 1;
+                        else if (tmp_65832)
+                            reg_y <= reg_y + 1;
+                    end
+
+                8'hC9: begin
+                        tmp_operation = CMP;
+                        tmp_6502_addr_mode = IMM_m;
+                    end
+
+                8'hCA: begin
+                        // DEX
+                        if (tmp_6502)
+                            `X <= `X - 1;
+                        else if (tmp_65832)
+                            reg_x <= reg_x - 1;
+                    end
+
+                8'hCB: begin
+                        tmp_operation = WAI;
+                        tmp_6502_addr_mode = IMP_i;
+                    end
+
+                8'hCC: begin
+                        tmp_operation = CPY;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'hCD: begin
+                        tmp_operation = CMP;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'hCE: begin
+                        tmp_operation = DEC;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'hD0: begin
+                        tmp_operation = BNE;
+                        tmp_6502_addr_mode = PCR_r;
+                    end
+
+                8'hD1: begin
+                        tmp_operation = CMP;
+                        tmp_6502_addr_mode = ZIIY_ZP_y;
+                        tmp_65832_addr_mode = AIIY_A_y;
+                    end
+
+                8'hD2: begin
+                        tmp_operation = CMP;
+                        tmp_6502_addr_mode = ZPI_ZP;
+                        tmp_65832_addr_mode = AIA_A;
+                    end
+
+                8'hD5: begin
+                        tmp_operation = CMP;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                    end
+
+                8'hD6: begin
+                        tmp_operation = DEC;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                        tmp_65832_addr_mode = AIX_a_x;
+                    end
+
+                8'hD8: begin
+                        `D <= 0; // CLD
+                    end
+
+                8'hD9: begin
+                        tmp_operation = CMP;
+                        tmp_6502_addr_mode = AIY_a_y;
+                    end
+
+                8'hDA: begin
+                        // PHX
+                        if (tmp_6502) begin
+                            tmp_push_count = 1;
+                            tmp_push_data[0] = `X;
+                        end else if (tmp_65832) begin
+                            tmp_push_count = 1;
+                            tmp_push_data[0] = `X;
+                        end
+                    end
+
+                8'hDB: begin
+                        tmp_operation = STP;
+                        tmp_6502_addr_mode = IMP_i;
+                    end
+
+                8'hDD: begin
+                        tmp_operation = CMP;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'hDE: begin
+                        tmp_operation = DEC;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'hE0: begin
+                        tmp_operation = CPX;
+                        tmp_6502_addr_mode = IMM_m;
+                    end
+
+                8'hE1: begin
+                        tmp_operation = SBC;
+                        tmp_6502_addr_mode = ZIIX_ZP_X;
+                        tmp_65832_addr_mode = AIIX_A_X;
+                    end
+
+                8'hE4: begin
+                        tmp_operation = CPX;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'hE5: begin
+                        tmp_operation = SBC;
+                        tmp_6502_addr_mode = ZPG_zp;
+                    end
+
+                8'hE6: begin
+                        tmp_operation = INC;
+                        tmp_6502_addr_mode = ZPG_zp;
+                        tmp_65832_addr_mode = ABS_a;
+                    end
+
+                8'hE8: begin
+                        // INX
+                        if (tmp_6502)
+                            `X <= `X + 1;
+                        else if (tmp_65832)
+                            reg_x <= reg_x + 1;
+                    end
+
+                8'hE9: begin
+                        tmp_operation = SBC;
+                        tmp_6502_addr_mode = IMM_m;
+                    end
+
+                8'hEA: begin
+                        // NOP
+                    end
+
+                8'hEC: begin
+                        tmp_operation = CPX;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'hED: begin
+                        tmp_operation = SBC;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'hEE: begin
+                        tmp_operation = INC;
+                        tmp_6502_addr_mode = ABS_a;
+                    end
+
+                8'hF0: begin
+                        tmp_operation = BEQ;
+                        tmp_6502_addr_mode = PCR_r;
+                    end
+
+                8'hF1: begin
+                        tmp_operation = SBC;
+                        tmp_6502_addr_mode = ZIIY_ZP_y;
+                        tmp_65832_addr_mode = AIIY_A_y;
+                    end
+
+                8'hF2: begin
+                        tmp_operation = SBC;
+                        tmp_6502_addr_mode = ZPI_ZP;
+                        tmp_65832_addr_mode = AIA_A;
+                    end
+
+                8'hF5: begin
+                        tmp_operation = SBC;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                    end
+
+                8'hF6: begin
+                        tmp_operation = INC;
+                        tmp_6502_addr_mode = ZIX_zp_x;
+                        tmp_65832_addr_mode = AIX_a_x;
+                    end
+
+                8'hF8: begin
+                        `D <= 1; // SED
+                    end
+
+                8'hF9: begin
+                        tmp_operation = SBC;
+                        tmp_6502_addr_mode = AIY_a_y;
+                    end
+
+                8'hFA: begin
+                        // PLX
+                        if (tmp_6502) begin
+                            tmp_address = {`ZERO_24,`SP};
+                            tmp_dst_reg = DST_X_8;
+                            tmp_load_code_byte = 1;
+                            reg_sp <= {`ZERO_24,`SP + 1};
+                        end else if (tmp_65832) begin
+                            tmp_address = reg_sp;
+                            tmp_dst_reg = DST_X_32;
+                            tmp_load_code_word = 1;
+                            reg_sp <= tmp_address + 4;
+                        end
+                    end
+
+                8'hFD: begin
+                        tmp_operation = SBC;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+
+                8'hFE: begin
+                        tmp_operation = INC;
+                        tmp_6502_addr_mode = AIX_a_x;
+                    end
+            endcase // tmp_code_cache[7:0]
+
+            reg_pc <= tmp_pc;
+        end
 
     end else begin
 
         case (reg_stage)
             Decode: begin
                     // Decode instruction
-                    tmp_next_stage = reg_stage;
                     tmp_data_width = DATA_WIDTH_8;
                     tmp_dst_reg = DST_NONE;
                     tmp_src_bank = 0;
@@ -386,1129 +1533,11 @@ always @(posedge i_rst or posedge i_clk) begin
                     tmp_store_word = 0;
                     tmp_store_double_word = 0;
                     tmp_store_quad_word = 0;
-                    tmp_pc = reg_pc;
                     tmp_code_cache = reg_code_cache;
                     tmp_cache_count = reg_cache_count;
-                    tmp_need_count = reg_need_count;
+                    tmp_need_count = reg_instr_size;
 
                     tmp_pc = reg_pc + 1;
-
-                    // Determine operation
-                    case (tmp_code_cache[7:0])
-
-                        8'h00: begin
-                                tmp_operation = BRK;
-                                tmp_6502_addr_mode = STK_s;
-                            end
-
-                        8'h01: begin
-                                tmp_operation = ORA;
-                                tmp_6502_addr_mode = ZIIX_ZP_X;
-                                tmp_65832_addr_mode = AIIX_A_X;
-                            end
-
-                        8'h02: begin
-                                tmp_operation = ADD;
-                                tmp_6502_addr_mode = ZIIX_ZP_X;
-                            end
-
-                        8'h04: begin
-                                tmp_operation = TSB;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'h05: begin
-                                tmp_operation = ORA;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'h06: begin
-                                tmp_operation = ASL;
-                                tmp_6502_addr_mode = ZPG_zp;
-                                tmp_65832_addr_mode = ABS_a;
-                            end
-
-                        8'h07, 8'h17, 8'h27, 8'h37,
-                        8'h47, 8'h57, 8'h67, 8'h77:
-                            begin
-                                tmp_operation = RMB;
-                                tmp_6502_addr_mode = ZPG_zp;
-                                tmp_which = tmp_code_cache[6:4];
-                            end
-
-                        8'h08: begin
-                                // PHP
-                                if (tmp_6502) begin
-                                    tmp_address = {`ZERO_24,`SP - 1};
-                                    tmp_dst_data = `P;
-                                    tmp_store_byte = 1;
-                                    reg_sp <= tmp_address;
-                                end else if (tmp_65832) begin
-                                    tmp_address = reg_sp - 1;
-                                    tmp_dst_data = `P;
-                                    tmp_store_byte = 1;
-                                    reg_sp <= tmp_address;
-                                end
-                            end
-
-                        8'h09: begin
-                                tmp_operation = ORA;
-                                tmp_6502_addr_mode = IMM_m;
-                            end
-
-                        8'h0A: begin
-                                tmp_operation = ASL;
-                                tmp_6502_addr_mode = ACC_A;
-                            end
-
-                        8'h0C: begin
-                                tmp_operation = TSB;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h0D: begin
-                                tmp_operation = ORA;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h0E: begin
-                                tmp_operation = ASL;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h0F, 8'h1F, 8'h2F, 8'h3F,
-                        8'h4F, 8'h5F, 8'h6F, 8'h7F:
-                            begin
-                                tmp_operation = BBR;
-                                tmp_6502_addr_mode = PCR_r;
-                                tmp_which = tmp_code_cache[6:4];
-                            end
-
-                        8'h10: begin
-                                tmp_operation = BPL;
-                                tmp_6502_addr_mode = PCR_r;
-                            end
-
-                        8'h11: begin
-                                tmp_operation = ORA;
-                                tmp_6502_addr_mode = ZIIY_ZP_y;
-                                tmp_65832_addr_mode = AIIY_A_y;
-                            end
-
-                        8'h12: begin
-                                tmp_operation = ORA;
-                                tmp_6502_addr_mode = ZPI_ZP;
-                                tmp_65832_addr_mode = AIA_A;
-                            end
-
-                        8'h14: begin
-                                tmp_operation = TRB;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'h15: begin
-                                tmp_operation = ORA;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h16: begin
-                                tmp_operation = ASL;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                                tmp_65832_addr_mode = AIX_a_x;
-                            end
-
-                        8'h18: begin
-                                `C <= 0; // CLC
-                            end
-
-                        8'h19: begin
-                                tmp_operation = ORA;
-                                tmp_6502_addr_mode = AIY_a_y;
-                            end
-
-                        8'h1A: begin
-                                tmp_operation = INC;
-                                tmp_6502_addr_mode = ACC_A;
-                            end
-
-                        8'h1C: begin
-                                tmp_operation = TRB;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h1D: begin
-                                tmp_operation = ORA;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'h1E: begin
-                                tmp_operation = ASL;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'h20: begin
-                                tmp_operation = JSR;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h21: begin
-                                tmp_operation = AND;
-                                tmp_6502_addr_mode = ZIIX_ZP_X;
-                                tmp_65832_addr_mode = AIIX_A_X;
-                            end
-
-                        8'h22: begin
-                                tmp_operation = JSR;
-                                tmp_6502_addr_mode = AIA_A;
-                            end
-
-                        8'h23: begin
-                                tmp_operation = SUB;
-                                tmp_6502_addr_mode = ZIIX_ZP_X;
-                                tmp_65832_addr_mode = AIIX_A_X;
-                            end
-
-                        8'h24: begin
-                                tmp_operation = BIT;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'h25: begin
-                                tmp_operation = AND;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'h26: begin
-                                tmp_operation = ROL;
-                                tmp_6502_addr_mode = ZPG_zp;
-                                tmp_65832_addr_mode = ABS_a;
-                            end
-
-                        8'h25: begin
-                                tmp_operation = AND;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'h26: begin
-                                tmp_operation = ROL;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'h28: begin
-                                // PLP
-                                if (tmp_6502) begin
-                                    tmp_address = {`ZERO_24,`SP};
-                                    tmp_dst_reg = DST_P_8;
-                                    tmp_load_code_byte = 1;
-                                    reg_sp <= {`ZERO_24,`SP + 1};
-                                end else if (tmp_65832) begin
-                                    tmp_address = reg_sp;
-                                    tmp_dst_reg = DST_P_8;
-                                    tmp_load_code_byte = 1;
-                                    reg_sp <= tmp_address + 4;
-                                end
-                            end
-
-                        8'h29: begin
-                                tmp_operation = AND;
-                                tmp_6502_addr_mode = IMM_m;
-                            end
-
-                        8'h2A: begin
-                                tmp_operation = ROL;
-                                tmp_6502_addr_mode = ACC_A;
-                            end
-
-                        8'h2C: begin
-                                tmp_operation = BIT;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h2D: begin
-                                tmp_operation = AND;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h2E: begin
-                                tmp_operation = ROL;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h30: begin
-                                tmp_operation = BMI;
-                                tmp_6502_addr_mode = PCR_r;
-                            end
-
-                        8'h31: begin
-                                tmp_operation = AND;
-                                tmp_6502_addr_mode = ZIIY_ZP_y;
-                                tmp_65832_addr_mode = AIIY_A_y;
-                            end
-
-                        8'h32: begin
-                                tmp_operation = AND;
-                                tmp_6502_addr_mode = ZPI_ZP;
-                                tmp_65832_addr_mode = AIA_A;
-                            end
-
-                        8'h34: begin
-                                tmp_operation = BIT;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h35: begin
-                                tmp_operation = AND;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h36: begin
-                                tmp_operation = ROL;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                                tmp_65832_addr_mode = AIX_a_x;
-                            end
-
-                        8'h38: begin
-                                `C <= 1; // SEC
-                            end
-
-                        8'h39: begin
-                                tmp_operation = AND;
-                                tmp_6502_addr_mode = AIY_a_y;
-                            end
-
-                        8'h3A: begin
-                                tmp_operation = DEC;
-                                tmp_6502_addr_mode = ACC_A;
-                            end
-
-                        8'h3C: begin
-                                tmp_operation = BIT;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'h3D: begin
-                                tmp_operation = AND;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'h3E: begin
-                                tmp_operation = ROL;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'h40: begin
-                                tmp_operation = RTI;
-                                tmp_6502_addr_mode = STK_s;
-                            end
-
-                        8'h41: begin
-                                tmp_operation = EOR;
-                                tmp_6502_addr_mode = ZIIX_ZP_X;
-                                tmp_65832_addr_mode = AIIX_A_X;
-                            end
-
-                        8'h45: begin
-                                tmp_operation = EOR;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'h46: begin
-                                tmp_operation = LSR;
-                                tmp_6502_addr_mode = ZPG_zp;
-                                tmp_65832_addr_mode = ABS_a;
-                            end
-
-                        8'h48: begin
-                                // PHA
-                                if (tmp_6502) begin
-                                    tmp_address = {`ZERO_24,`SP - 1};
-                                    tmp_dst_data = `A;
-                                    tmp_store_byte = 1;
-                                    reg_sp <= tmp_address;
-                                end else if (tmp_65832) begin
-                                    tmp_address = reg_sp - 4;
-                                    tmp_dst_data = reg_a;
-                                    tmp_store_word = 1;
-                                    reg_sp <= tmp_address;
-                                end
-                            end
-
-                        8'h49: begin
-                                tmp_operation = EOR;
-                                tmp_6502_addr_mode = IMM_m;
-                            end
-
-                        8'h4A: begin
-                                tmp_operation = LSR;
-                                tmp_6502_addr_mode = ACC_A;
-                            end
-
-                        8'h4C: begin
-                                tmp_operation = JMP;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h4D: begin
-                                tmp_operation = EOR;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h4E: begin
-                                tmp_operation = LSR;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h50: begin
-                                tmp_operation = BVC;
-                                tmp_6502_addr_mode = PCR_r;
-                            end
-
-                        8'h51: begin
-                                tmp_operation = EOR;
-                                tmp_6502_addr_mode = ZIIY_ZP_y;
-                                tmp_65832_addr_mode = AIIY_A_y;
-                            end
-
-                        8'h52: begin
-                                tmp_operation = EOR;
-                                tmp_6502_addr_mode = ZPG_zp;
-                                tmp_65832_addr_mode = AIA_A;
-                            end
-
-                        8'h55: begin
-                                tmp_operation = EOR;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h56: begin
-                                tmp_operation = LSR;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                                tmp_65832_addr_mode = AIX_a_x;
-                            end
-
-                        8'h58: begin
-                                `I <= 0; // CLI
-                            end
-
-                        8'h59: begin
-                                tmp_operation = EOR;
-                                tmp_6502_addr_mode = AIY_a_y;
-                            end
-
-                        8'h5A: begin
-                                // PHY
-                                if (tmp_6502) begin
-                                    tmp_address = {`ZERO_24,`SP - 1};
-                                    tmp_dst_data = `Y;
-                                    tmp_store_byte = 1;
-                                    reg_sp <= tmp_address;
-                                end else if (tmp_65832) begin
-                                    tmp_address = reg_sp - 4;
-                                    tmp_dst_data = reg_y;
-                                    tmp_store_word = 1;
-                                    reg_sp <= tmp_address;
-                                end
-                            end
-
-                        8'h5C: begin
-                                tmp_operation = JSR;
-                                tmp_6502_addr_mode = AIIX_A_X;
-                            end
-
-                        8'h5D: begin
-                                tmp_operation = EOR;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'h5E: begin
-                                tmp_operation = LSR;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'h60: begin
-                                tmp_operation = RTS;
-                                tmp_6502_addr_mode = STK_s;
-                            end
-
-                        8'h61: begin
-                                tmp_operation = ADC;
-                                tmp_6502_addr_mode = ZIIX_ZP_X;
-                                tmp_65832_addr_mode = AIIX_A_X;
-                            end
-
-                        8'h64: begin
-                                tmp_operation = STZ;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'h65: begin
-                                tmp_operation = ADC;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'h66: begin
-                                tmp_operation = ROR;
-                                tmp_6502_addr_mode = ZPG_zp;
-                                tmp_65832_addr_mode = ABS_a;
-                            end
-
-                        8'h68: begin
-                                // PLA
-                                if (tmp_6502) begin
-                                    tmp_address = {`ZERO_24,`SP};
-                                    tmp_dst_reg = DST_A_8;
-                                    tmp_load_code_byte = 1;
-                                    reg_sp <= {`ZERO_24,`SP + 1};
-                                end else if (tmp_65832) begin
-                                    tmp_address = reg_sp;
-                                    tmp_dst_reg = DST_A_32;
-                                    tmp_load_code_word = 1;
-                                    reg_sp <= tmp_address + 4;
-                                end
-                            end
-
-                        8'h69: begin
-                                tmp_operation = ADC;
-                                tmp_6502_addr_mode = IMM_m;
-                            end
-
-                        8'h6A: begin
-                                tmp_operation = ROR;
-                                tmp_6502_addr_mode = ACC_A;
-                            end
-
-                        8'h6C: begin
-                                tmp_operation = JMP;
-                                tmp_6502_addr_mode = AIA_A;
-                            end
-
-                        8'h6D: begin
-                                tmp_operation = ADC;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h6E: begin
-                                tmp_operation = ROR;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h70: begin
-                                tmp_operation = BVS;
-                                tmp_6502_addr_mode = PCR_r;
-                            end
-
-                        8'h71: begin
-                                tmp_operation = ADC;
-                                tmp_6502_addr_mode = ZIIY_ZP_y;
-                                tmp_65832_addr_mode = AIIY_A_y;
-                            end
-
-                        8'h72: begin
-                                tmp_operation = ADC;
-                                tmp_6502_addr_mode = ZPI_ZP;
-                                tmp_65832_addr_mode = AIA_A;
-                            end
-
-                        8'h74: begin
-                                tmp_operation = STZ;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h75: begin
-                                tmp_operation = ADC;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h76: begin
-                                tmp_operation = ROR;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                                tmp_65832_addr_mode = AIX_a_x;
-                            end
-
-                        8'h78: begin
-                                `I <= 1; // SEI
-                            end
-
-                        8'h79: begin
-                                tmp_operation = ADC;
-                                tmp_6502_addr_mode = AIY_a_y;
-                            end
-
-                        8'h7A: begin
-                                // PLY
-                                if (tmp_6502) begin
-                                    tmp_address = {`ZERO_24,`SP};
-                                    tmp_dst_reg = DST_Y_8;
-                                    tmp_load_code_byte = 1;
-                                    reg_sp <= {`ZERO_24,`SP + 1};
-                                end else if (tmp_65832) begin
-                                    tmp_address = reg_sp;
-                                    tmp_dst_reg = DST_Y_32;
-                                    tmp_load_code_word = 1;
-                                    reg_sp <= tmp_address + 4;
-                                end
-                            end
-
-                        8'h7C: begin
-                                tmp_operation = JMP;
-                                tmp_6502_addr_mode = AIIX_A_X;
-                            end
-
-                        8'h7D: begin
-                                tmp_operation = ADC;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'h7E: begin
-                                tmp_operation = ROR;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'h80: begin
-                                tmp_operation = BRA;
-                                tmp_6502_addr_mode = PCR_r;
-                            end
-
-                        8'h81: begin
-                                tmp_operation = STA;
-                                tmp_6502_addr_mode = ZIIX_ZP_X;
-                                tmp_65832_addr_mode = AIIX_A_X;
-                            end
-
-                        8'h84: begin
-                                tmp_operation = STY;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'h85: begin
-                                tmp_operation = STA;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'h86: begin
-                                tmp_operation = STX;
-                                tmp_6502_addr_mode = ZPG_zp;
-                                tmp_65832_addr_mode = ABS_a;
-                            end
-
-                        8'h87, 8'h97, 8'hA7, 8'hB7,
-                        8'hC7, 8'hD7, 8'hE7, 8'hF7:
-                            begin
-                                tmp_operation = SMB;
-                                tmp_6502_addr_mode = ZPG_zp;
-                                tmp_which = tmp_code_cache[6:4];
-                            end
-
-                        8'h88: begin
-                                // DEY
-                                if (tmp_6502)
-                                    `Y <= `Y - 1;
-                                else if (tmp_65832)
-                                    reg_y <= reg_y - 1;
-                            end
-
-                        8'h89: begin
-                                tmp_operation = BIT;
-                                tmp_6502_addr_mode = IMM_m;
-                            end
-
-                        8'h8A: begin
-                                // TXA
-                                if (tmp_6502)
-                                    `A <= `X;
-                                else if (tmp_65832)
-                                    reg_a <= reg_x;
-                            end
-
-                        8'h8C: begin
-                                tmp_operation = STY;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h8D: begin
-                                tmp_operation = STA;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h8E: begin
-                                tmp_operation = STX;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'h8F, 8'h9F, 8'hAF, 8'hBF,
-                        8'hCF, 8'hDF, 8'hEF, 8'hFF:
-                            begin
-                                tmp_operation = BBS;
-                                tmp_6502_addr_mode = PCR_r;
-                                tmp_which = tmp_code_cache[6:4];
-                            end
-
-                        8'h90: begin
-                                tmp_operation = BCC;
-                                tmp_6502_addr_mode = PCR_r;
-                            end
-
-                        8'h91: begin
-                                tmp_operation = STA;
-                                tmp_6502_addr_mode = ZIIY_ZP_y;
-                                tmp_65832_addr_mode = AIIY_A_y;
-                            end
-
-                        8'h92: begin
-                                tmp_operation = STA;
-                                tmp_6502_addr_mode = ZIY_zp_y;
-                                tmp_65832_addr_mode = AIA_A;
-                            end
-
-                        8'h94: begin
-                                tmp_operation = STY;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h95: begin
-                                tmp_operation = STA;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'h96: begin
-                                tmp_operation = STX;
-                                tmp_6502_addr_mode = ZIY_zp_y;
-                                tmp_65832_addr_mode = AIX_a_x;
-                            end
-
-                        8'h98: begin
-                                // TYA
-                                if (tmp_6502)
-                                    `A <= `Y;
-                                else if (tmp_65832)
-                                    reg_a <= reg_y;
-                            end
-
-                        8'h99: begin
-                                tmp_operation = STA;
-                                tmp_6502_addr_mode = AIY_a_y;
-                            end
-
-                        8'h9A: begin
-                                // TXS
-                                if (tmp_6502)
-                                    `SP <= `X;
-                                else if (tmp_65832)
-                                    reg_sp <= reg_x;
-                            end
-
-                        8'h9C: begin
-                                if (tmp_6502) begin
-                                    tmp_operation = STZ;
-                                    tmp_6502_addr_mode = ABS_a;
-                                end else begin
-                                    tmp_operation = STY;
-                                    tmp_65832_addr_mode = AIX_a_x;
-                                end
-                            end
-
-                        8'h9D: begin
-                                tmp_operation = STA;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'h9E: begin
-                                if (tmp_6502) begin
-                                    tmp_operation = STZ;
-                                    tmp_6502_addr_mode = AIX_a_x;
-                                end else begin
-                                    tmp_operation = STX;
-                                    tmp_65832_addr_mode = AIY_a_y;
-                                end
-                            end
-
-                        8'hA0: begin
-                                tmp_operation = LDY;
-                                tmp_6502_addr_mode = IMM_m;
-                            end
-
-                        8'hA1: begin
-                                tmp_operation = LDA;
-                                tmp_6502_addr_mode = ZIIX_ZP_X;
-                                tmp_65832_addr_mode = AIIX_A_X;
-                            end
-
-                        8'hA2: begin
-                                tmp_operation = LDX;
-                                tmp_6502_addr_mode = IMM_m;
-                            end
-
-                        8'hA4: begin
-                                tmp_operation = LDY;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'hA5: begin
-                                tmp_operation = LDA;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'hA6: begin
-                                tmp_operation = LDX;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'hA8: begin
-                                // TAY
-                                if (tmp_6502)
-                                    `Y <= `A;
-                                else if (tmp_65832)
-                                    reg_y <= reg_a;
-                            end
-
-                        8'hA9: begin
-                                tmp_operation = LDA;
-                                tmp_6502_addr_mode = IMM_m;
-                            end
-
-                        8'hAA: begin
-                                // TAX
-                                if (tmp_6502)
-                                    `X <= `A;
-                                else if (tmp_65832)
-                                    reg_x <= reg_a;
-                            end
-
-                        8'hAC: begin
-                                tmp_operation = LDY;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'hAD: begin
-                                tmp_operation = LDA;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'hAE: begin
-                                tmp_operation = LDX;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'hB0: begin
-                                tmp_operation = BCS;
-                                tmp_6502_addr_mode = PCR_r;
-                            end
-
-                        8'hB1: begin
-                                tmp_operation = LDA;
-                                tmp_6502_addr_mode = ZIIY_ZP_y;
-                                tmp_65832_addr_mode = AIIY_A_y;
-                            end
-
-                        8'hB2: begin
-                                tmp_operation = LDA;
-                                tmp_6502_addr_mode = ZPI_ZP;
-                                tmp_65832_addr_mode = AIA_A;
-                            end
-
-                        8'hB4: begin
-                                tmp_operation = LDY;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'hB5: begin
-                                tmp_operation = LDA;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'hB6: begin
-                                tmp_operation = LDX;
-                                tmp_6502_addr_mode = ZIY_zp_y;
-                            end
-
-                        8'hB8: begin
-                                `V <= 0; // CLV
-                            end
-
-                        8'hB9: begin
-                                tmp_operation = LDA;
-                                tmp_6502_addr_mode = AIY_a_y;
-                            end
-
-                        8'hBA: begin
-                                // TSX
-                                if (tmp_6502)
-                                    `X <= `SP;
-                                else if (tmp_65832)
-                                    reg_x <= reg_sp;
-                            end
-
-                        8'hBC: begin
-                                tmp_operation = LDY;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'hBD: begin
-                                tmp_operation = LDA;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'hBE: begin
-                                tmp_operation = LDX;
-                                tmp_6502_addr_mode = AIY_a_y;
-                            end
-
-                        8'hC0: begin
-                                tmp_operation = CPY;
-                                tmp_6502_addr_mode = IMM_m;
-                            end
-
-                        8'hC1: begin
-                                tmp_operation = CMP;
-                                tmp_6502_addr_mode = ZIIX_ZP_X;
-                                tmp_65832_addr_mode = AIIX_A_X;
-                            end
-
-                        8'hC4: begin
-                                tmp_operation = CPY;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'hC5: begin
-                                tmp_operation = CMP;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'hC6: begin
-                                tmp_operation = DEC;
-                                tmp_6502_addr_mode = ZPG_zp;
-                                tmp_65832_addr_mode = ABS_a;
-                            end
-
-                        8'hC8: begin
-                                // INY
-                                if (tmp_6502)
-                                    `Y <= `Y + 1;
-                                else if (tmp_65832)
-                                    reg_y <= reg_y + 1;
-                            end
-
-                        8'hC9: begin
-                                tmp_operation = CMP;
-                                tmp_6502_addr_mode = IMM_m;
-                            end
-
-                        8'hCA: begin
-                                // DEX
-                                if (tmp_6502)
-                                    `X <= `X - 1;
-                                else if (tmp_65832)
-                                    reg_x <= reg_x - 1;
-                            end
-
-                        8'hCB: begin
-                                tmp_operation = WAI;
-                                tmp_6502_addr_mode = IMP_i;
-                            end
-
-                        8'hCC: begin
-                                tmp_operation = CPY;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'hCD: begin
-                                tmp_operation = CMP;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'hCE: begin
-                                tmp_operation = DEC;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'hD0: begin
-                                tmp_operation = BNE;
-                                tmp_6502_addr_mode = PCR_r;
-                            end
-
-                        8'hD1: begin
-                                tmp_operation = CMP;
-                                tmp_6502_addr_mode = ZIIY_ZP_y;
-                                tmp_65832_addr_mode = AIIY_A_y;
-                            end
-
-                        8'hD2: begin
-                                tmp_operation = CMP;
-                                tmp_6502_addr_mode = ZPI_ZP;
-                                tmp_65832_addr_mode = AIA_A;
-                            end
-
-                        8'hD5: begin
-                                tmp_operation = CMP;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'hD6: begin
-                                tmp_operation = DEC;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                                tmp_65832_addr_mode = AIX_a_x;
-                            end
-
-                        8'hD8: begin
-                                `D <= 0; // CLD
-                            end
-
-                        8'hD9: begin
-                                tmp_operation = CMP;
-                                tmp_6502_addr_mode = AIY_a_y;
-                            end
-
-                        8'hDA: begin
-                                // PHX
-                                if (tmp_6502) begin
-                                    tmp_address = {`ZERO_24,`SP - 1};
-                                    tmp_dst_data = `X;
-                                    tmp_store_byte = 1;
-                                    reg_sp <= tmp_address;
-                                end else if (tmp_65832) begin
-                                    tmp_address = reg_sp - 4;
-                                    tmp_dst_data = reg_x;
-                                    tmp_store_word = 1;
-                                    reg_sp <= tmp_address;
-                                end
-                            end
-
-                        8'hDB: begin
-                                tmp_operation = STP;
-                                tmp_6502_addr_mode = IMP_i;
-                            end
-
-                        8'hDD: begin
-                                tmp_operation = CMP;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'hDE: begin
-                                tmp_operation = DEC;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'hE0: begin
-                                tmp_operation = CPX;
-                                tmp_6502_addr_mode = IMM_m;
-                            end
-
-                        8'hE1: begin
-                                tmp_operation = SBC;
-                                tmp_6502_addr_mode = ZIIX_ZP_X;
-                                tmp_65832_addr_mode = AIIX_A_X;
-                            end
-
-                        8'hE4: begin
-                                tmp_operation = CPX;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'hE5: begin
-                                tmp_operation = SBC;
-                                tmp_6502_addr_mode = ZPG_zp;
-                            end
-
-                        8'hE6: begin
-                                tmp_operation = INC;
-                                tmp_6502_addr_mode = ZPG_zp;
-                                tmp_65832_addr_mode = ABS_a;
-                            end
-
-                        8'hE8: begin
-                                // INX
-                                if (tmp_6502)
-                                    `X <= `X + 1;
-                                else if (tmp_65832)
-                                    reg_x <= reg_x + 1;
-                            end
-
-                        8'hE9: begin
-                                tmp_operation = SBC;
-                                tmp_6502_addr_mode = IMM_m;
-                            end
-
-                        8'hEA: begin
-                                // NOP
-                            end
-
-                        8'hEC: begin
-                                tmp_operation = CPX;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'hED: begin
-                                tmp_operation = SBC;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'hEE: begin
-                                tmp_operation = INC;
-                                tmp_6502_addr_mode = ABS_a;
-                            end
-
-                        8'hF0: begin
-                                tmp_operation = BEQ;
-                                tmp_6502_addr_mode = PCR_r;
-                            end
-
-                        8'hF1: begin
-                                tmp_operation = SBC;
-                                tmp_6502_addr_mode = ZIIY_ZP_y;
-                                tmp_65832_addr_mode = AIIY_A_y;
-                            end
-
-                        8'hF2: begin
-                                tmp_operation = SBC;
-                                tmp_6502_addr_mode = ZPI_ZP;
-                                tmp_65832_addr_mode = AIA_A;
-                            end
-
-                        8'hF5: begin
-                                tmp_operation = SBC;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                            end
-
-                        8'hF6: begin
-                                tmp_operation = INC;
-                                tmp_6502_addr_mode = ZIX_zp_x;
-                                tmp_65832_addr_mode = AIX_a_x;
-                            end
-
-                        8'hF8: begin
-                                `D <= 1; // SED
-                            end
-
-                        8'hF9: begin
-                                tmp_operation = SBC;
-                                tmp_6502_addr_mode = AIY_a_y;
-                            end
-
-                        8'hFA: begin
-                                // PLX
-                                if (tmp_6502) begin
-                                    tmp_address = {`ZERO_24,`SP};
-                                    tmp_dst_reg = DST_X_8;
-                                    tmp_load_code_byte = 1;
-                                    reg_sp <= {`ZERO_24,`SP + 1};
-                                end else if (tmp_65832) begin
-                                    tmp_address = reg_sp;
-                                    tmp_dst_reg = DST_X_32;
-                                    tmp_load_code_word = 1;
-                                    reg_sp <= tmp_address + 4;
-                                end
-                            end
-
-                        8'hFD: begin
-                                tmp_operation = SBC;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-
-                        8'hFE: begin
-                                tmp_operation = INC;
-                                tmp_6502_addr_mode = AIX_a_x;
-                            end
-                    endcase // tmp_code_cache[7:0]
 
                     // See what to do next based on decoding thus far
                     if (tmp_load_code_byte) begin
@@ -1566,16 +1595,14 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
                     endcase // tmp_6502_addr_mode
 
-                    reg_stage <= tmp_next_stage;
                     reg_6502 <= tmp_6502;
                     reg_65832 <= tmp_65832;
                     reg_overlay <= tmp_overlay;
                     reg_operation <= tmp_operation;
                     reg_address_mode <= tmp_6502_addr_mode;
                     reg_data_width <= tmp_data_width;
-                    reg_pc <= tmp_pc;
                     reg_cache_count = tmp_cache_count;
-                    reg_need_count = tmp_need_count;
+                    reg_instr_size = tmp_need_count;
                 end // Decode
 
         endcase // reg_stage
