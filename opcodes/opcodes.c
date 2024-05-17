@@ -98,11 +98,28 @@ static AddressMode ZIY_zp_y = "ZIY_zp_y";       // Zero Page Indexed with Y zp,y
 static AddressMode ZPI_ZP = "ZPI_ZP";           // Zero Page Indirect (zp)
 static AddressMode ZIIY_ZP_y = "ZIIY_ZP_y";     // Zero Page Indirect Indexed with Y (zp),y
 
-typedef enum {
-    MODE_6502,
-    MODE_65832,
-    MODE_OVERLAY
-} CpuMode;
+typedef const char* Register;
+
+static Register A = "A";
+static Register X = "X";
+static Register Y = "Y";
+static Register PC = "PC";
+static Register SP = "SP";
+static Register P = "P";
+static Register N = "`N";
+static Register V = "`V";
+static Register U = "`U";
+static Register B = "`B";
+static Register D = "`D";
+static Register I = "`I";
+static Register Z = "`Z";
+static Register C = "`C";
+
+typedef const char* CpuMode;
+
+CpuMode MODE_6502 = "MODE_6502";
+CpuMode MODE_65832 = "MODE_65832";
+CpuMode MODE_OVERLAY = "MODE_OVERLAY";
 
 void flush_mode();
 void flush_instruction();
@@ -112,6 +129,7 @@ uint8_t g_opcode;
 Operation g_operation;
 AddressMode g_address_mode;
 uint8_t g_which;
+uint8_t g_cycle;
 
 void set_mode(CpuMode cpu_mode) {
     flush_mode();
@@ -141,8 +159,62 @@ void flush_mode() {
 
 void flush_instruction() {
     if (g_operation != OP_NONE) {
+        printf("// %s %02hX %s %s\n", g_cpu_mode, g_opcode, g_operation, g_address_mode);
         g_operation = OP_NONE;
     }
+    g_cycle = 0;
+}
+
+const char* part_a(Register reg, uint8_t highest, uint8_t lowest) {
+    static char combined[20];
+    sprintf(combined, "%s[%hu:%hu]", reg, highest, lowest);
+    return combined;
+}
+
+const char* part_b(Register reg, uint8_t highest, uint8_t lowest) {
+    static char combined[20];
+    sprintf(combined, "%s[%hu:%hu]", reg, highest, lowest);
+    return combined;
+}
+
+const char* bit(uint8_t b) {
+    static char val[2];
+    sprintf(val, "%hu", b);
+    return val;
+}
+
+const char* combine3(const char* a, const char* b, const char* c) {
+    static char combined[60];
+    sprintf(combined, "%s%s%s", a, b, c);
+    return combined;
+}
+
+void write_byte(const char* address, const char* val) {
+    printf("%hu: `WRITE_BYTE(%s, %s)\n", g_cycle, address, val);
+    g_cycle++;
+}
+
+void push_byte(const char* val) {
+    write_byte(SP, val);
+}
+
+void push_half_word(const char* val) {
+
+}
+
+void push_word(const char* val) {
+    
+}
+
+void push_double_word(const char* val) {
+    
+}
+
+void push_quad_word(const char* val) {
+    
+}
+
+void assign(Register reg, uint32_t n) {
 }
 
 void gen_6502_instructions() {
@@ -152,6 +224,9 @@ void gen_6502_instructions() {
     set_opcode(0x00);
     set_operation(OP_BRK);
     set_address_mode(STK_s);
+    push_half_word(PC);
+    push_byte(combine3(part_a(P, 7, 5), bit(1), part_b(P, 3, 0)));
+    assign(I, 1);
 
     set_opcode(0x01);
     set_operation(OP_ORA);
@@ -1055,7 +1130,7 @@ void gen_6502_instructions() {
 
 void gen_65832_instructions() {
 
-    set_mode(MODE_6502);
+    set_mode(MODE_65832);
 
     set_opcode(0x00);
     set_operation(OP_BRK);
