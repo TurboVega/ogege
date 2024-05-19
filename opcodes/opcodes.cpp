@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
+#include <vector>
+#include <map>
+#include <string>
 
 typedef const char * Operation;
 
@@ -79,7 +83,7 @@ static Operation OP_WAI = "WAI";
 
 typedef const char* AddressMode;
 
-static AddressMode AM_INVALID = "AM_INVALID";   // Invalid (none)
+static AddressMode AM_NONE = "AM_NONE";         // None (invalid)
 static AddressMode ABS_a = "ABS_a";             // Absolute a
 static AddressMode AIIX_A_X = "AIIX_A_X";       // Absolute Indexed Indirect with X (a,x)
 static AddressMode AIX_a_x = "AIX_a_x";         // Absolute Indexed with X a,x
@@ -117,6 +121,7 @@ static Register C = "`C";
 
 typedef const char* CpuMode;
 
+CpuMode MODE_NONE = "MODE_NONE";
 CpuMode MODE_6502 = "MODE_6502";
 CpuMode MODE_65832 = "MODE_65832";
 CpuMode MODE_OVERLAY = "MODE_OVERLAY";
@@ -124,93 +129,156 @@ CpuMode MODE_OVERLAY = "MODE_OVERLAY";
 void flush_mode();
 void flush_instruction();
 
-CpuMode g_cpu_mode;
-uint8_t g_opcode;
-Operation g_operation;
-AddressMode g_address_mode;
-uint8_t g_which;
-uint8_t g_cycle;
+class MicroInstruction {
+    public:
+    CpuMode     cpu_mode;
+    uint8_t     opcode;
+    Operation   operation;
+    AddressMode address_mode;
+    uint8_t     which;
+    uint8_t     cycle;
+    std::string action;
+
+    MicroInstruction() {
+        cpu_mode = MODE_NONE;
+        opcode = 0;
+        operation = OP_NONE;
+        address_mode = AM_NONE;
+        which = 0;
+        cycle = 0;
+    }
+};
+
+bool operator<(const MicroInstruction& a, const MicroInstruction& b) {
+    auto cmp = strcmp(a.cpu_mode, b.cpu_mode);
+    if (cmp < 0) return true;
+    if (cmp > 0) return false;
+
+    if (a.opcode < b.opcode) return true;
+    if (a.opcode > b.opcode) return false;
+
+    cmp = strcmp(a.operation, b.operation);
+    if (cmp < 0) return true;
+    if (cmp > 0) return false;
+
+    cmp = strcmp(a.address_mode, b.address_mode);
+    if (cmp < 0) return true;
+    if (cmp > 0) return false;
+
+    if (a.cycle < b.cycle) return true;
+    if (a.cycle > b.cycle) return false;
+
+    if (a.which < b.which) return true;
+    if (a.which > b.which) return false;
+
+    return false; // items are equal
+}
+
+typedef std::vector<MicroInstruction> ActionList;
+
+MicroInstruction g_mi;
+std::map<uint8_t, ActionList> g_actions;
 
 void set_mode(CpuMode cpu_mode) {
     flush_mode();
-    g_cpu_mode = cpu_mode;
+    g_mi.cpu_mode = cpu_mode;
 }
 
 void set_opcode(uint8_t opcode) {
     flush_instruction();
-    g_opcode = opcode;
+    g_mi.opcode = opcode;
 }
 
 void set_operation(Operation operation) {
-    g_operation = operation;
+    g_mi.operation = operation;
 }
 
 void set_address_mode(AddressMode address_mode) {
-    g_address_mode = address_mode;
+    g_mi.address_mode = address_mode;
 }
 
 void set_which(uint8_t which) {
-    g_which = which;
+    g_mi.which = which;
 }
 
 void flush_mode() {
     flush_instruction();
 }
 
-void flush_instruction() {
-    if (g_operation != OP_NONE) {
-        printf("// %s %02hX %s %s\n", g_cpu_mode, g_opcode, g_operation, g_address_mode);
-        g_operation = OP_NONE;
+void save_instruction() {
+    if (g_mi.operation != OP_NONE) {
+        auto iter = g_actions.find(g_mi.cycle);
+        if (iter == g_actions.end()) {
+            ActionList action_list;
+            action_list.push_back(g_mi);
+            g_actions[g_mi.cycle] = action_list;
+        } else {
+            iter->second.push_back(g_mi);
+        }
     }
-    g_cycle = 0;
 }
 
-const char* part_a(Register reg, uint8_t highest, uint8_t lowest) {
+void flush_instruction() {
+    save_instruction();
+    g_mi.operation = OP_NONE;
+    g_mi.cycle = 0;
+}
+
+void flush_cycle() {
+    save_instruction();
+    g_mi.cycle++;
+}
+
+std::string part(Register reg, uint8_t highest, uint8_t lowest) {
     static char combined[20];
     sprintf(combined, "%s[%hu:%hu]", reg, highest, lowest);
-    return combined;
+    return std::string(combined);
 }
 
-const char* part_b(Register reg, uint8_t highest, uint8_t lowest) {
-    static char combined[20];
-    sprintf(combined, "%s[%hu:%hu]", reg, highest, lowest);
-    return combined;
-}
-
-const char* bit(uint8_t b) {
+std::string bit(uint8_t b) {
     static char val[2];
     sprintf(val, "%hu", b);
-    return val;
+    return std::string(val);
 }
 
-const char* combine3(const char* a, const char* b, const char* c) {
-    static char combined[60];
-    sprintf(combined, "%s%s%s", a, b, c);
+std::string combine3(const std::string& a,
+    const std::string& b, const std::string& c) {
+    std::string combined("{");
+    combined += a;
+    combined += ",";
+    combined += b;
+    combined += ",";
+    combined += c;
+    combined += "}";
     return combined;
 }
 
-void write_byte(const char* address, const char* val) {
-    printf("%hu: `WRITE_BYTE(%s, %s)\n", g_cycle, address, val);
-    g_cycle++;
+void write_byte(std::string& address, std::string& val) {
+    g_mi.action = "`WRITE_BYTE(";
+    g_mi.action += address;
+    g_mi.action += ",";
+    g_mi.action += val;
+    g_mi.action += ");";
+    flush_cycle();
 }
 
-void push_byte(const char* val) {
+void push_byte(std::string& val) {
     write_byte(SP, val);
 }
 
-void push_half_word(const char* val) {
+void push_half_word(std::string& val) {
 
 }
 
-void push_word(const char* val) {
+void push_word(std::string& val) {
     
 }
 
-void push_double_word(const char* val) {
+void push_double_word(std::string& val) {
     
 }
 
-void push_quad_word(const char* val) {
+void push_quad_word(std::string& val) {
     
 }
 
@@ -224,9 +292,10 @@ void gen_6502_instructions() {
     set_opcode(0x00);
     set_operation(OP_BRK);
     set_address_mode(STK_s);
-    push_half_word(PC);
-    push_byte(combine3(part_a(P, 7, 5), bit(1), part_b(P, 3, 0)));
     assign(I, 1);
+    assign(PC, 0xFFFE);
+    push_half_word(PC);
+    push_byte(combine3(part(P, 7, 5), bit(1), part(P, 3, 0)));
 
     set_opcode(0x01);
     set_operation(OP_ORA);
@@ -2593,10 +2662,12 @@ void gen_overlay_instructions() {
 }
 */
 int main() {
-    g_operation = OP_NONE;
     gen_6502_instructions();
     gen_65832_instructions();
     //gen_overlay_instructions();
     flush_mode();
+
+    //printf("// %s %02hX %s %s\n", g_mi.cpu_mode, g_mi.opcode, g_mi.operation, g_mi.address_mode);
+
     return 0;
 }
