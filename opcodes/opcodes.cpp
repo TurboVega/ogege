@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <vector>
-#include <map>
 #include <string>
+#include <algorithm>
 
 typedef const char * Operation;
 
@@ -147,37 +147,48 @@ class MicroInstruction {
         which = 0;
         cycle = 0;
     }
+
+    MicroInstruction(const MicroInstruction& mi) {
+        cpu_mode = mi.cpu_mode;
+        opcode = mi.opcode;
+        operation = mi.operation;
+        address_mode = mi.address_mode;
+        which = mi.which;
+        cycle = mi.cycle;
+        action = mi.action;
+    }
 };
 
-bool operator<(const MicroInstruction& a, const MicroInstruction& b) {
-    auto cmp = strcmp(a.cpu_mode, b.cpu_mode);
-    if (cmp < 0) return true;
-    if (cmp > 0) return false;
+int compare_mi_objects(const MicroInstruction& a, const MicroInstruction& b) {
+    if (a.cycle < b.cycle) return -1;
+    if (a.cycle > b.cycle) return 1;
 
-    if (a.opcode < b.opcode) return true;
-    if (a.opcode > b.opcode) return false;
+    auto cmp = a.action.compare(b.action);
+    if (cmp != 0) return cmp;
 
     cmp = strcmp(a.operation, b.operation);
-    if (cmp < 0) return true;
-    if (cmp > 0) return false;
+    if (cmp != 0) return cmp;
 
-    cmp = strcmp(a.address_mode, b.address_mode);
-    if (cmp < 0) return true;
-    if (cmp > 0) return false;
+    cmp = strcmp(a.cpu_mode, b.cpu_mode);
+    if (cmp != 0) return cmp;
 
-    if (a.cycle < b.cycle) return true;
-    if (a.cycle > b.cycle) return false;
+    if (a.which < b.which) return -1;
+    if (a.which > b.which) return 1;
 
-    if (a.which < b.which) return true;
-    if (a.which > b.which) return false;
+    if (a.opcode < b.opcode) return -1;
+    if (a.opcode > b.opcode) return 1;
 
-    return false; // items are equal
+    return strcmp(a.address_mode, b.address_mode);
+}
+
+bool compare_mi(const MicroInstruction& a, const MicroInstruction& b) {
+    return compare_mi_objects(a, b) < 0;
 }
 
 typedef std::vector<MicroInstruction> ActionList;
 
 MicroInstruction g_mi;
-std::map<uint8_t, ActionList> g_actions;
+ActionList g_actions;
 
 void set_mode(CpuMode cpu_mode) {
     flush_mode();
@@ -207,14 +218,7 @@ void flush_mode() {
 
 void save_instruction() {
     if (g_mi.operation != OP_NONE) {
-        auto iter = g_actions.find(g_mi.cycle);
-        if (iter == g_actions.end()) {
-            ActionList action_list;
-            action_list.push_back(g_mi);
-            g_actions[g_mi.cycle] = action_list;
-        } else {
-            iter->second.push_back(g_mi);
-        }
+        g_actions.push_back(g_mi);
     }
 }
 
@@ -241,8 +245,8 @@ std::string bit(uint8_t b) {
     return std::string(val);
 }
 
-std::string combine3(const std::string& a,
-    const std::string& b, const std::string& c) {
+std::string combine3(const char* a,
+    const char* b, const char* c) {
     std::string combined("{");
     combined += a;
     combined += ",";
@@ -253,7 +257,7 @@ std::string combine3(const std::string& a,
     return combined;
 }
 
-void write_byte(std::string& address, std::string& val) {
+void write_byte(const char* address, const char* val) {
     g_mi.action = "`WRITE_BYTE(";
     g_mi.action += address;
     g_mi.action += ",";
@@ -262,23 +266,23 @@ void write_byte(std::string& address, std::string& val) {
     flush_cycle();
 }
 
-void push_byte(std::string& val) {
+void push_byte(const char* val) {
     write_byte(SP, val);
 }
 
-void push_half_word(std::string& val) {
+void push_half_word(const char* val) {
 
 }
 
-void push_word(std::string& val) {
+void push_word(const char* val) {
     
 }
 
-void push_double_word(std::string& val) {
+void push_double_word(const char* val) {
     
 }
 
-void push_quad_word(std::string& val) {
+void push_quad_word(const char* val) {
     
 }
 
@@ -295,7 +299,11 @@ void gen_6502_instructions() {
     assign(I, 1);
     assign(PC, 0xFFFE);
     push_half_word(PC);
-    push_byte(combine3(part(P, 7, 5), bit(1), part(P, 3, 0)));
+    auto part_a = part(P, 7, 5);
+    auto part_b = bit(1);
+    auto part_c = part(P, 3, 0);
+    auto combined = combine3(part_a.c_str(), part_b.c_str(), part_b.c_str());
+    push_byte(combined.c_str());
 
     set_opcode(0x01);
     set_operation(OP_ORA);
@@ -2667,7 +2675,11 @@ int main() {
     //gen_overlay_instructions();
     flush_mode();
 
-    //printf("// %s %02hX %s %s\n", g_mi.cpu_mode, g_mi.opcode, g_mi.operation, g_mi.address_mode);
+    std::sort(g_actions.begin(), g_actions.end(), compare_mi);
+    for (auto mi = g_actions.begin(); mi != g_actions.end(); mi++) {
+        printf("// %s %02hX %s %s\n",
+            mi->cpu_mode, mi->opcode, mi->operation, mi->address_mode);
+    }
 
     return 0;
 }
