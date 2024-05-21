@@ -217,7 +217,7 @@ void flush_mode() {
 }
 
 void save_instruction() {
-    if (g_mi.operation != OP_NONE) {
+    if (g_mi.operation != OP_NONE && !g_mi.action.empty()) {
         g_actions.push_back(g_mi);
     }
 }
@@ -226,6 +226,7 @@ void flush_instruction() {
     save_instruction();
     g_mi.operation = OP_NONE;
     g_mi.cycle = 0;
+    g_mi.action.clear();
 }
 
 void flush_cycle() {
@@ -302,7 +303,7 @@ void gen_6502_instructions() {
     auto part_a = part(P, 7, 5);
     auto part_b = bit(1);
     auto part_c = part(P, 3, 0);
-    auto combined = combine3(part_a.c_str(), part_b.c_str(), part_b.c_str());
+    auto combined = combine3(part_a.c_str(), part_b.c_str(), part_c.c_str());
     push_byte(combined.c_str());
 
     set_opcode(0x01);
@@ -2669,6 +2670,76 @@ void gen_overlay_instructions() {
     flush_instruction();
 }
 */
+
+int gen_code_for_address_mode(int index) {
+    auto first_mi = &g_actions[index];
+    MicroInstruction* last_mi = NULL;
+    printf("    if (reg_address_mode == %s) begin\n", first_mi->address_mode);
+    printf("        if (\n");
+    while (index < g_actions.size()) {
+        auto mi = &g_actions[index++];
+        if (mi->cycle != first_mi->cycle) {
+            break;
+        }
+        if (mi->action != first_mi->action) {
+            break;
+        }
+        if (strcmp(mi->address_mode, first_mi->address_mode)) {
+            break;
+        }
+
+        if (last_mi && !strcmp(last_mi->operation, mi->operation)) {
+            printf("                                // also: %s %s [%02hX]\n",
+                mi->operation, mi->cpu_mode, mi->opcode);
+        } else {
+            if (mi != first_mi) {
+                printf("            || ");
+            } else {
+                printf("            ");
+            }
+            printf("reg_operation == %s // %s [%02hX]\n",
+                mi->operation, mi->cpu_mode, mi->opcode);
+            last_mi = mi;
+        }
+    }
+    printf("        ) begin\n");
+    printf("            %s\n", first_mi->action.c_str());
+    printf("        end\n");
+    printf("    end\n");
+    return index;
+}
+
+int gen_code_for_action(int index) {
+    auto first_mi = &g_actions[index];
+    while (index < g_actions.size()) {
+        auto mi = &g_actions[index];
+        if (mi->cycle != first_mi->cycle) {
+            break;
+        }
+        if (mi->action != first_mi->action) {
+            break;
+        }
+
+        index = gen_code_for_address_mode(index);
+    }
+    return index;
+}
+
+int gen_code_for_cycle(int index) {
+    auto first_mi = &g_actions[index];
+    printf("if (reg_cyle == %hu) begin\n", first_mi->cycle);
+    while (index < g_actions.size()) {
+        auto mi = &g_actions[index];
+        if (mi->cycle != first_mi->cycle) {
+            break;
+        }
+
+        index = gen_code_for_action(index);
+    }
+    printf("end // cycle %hu\n", first_mi->cycle);
+    return index;
+}
+
 int main() {
     gen_6502_instructions();
     gen_65832_instructions();
@@ -2676,10 +2747,9 @@ int main() {
     flush_mode();
 
     std::sort(g_actions.begin(), g_actions.end(), compare_mi);
-    for (auto mi = g_actions.begin(); mi != g_actions.end(); mi++) {
-        printf("// %s %02hX %s %s\n",
-            mi->cpu_mode, mi->opcode, mi->operation, mi->address_mode);
+    int index = 0;
+    while (index < g_actions.size()) {
+        index = gen_code_for_cycle(index);
     }
-
     return 0;
 }
