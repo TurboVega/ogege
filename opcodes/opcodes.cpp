@@ -220,13 +220,13 @@ void save_instruction() {
     if (g_mi.operation != OP_NONE && !g_mi.action.empty()) {
         g_actions.push_back(g_mi);
     }
+    g_mi.action.clear();
 }
 
 void flush_instruction() {
     save_instruction();
     g_mi.operation = OP_NONE;
     g_mi.cycle = 0;
-    g_mi.action.clear();
 }
 
 void flush_cycle() {
@@ -258,36 +258,56 @@ std::string combine3(const char* a,
     return combined;
 }
 
-void write_byte(const char* address, const char* val) {
-    g_mi.action = "`WRITE_BYTE(";
-    g_mi.action += address;
-    g_mi.action += ",";
-    g_mi.action += val;
-    g_mi.action += ");";
-    flush_cycle();
+std::string write_byte(const char* address, const char* val) {
+    std::string action("`WRITE_BYTE(");
+    action += address;
+    action += ",";
+    action += val;
+    action += ");";
+    return action;
 }
 
 void push_byte(const char* val) {
-    write_byte(SP, val);
+    save_instruction();
+    std::string action("tmp_SP = SP - 1;");
+    action += " ";
+    action += write_byte("tmp_SP", val);
+    action += " SP <= tmp_SP;";
+    g_mi.action = action;
+    flush_cycle();
 }
 
 void push_half_word(const char* val) {
-
+    save_instruction();
+    auto byte_val = part(val, 15, 8);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 7, 0);
+    push_byte(byte_val.c_str());
 }
 
 void push_word(const char* val) {
+    save_instruction();
     
 }
 
 void push_double_word(const char* val) {
+    save_instruction();
     
 }
 
 void push_quad_word(const char* val) {
-    
+    save_instruction();
+
 }
 
 void assign(Register reg, uint32_t n) {
+    save_instruction();
+    g_mi.action = reg;
+    g_mi.action += " <= ";
+    char nbr[11];
+    sprintf(nbr, "%u", n);
+    g_mi.action += nbr;
+    g_mi.action += ";";
 }
 
 void gen_6502_instructions() {
@@ -2677,7 +2697,7 @@ int gen_code_for_address_mode(int index) {
     printf("    if (reg_address_mode == %s) begin\n", first_mi->address_mode);
     printf("        if (\n");
     while (index < g_actions.size()) {
-        auto mi = &g_actions[index++];
+        auto mi = &g_actions[index];
         if (mi->cycle != first_mi->cycle) {
             break;
         }
@@ -2701,11 +2721,12 @@ int gen_code_for_address_mode(int index) {
                 mi->operation, mi->cpu_mode, mi->opcode);
             last_mi = mi;
         }
+        index++;
     }
     printf("        ) begin\n");
     printf("            %s\n", first_mi->action.c_str());
     printf("        end\n");
-    printf("    end\n");
+    printf("    end // %s\n", first_mi->address_mode);
     return index;
 }
 
