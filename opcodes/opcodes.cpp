@@ -237,6 +237,12 @@ void flush_cycle() {
     g_mi.cycle++;
 }
 
+std::string bit_of(Register reg, uint8_t bit_nbr) {
+    static char combined[20];
+    sprintf(combined, "%s[%hu]", reg, bit_nbr);
+    return std::string(combined);
+}
+
 std::string part(Register reg, uint8_t highest, uint8_t lowest) {
     static char combined[20];
     sprintf(combined, "%s[%hu:%hu]", reg, highest, lowest);
@@ -247,6 +253,15 @@ std::string bit(uint8_t b) {
     static char val[2];
     sprintf(val, "%hu", b);
     return std::string(val);
+}
+
+std::string combine2(const char* a, const char* b) {
+    std::string combined("{");
+    combined += a;
+    combined += ",";
+    combined += b;
+    combined += "}";
+    return combined;
 }
 
 std::string combine3(const char* a,
@@ -290,17 +305,70 @@ void push_half_word(const char* val) {
 
 void push_word(const char* val) {
     save_instruction();
-    
+    auto byte_val = part(val, 31, 24);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 23, 16);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 15, 8);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 7, 0);
+    push_byte(byte_val.c_str());
 }
 
 void push_double_word(const char* val) {
     save_instruction();
-    
+    auto byte_val = part(val, 63, 56);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 55, 48);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 47, 40);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 39, 32);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 31, 24);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 23, 16);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 15, 8);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 7, 0);
+    push_byte(byte_val.c_str());
 }
 
 void push_quad_word(const char* val) {
     save_instruction();
-
+    auto byte_val = part(val, 127, 120);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 119, 112);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 111, 104);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 103, 96);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 95, 88);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 87, 80);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 79, 72);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 71, 64);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 63, 56);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 55, 48);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 47, 40);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 39, 32);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 31, 24);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 23, 16);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 15, 8);
+    push_byte(byte_val.c_str());
+    byte_val = part(val, 7, 0);
+    push_byte(byte_val.c_str());
 }
 
 void assign(Register reg, uint32_t n) {
@@ -310,6 +378,14 @@ void assign(Register reg, uint32_t n) {
     char nbr[11];
     sprintf(nbr, "%u", n);
     g_mi.action += nbr;
+    g_mi.action += ";";
+}
+
+void assign(Register reg, const char* val) {
+    save_instruction();
+    g_mi.action = reg;
+    g_mi.action += " <= ";
+    g_mi.action += val;
     g_mi.action += ";";
 }
 
@@ -350,7 +426,7 @@ void set_flag(Register reg) {
 }
 
 void clear_flag(Register reg) {
-    assign(reg, 0);
+    assign(reg, (uint32_t)0);
 }
 
 void increment(Register reg) {
@@ -359,6 +435,186 @@ void increment(Register reg) {
 
 void decrement(Register reg) {
     sub(reg, 1);
+}
+
+void lsl_byte(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 7).c_str());
+    auto part_a = part(reg, 6, 0);
+    auto part_b = bit(0);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void lsl_half_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 15).c_str());
+    auto part_a = part(reg, 14, 0);
+    auto part_b = bit(0);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void lsl_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 31).c_str());
+    auto part_a = part(reg, 30, 0);
+    auto part_b = bit(0);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void lsl_double_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 63).c_str());
+    auto part_a = part(reg, 62, 0);
+    auto part_b = bit(0);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void lsl_quad_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 127).c_str());
+    auto part_a = part(reg, 126, 0);
+    auto part_b = bit(0);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void lsr_byte(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 0).c_str());
+    auto part_a = bit(0);
+    auto part_b = part(reg, 7, 1);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void lsr_half_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 0).c_str());
+    auto part_a = bit(0);
+    auto part_b = part(reg, 15, 1);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void lsr_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 0).c_str());
+    auto part_a = bit(0);
+    auto part_b = part(reg, 31, 1);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void lsr_double_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 0).c_str());
+    auto part_a = bit(0);
+    auto part_b = part(reg, 63, 1);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void lsr_quad_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 0).c_str());
+    auto part_a = bit(0);
+    auto part_b = part(reg, 127, 1);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void asl_byte(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 7).c_str());
+    auto part_a = part(reg, 6, 0);
+    auto part_b = bit(0);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void asl_half_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 15).c_str());
+    auto part_a = part(reg, 14, 0);
+    auto part_b = bit(0);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void asl_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 31).c_str());
+    auto part_a = part(reg, 30, 0);
+    auto part_b = bit(0);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void asl_double_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 63).c_str());
+    auto part_a = part(reg, 62, 0);
+    auto part_b = bit(0);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void asl_quad_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 127).c_str());
+    auto part_a = part(reg, 126, 0);
+    auto part_b = bit(0);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void asr_byte(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 0).c_str());
+    auto part_a = bit(7);
+    auto part_b = part(reg, 7, 1);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void asr_half_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 0).c_str());
+    auto part_a = bit(15);
+    auto part_b = part(reg, 15, 1);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void asr_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 0).c_str());
+    auto part_a = bit(31);
+    auto part_b = part(reg, 31, 1);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void asr_double_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 0).c_str());
+    auto part_a = bit(63);
+    auto part_b = part(reg, 63, 1);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
+}
+
+void asr_quad_word(Register reg) {
+    save_instruction();
+    assign(C, bit_of(reg, 0).c_str());
+    auto part_a = bit(127);
+    auto part_b = part(reg, 127, 1);
+    auto combined = combine2(part_a.c_str(), part_b.c_str());
+    assign(reg, combined.c_str());
 }
 
 void gen_6502_instructions() {
