@@ -310,6 +310,14 @@ void assign(Register reg, uint32_t n) {
     g_mi.action += ";";
 }
 
+void set_flag(Register reg) {
+    assign(reg, 1);
+}
+
+void clear_flag(Register reg) {
+    assign(reg, 0);
+}
+
 void gen_6502_instructions() {
 
     set_mode(MODE_6502);
@@ -317,7 +325,7 @@ void gen_6502_instructions() {
     set_opcode(0x00);
     set_operation(OP_BRK);
     set_address_mode(STK_s);
-    assign(I, 1);
+    set_flag(I);
     assign(PC, 0xFFFE);
     push_half_word(PC);
     auto part_a = part(P, 7, 5);
@@ -2694,7 +2702,7 @@ void gen_overlay_instructions() {
 int gen_code_for_address_mode(int index) {
     auto first_mi = &g_actions[index];
     MicroInstruction* last_mi = NULL;
-    printf("    if (reg_address_mode == %s) begin\n", first_mi->address_mode);
+    printf("    if (reg_address_mode_%s) begin\n", first_mi->address_mode);
     printf("        if (\n");
     while (index < g_actions.size()) {
         auto mi = &g_actions[index];
@@ -2717,7 +2725,7 @@ int gen_code_for_address_mode(int index) {
             } else {
                 printf("            ");
             }
-            printf("reg_operation == %s // %s [%02hX]\n",
+            printf("reg_operation_%s // %s [%02hX]\n",
                 mi->operation, mi->cpu_mode, mi->opcode);
             last_mi = mi;
         }
