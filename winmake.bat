@@ -103,5 +103,6 @@ if "%1"=="clean" (
   del *.pin 2>NUL
   del *.cfg* 2>NUL
   del *.cdf 2>NUL
+  del opcodes/opcodes 2>NUL
   exit /b 0
 )

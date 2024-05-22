@@ -66,6 +66,7 @@ clean:
 	$(RM) *.log *_synth.v *.history *.txt *.refwire *.refparam
 	$(RM) *.refcomp *.pos *.pathes *.path_struc *.net *.id *.prn
 	$(RM) *_00.v *_00pre* *.used *.sdf *.place *.pin *.cfg* *.cdf *.idh
+	$(RM) opcodes/opcodes
 
 .SECONDARY:
 .PHONY: all jtag jtag-flash clean
