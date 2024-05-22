@@ -163,7 +163,10 @@ int compare_mi_objects(const MicroInstruction& a, const MicroInstruction& b) {
     if (a.cycle < b.cycle) return -1;
     if (a.cycle > b.cycle) return 1;
 
-    auto cmp = a.action.compare(b.action);
+    auto cmp = strcmp(a.address_mode, b.address_mode);
+    if (cmp != 0) return cmp;
+
+    cmp = a.action.compare(b.action);
     if (cmp != 0) return cmp;
 
     cmp = strcmp(a.operation, b.operation);
@@ -178,7 +181,7 @@ int compare_mi_objects(const MicroInstruction& a, const MicroInstruction& b) {
     if (a.opcode < b.opcode) return -1;
     if (a.opcode > b.opcode) return 1;
 
-    return strcmp(a.address_mode, b.address_mode);
+    return 0; // equal
 }
 
 bool compare_mi(const MicroInstruction& a, const MicroInstruction& b) {
@@ -2773,20 +2776,19 @@ void gen_overlay_instructions() {
 }
 */
 
-int gen_code_for_address_mode(int index) {
+int gen_code_for_action(int index) {
     auto first_mi = &g_actions[index];
     MicroInstruction* last_mi = NULL;
-    printf("    if (reg_address_mode_%s) begin\n", first_mi->address_mode);
     printf("        if (\n");
     while (index < g_actions.size()) {
         auto mi = &g_actions[index];
         if (mi->cycle != first_mi->cycle) {
             break;
         }
-        if (mi->action != first_mi->action) {
+        if (strcmp(mi->address_mode, first_mi->address_mode)) {
             break;
         }
-        if (strcmp(mi->address_mode, first_mi->address_mode)) {
+        if (mi->action != first_mi->action) {
             break;
         }
 
@@ -2808,23 +2810,24 @@ int gen_code_for_address_mode(int index) {
     printf("        ) begin\n");
     printf("            %s\n", first_mi->action.c_str());
     printf("        end\n");
-    printf("    end // %s\n", first_mi->address_mode);
     return index;
 }
 
-int gen_code_for_action(int index) {
+int gen_code_for_address_mode(int index) {
     auto first_mi = &g_actions[index];
+    printf("    if (reg_address_mode_%s) begin\n", first_mi->address_mode);
     while (index < g_actions.size()) {
         auto mi = &g_actions[index];
         if (mi->cycle != first_mi->cycle) {
             break;
         }
-        if (mi->action != first_mi->action) {
+        if (strcmp(mi->address_mode, first_mi->address_mode)) {
             break;
         }
 
-        index = gen_code_for_address_mode(index);
+        index = gen_code_for_action(index);
     }
+    printf("    end // %s\n", first_mi->address_mode);
     return index;
 }
 
@@ -2837,7 +2840,7 @@ int gen_code_for_cycle(int index) {
             break;
         }
 
-        index = gen_code_for_action(index);
+        index = gen_code_for_address_mode(index);
     }
     printf("end // cycle %hu\n", first_mi->cycle);
     return index;
