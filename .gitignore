@@ -19,3 +19,4 @@
 *.ref*
 log/
 net/
+opcodes/opcodes

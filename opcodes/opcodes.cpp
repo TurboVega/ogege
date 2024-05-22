@@ -310,12 +310,52 @@ void assign(Register reg, uint32_t n) {
     g_mi.action += ";";
 }
 
+void add(Register reg, uint32_t n) {
+    save_instruction();
+    g_mi.action = reg;
+    g_mi.action += " <= ";
+    g_mi.action = reg;
+    g_mi.action += " + ";
+    char nbr[11];
+    sprintf(nbr, "%u", n);
+    g_mi.action += nbr;
+    g_mi.action += ";";
+}
+
+void sub(Register reg, uint32_t n) {
+    save_instruction();
+    g_mi.action = reg;
+    g_mi.action += " <= ";
+    g_mi.action = reg;
+    g_mi.action += " - ";
+    char nbr[11];
+    sprintf(nbr, "%u", n);
+    g_mi.action += nbr;
+    g_mi.action += ";";
+}
+
+void copy(Register src, Register dst) {
+    save_instruction();
+    g_mi.action = dst;
+    g_mi.action += " <= ";
+    g_mi.action += src;
+    g_mi.action += ";";
+}
+
 void set_flag(Register reg) {
     assign(reg, 1);
 }
 
 void clear_flag(Register reg) {
     assign(reg, 0);
+}
+
+void increment(Register reg) {
+    add(reg, 1);
+}
+
+void decrement(Register reg) {
+    sub(reg, 1);
 }
 
 void gen_6502_instructions() {
@@ -485,6 +525,7 @@ void gen_6502_instructions() {
     set_opcode(0x18);
     set_operation(OP_CLC);
     set_address_mode(IMP_i);
+    clear_flag(C);
 
     set_opcode(0x19);
     set_operation(OP_ORA);
@@ -585,6 +626,7 @@ void gen_6502_instructions() {
     set_opcode(0x38);
     set_operation(OP_SEC);
     set_address_mode(IMP_i);
+    set_flag(C);
 
     set_opcode(0x39);
     set_operation(OP_AND);
@@ -669,6 +711,7 @@ void gen_6502_instructions() {
     set_opcode(0x58);
     set_operation(OP_CLI);
     set_address_mode(IMP_i);
+    clear_flag(I);
 
     set_opcode(0x59);
     set_operation(OP_EOR);
@@ -761,6 +804,7 @@ void gen_6502_instructions() {
     set_opcode(0x78);
     set_operation(OP_SEI);
     set_address_mode(IMP_i);
+    set_flag(I);
 
     set_opcode(0x79);
     set_operation(OP_ADC);
@@ -845,6 +889,7 @@ void gen_6502_instructions() {
     set_opcode(0x88);
     set_operation(OP_DEY);
     set_address_mode(IMP_i);
+    decrement(Y);
 
     set_opcode(0x89);
     set_operation(OP_BIT);
@@ -853,6 +898,7 @@ void gen_6502_instructions() {
     set_opcode(0x8A);
     set_operation(OP_TXA);
     set_address_mode(IMP_i);
+    copy(X, A);
 
     set_opcode(0x8C);
     set_operation(OP_STY);
@@ -933,6 +979,7 @@ void gen_6502_instructions() {
     set_opcode(0x98);
     set_operation(OP_TYA);
     set_address_mode(IMP_i);
+    copy(Y, A);
 
     set_opcode(0x99);
     set_operation(OP_STA);
@@ -941,6 +988,7 @@ void gen_6502_instructions() {
     set_opcode(0x9A);
     set_operation(OP_TXS);
     set_address_mode(IMP_i);
+    copy(X, SP);
 
     set_opcode(0x9C);
     set_operation(OP_STZ);
@@ -981,6 +1029,7 @@ void gen_6502_instructions() {
     set_opcode(0xA8);
     set_operation(OP_TAY);
     set_address_mode(IMP_i);
+    copy(A, Y);
 
 
     set_opcode(0xA9);
@@ -990,6 +1039,7 @@ void gen_6502_instructions() {
     set_opcode(0xAA);
     set_operation(OP_TAX);
     set_address_mode(IMP_i);
+    copy(A, X);
 
 
     set_opcode(0xAC);
@@ -1031,6 +1081,7 @@ void gen_6502_instructions() {
     set_opcode(0xB8);
     set_operation(OP_CLV);
     set_address_mode(IMP_i);
+    clear_flag(V);
 
     set_opcode(0xB9);
     set_operation(OP_LDA);
@@ -1039,6 +1090,7 @@ void gen_6502_instructions() {
     set_opcode(0xBA);
     set_operation(OP_TSX);
     set_address_mode(IMP_i);
+    copy(SP, X);
 
 
     set_opcode(0xBC);
@@ -1076,6 +1128,7 @@ void gen_6502_instructions() {
     set_opcode(0xC8);
     set_operation(OP_INY);
     set_address_mode(IMP_i);
+    increment(Y);
 
     set_opcode(0xC9);
     set_operation(OP_CMP);
@@ -1084,6 +1137,7 @@ void gen_6502_instructions() {
     set_opcode(0xCA);
     set_operation(OP_DEX);
     set_address_mode(IMP_i);
+    decrement(X);
 
     set_opcode(0xCB);
     set_operation(OP_WAI);
@@ -1124,6 +1178,7 @@ void gen_6502_instructions() {
     set_opcode(0xD8);
     set_operation(OP_CLD);
     set_address_mode(IMP_i);
+    clear_flag(D);
 
 
     set_opcode(0xD9);
@@ -1169,6 +1224,7 @@ void gen_6502_instructions() {
     set_opcode(0xE8);
     set_operation(OP_INX);
     set_address_mode(IMP_i);
+    increment(X);
 
     set_opcode(0xE9);
     set_operation(OP_SBC);
@@ -1214,6 +1270,7 @@ void gen_6502_instructions() {
     set_opcode(0xF8);
     set_operation(OP_SED);
     set_address_mode(IMP_i);
+    set_flag(D);
 
     set_opcode(0xF9);
     set_operation(OP_SBC);
@@ -1289,6 +1346,7 @@ void gen_65832_instructions() {
     set_opcode(0x18);
     set_operation(OP_CLC);
     set_address_mode(IMP_i);
+    clear_flag(C);
 
     set_opcode(0x19);
     set_operation(OP_ORA);
@@ -1361,6 +1419,7 @@ void gen_65832_instructions() {
     set_opcode(0x38);
     set_operation(OP_SEC);
     set_address_mode(IMP_i);
+    set_flag(C);
 
     set_opcode(0x39);
     set_operation(OP_AND);
@@ -1429,6 +1488,7 @@ void gen_65832_instructions() {
     set_opcode(0x58);
     set_operation(OP_CLI);
     set_address_mode(IMP_i);
+    clear_flag(I);
 
     set_opcode(0x59);
     set_operation(OP_EOR);
@@ -1497,6 +1557,7 @@ void gen_65832_instructions() {
     set_opcode(0x78);
     set_operation(OP_SEI);
     set_address_mode(IMP_i);
+    set_flag(I);
 
     set_opcode(0x79);
     set_operation(OP_ADC);
@@ -1529,6 +1590,7 @@ void gen_65832_instructions() {
     set_opcode(0x88);
     set_operation(OP_DEY);
     set_address_mode(IMP_i);
+    decrement(Y);
 
     set_opcode(0x89);
     set_operation(OP_BIT);
@@ -1537,6 +1599,7 @@ void gen_65832_instructions() {
     set_opcode(0x8A);
     set_operation(OP_TXA);
     set_address_mode(IMP_i);
+    copy(X, A);
 
     set_opcode(0x8C);
     set_operation(OP_STY);
@@ -1569,6 +1632,7 @@ void gen_65832_instructions() {
     set_opcode(0x98);
     set_operation(OP_TYA);
     set_address_mode(IMP_i);
+    copy(Y, A);
 
     set_opcode(0x99);
     set_operation(OP_STA);
@@ -1577,6 +1641,7 @@ void gen_65832_instructions() {
     set_opcode(0x9A);
     set_operation(OP_TXS);
     set_address_mode(IMP_i);
+    copy(X, SP);
 
     set_opcode(0x9C);
     set_operation(OP_STY);
@@ -1605,6 +1670,7 @@ void gen_65832_instructions() {
     set_opcode(0xA8);
     set_operation(OP_TAY);
     set_address_mode(IMP_i);
+    copy(A, Y);
 
     set_opcode(0xA9);
     set_operation(OP_LDA);
@@ -1613,6 +1679,7 @@ void gen_65832_instructions() {
     set_opcode(0xAA);
     set_operation(OP_TAX);
     set_address_mode(IMP_i);
+    copy(A, X);
 
     set_opcode(0xAC);
     set_operation(OP_LDY);
@@ -1641,6 +1708,7 @@ void gen_65832_instructions() {
     set_opcode(0xB8);
     set_operation(OP_CLV);
     set_address_mode(IMP_i);
+    clear_flag(V);
 
     set_opcode(0xB9);
     set_operation(OP_LDA);
@@ -1649,6 +1717,7 @@ void gen_65832_instructions() {
     set_opcode(0xBA);
     set_operation(OP_TSX);
     set_address_mode(IMP_i);
+    copy(SP, X);
 
     set_opcode(0xBC);
     set_operation(OP_LDY);
@@ -1677,6 +1746,7 @@ void gen_65832_instructions() {
     set_opcode(0xC8);
     set_operation(OP_INY);
     set_address_mode(IMP_i);
+    increment(Y);
 
     set_opcode(0xC9);
     set_operation(OP_CMP);
@@ -1685,6 +1755,7 @@ void gen_65832_instructions() {
     set_opcode(0xCA);
     set_operation(OP_DEX);
     set_address_mode(IMP_i);
+    decrement(X);
 
     set_opcode(0xCC);
     set_operation(OP_CPY);
@@ -1713,6 +1784,7 @@ void gen_65832_instructions() {
     set_opcode(0xD8);
     set_operation(OP_CLD);
     set_address_mode(IMP_i);
+    clear_flag(D);
 
     set_opcode(0xD9);
     set_operation(OP_CMP);
@@ -1741,6 +1813,7 @@ void gen_65832_instructions() {
     set_opcode(0xE8);
     set_operation(OP_INX);
     set_address_mode(IMP_i);
+    increment(X);
 
     set_opcode(0xE9);
     set_operation(OP_SBC);
@@ -1777,6 +1850,7 @@ void gen_65832_instructions() {
     set_opcode(0xF8);
     set_operation(OP_SED);
     set_address_mode(IMP_i);
+    set_flag(D);
 
     set_opcode(0xF9);
     set_operation(OP_SBC);
