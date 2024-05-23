@@ -311,7 +311,7 @@ void assign(Register reg, const char* val) {
     g_mi.action += ";";
 }
 
-std::string write_byte(const char* address, const char* val) {
+std::string get_write_byte_action(const char* address, const char* val) {
     std::string action("`WRITE_BYTE(");
     action += address;
     action += ",";
@@ -324,7 +324,7 @@ void push_byte(const char* val) {
     save_instruction();
     std::string action("tmp_SP = SP - 1;");
     action += " ";
-    action += write_byte("tmp_SP", val);
+    action += get_write_byte_action("tmp_SP", val);
     action += " SP <= tmp_SP;";
     g_mi.action = action;
     flush_cycle();
@@ -556,52 +556,117 @@ void read_byte_with_inc(Register address, const char* dst) {
 
 void read_half_word(Register address, const char* dst) {
     save_instruction();
-    read_byte(address, part(RQW, 7, 0).c_str());
+    read_byte_with_inc(address, part(RQW, 7, 0).c_str());
     assign(part(dst, 7, 0).c_str(), part(RQW, 7, 0).c_str());
     read_byte(address, part(dst, 15, 8).c_str());
 }
 
 void read_word(Register address, const char* dst) {
     save_instruction();
-    read_byte(address, part(RQW, 7, 0).c_str());
-    read_byte(address, part(RQW, 15, 8).c_str());
-    read_byte(address, part(RQW, 23, 16).c_str());
+    read_byte_with_inc(address, part(RQW, 7, 0).c_str());
+    read_byte_with_inc(address, part(RQW, 15, 8).c_str());
+    read_byte_with_inc(address, part(RQW, 23, 16).c_str());
     assign(part(dst, 23, 0).c_str(), part(RQW, 23, 0).c_str());
     read_byte(address, part(dst, 31, 24).c_str());
 }
 
 void read_double_word(Register address, const char* dst) {
     save_instruction();
-    read_byte(address, part(RQW, 7, 0).c_str());
-    read_byte(address, part(RQW, 15, 8).c_str());
-    read_byte(address, part(RQW, 23, 16).c_str());
-    read_byte(address, part(RQW, 31, 24).c_str());
-    read_byte(address, part(RQW, 39, 32).c_str());
-    read_byte(address, part(RQW, 47, 40).c_str());
-    read_byte(address, part(RQW, 55, 48).c_str());
+    read_byte_with_inc(address, part(RQW, 7, 0).c_str());
+    read_byte_with_inc(address, part(RQW, 15, 8).c_str());
+    read_byte_with_inc(address, part(RQW, 23, 16).c_str());
+    read_byte_with_inc(address, part(RQW, 31, 24).c_str());
+    read_byte_with_inc(address, part(RQW, 39, 32).c_str());
+    read_byte_with_inc(address, part(RQW, 47, 40).c_str());
+    read_byte_with_inc(address, part(RQW, 55, 48).c_str());
     assign(part(dst, 55, 0).c_str(), part(RQW, 55, 0).c_str());
     read_byte(address, part(dst, 63, 56).c_str());
 }
 
 void read_quad_word(Register address, const char* dst) {
     save_instruction();
-    read_byte(address, part(RQW, 7, 0).c_str());
-    read_byte(address, part(RQW, 15, 8).c_str());
-    read_byte(address, part(RQW, 23, 16).c_str());
-    read_byte(address, part(RQW, 31, 24).c_str());
-    read_byte(address, part(RQW, 39, 32).c_str());
-    read_byte(address, part(RQW, 47, 40).c_str());
-    read_byte(address, part(RQW, 55, 48).c_str());
-    read_byte(address, part(RQW, 63, 56).c_str());
-    read_byte(address, part(RQW, 71, 64).c_str());
-    read_byte(address, part(RQW, 79, 72).c_str());
-    read_byte(address, part(RQW, 87, 80).c_str());
-    read_byte(address, part(RQW, 95, 88).c_str());
-    read_byte(address, part(RQW, 103, 96).c_str());
-    read_byte(address, part(RQW, 111, 104).c_str());
-    read_byte(address, part(RQW, 119, 112).c_str());
+    read_byte_with_inc(address, part(RQW, 7, 0).c_str());
+    read_byte_with_inc(address, part(RQW, 15, 8).c_str());
+    read_byte_with_inc(address, part(RQW, 23, 16).c_str());
+    read_byte_with_inc(address, part(RQW, 31, 24).c_str());
+    read_byte_with_inc(address, part(RQW, 39, 32).c_str());
+    read_byte_with_inc(address, part(RQW, 47, 40).c_str());
+    read_byte_with_inc(address, part(RQW, 55, 48).c_str());
+    read_byte_with_inc(address, part(RQW, 63, 56).c_str());
+    read_byte_with_inc(address, part(RQW, 71, 64).c_str());
+    read_byte_with_inc(address, part(RQW, 79, 72).c_str());
+    read_byte_with_inc(address, part(RQW, 87, 80).c_str());
+    read_byte_with_inc(address, part(RQW, 95, 88).c_str());
+    read_byte_with_inc(address, part(RQW, 103, 96).c_str());
+    read_byte_with_inc(address, part(RQW, 111, 104).c_str());
+    read_byte_with_inc(address, part(RQW, 119, 112).c_str());
     assign(part(dst, 119, 0).c_str(), part(RQW, 119, 0).c_str());
     read_byte(address, part(dst, 127, 120).c_str());
+}
+
+void write_byte(Register address, const char* src) {
+    save_instruction();
+    std::string action = get_write_byte_action(address, src);
+    g_mi.action = action;
+    flush_cycle();
+}
+
+void write_byte_with_inc(Register address, const char* src) {
+    save_instruction();
+    std::string action = get_write_byte_action(address, src);
+    inc(address);
+    g_mi.action = action;
+    flush_cycle();
+}
+
+void write_half_word(Register address, const char* src) {
+    save_instruction();
+    assign(part(RQW, 15, 8).c_str(), part(src, 15, 8).c_str());
+    write_byte_with_inc(address, part(src, 7, 0).c_str());
+    write_byte(address, part(RQW, 15, 8).c_str());
+}
+
+void write_word(Register address, const char* src) {
+    save_instruction();
+    assign(part(RQW, 31, 8).c_str(), part(RQW, 31, 8).c_str());
+    write_byte_with_inc(address, part(src, 7, 0).c_str());
+    write_byte_with_inc(address, part(RQW, 15, 8).c_str());
+    write_byte_with_inc(address, part(RQW, 23, 16).c_str());
+    write_byte(address, part(RQW, 31, 24).c_str());
+}
+
+void write_double_word(Register address, const char* src) {
+    save_instruction();
+    assign(part(src, 63, 8).c_str(), part(RQW, 63, 8).c_str());
+    write_byte_with_inc(address, part(src, 7, 0).c_str());
+    write_byte_with_inc(address, part(RQW, 15, 8).c_str());
+    write_byte_with_inc(address, part(RQW, 23, 16).c_str());
+    write_byte_with_inc(address, part(RQW, 31, 24).c_str());
+    write_byte_with_inc(address, part(RQW, 39, 32).c_str());
+    write_byte_with_inc(address, part(RQW, 47, 40).c_str());
+    write_byte_with_inc(address, part(RQW, 55, 48).c_str());
+    write_byte(address, part(RQW, 63, 56).c_str());
+}
+
+void write_quad_word(Register address, const char* src) {
+    save_instruction();
+    assign(part(src, 127, 8).c_str(), part(RQW, 127, 8).c_str());
+    write_byte_with_inc(address, part(src, 7, 0).c_str());
+    write_byte_with_inc(address, part(RQW, 15, 8).c_str());
+    write_byte_with_inc(address, part(RQW, 23, 16).c_str());
+    write_byte_with_inc(address, part(RQW, 31, 24).c_str());
+    write_byte_with_inc(address, part(RQW, 39, 32).c_str());
+    write_byte_with_inc(address, part(RQW, 47, 40).c_str());
+    write_byte_with_inc(address, part(RQW, 55, 48).c_str());
+    write_byte_with_inc(address, part(RQW, 63, 56).c_str());
+    write_byte_with_inc(address, part(RQW, 71, 64).c_str());
+    write_byte_with_inc(address, part(RQW, 79, 72).c_str());
+    write_byte_with_inc(address, part(RQW, 87, 80).c_str());
+    write_byte_with_inc(address, part(RQW, 95, 88).c_str());
+    write_byte_with_inc(address, part(RQW, 103, 96).c_str());
+    write_byte_with_inc(address, part(RQW, 111, 104).c_str());
+    write_byte_with_inc(address, part(RQW, 119, 112).c_str());
+    write_byte(address, part(RQW, 127, 120).c_str());
 }
 
 void sub(Register reg, uint32_t n) {
