@@ -104,11 +104,16 @@ static AddressMode ZIIY_ZP_y = "ZIIY_ZP_y";     // Zero Page Indirect Indexed wi
 
 typedef const char* Register;
 
-static Register A = "A";
-static Register X = "X";
-static Register Y = "Y";
-static Register PC = "PC";
-static Register SP = "SP";
+static Register A = "`A";
+static Register X = "`X";
+static Register Y = "`Y";
+static Register PC = "`PC";
+static Register SP = "`SP";
+static Register EA = "`EA";
+static Register EX = "`EX";
+static Register EY = "`EY";
+static Register EPC = "`EPC";
+static Register ESP = "`ESP";
 static Register P = "P";
 static Register N = "`N";
 static Register V = "`V";
@@ -118,6 +123,18 @@ static Register D = "`D";
 static Register I = "`I";
 static Register Z = "`Z";
 static Register C = "`C";
+static Register RB = "`RB";
+static Register RHW = "`RHW";
+static Register RW = "`RW";
+static Register RDW = "`RDW";
+static Register RQW = "`RQW";
+static Register WB = "`WB";
+static Register WHW = "`WHW";
+static Register WW = "`WW";
+static Register WDW = "`WDW";
+static Register WQW = "`WQW";
+static Register ADDR = "`ADDR";
+static Register EADDR = "`EADDR";
 
 typedef const char* CpuMode;
 
@@ -276,6 +293,24 @@ std::string combine3(const char* a,
     return combined;
 }
 
+void assign(Register reg, uint32_t n) {
+    save_instruction();
+    g_mi.action = reg;
+    g_mi.action += " <= ";
+    char nbr[11];
+    sprintf(nbr, "%u", n);
+    g_mi.action += nbr;
+    g_mi.action += ";";
+}
+
+void assign(Register reg, const char* val) {
+    save_instruction();
+    g_mi.action = reg;
+    g_mi.action += " <= ";
+    g_mi.action += val;
+    g_mi.action += ";";
+}
+
 std::string write_byte(const char* address, const char* val) {
     std::string action("`WRITE_BYTE(");
     action += address;
@@ -297,119 +332,319 @@ void push_byte(const char* val) {
 
 void push_half_word(const char* val) {
     save_instruction();
-    auto byte_val = part(val, 15, 8);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 7, 0);
-    push_byte(byte_val.c_str());
+    assign(part(WQW, 7, 0).c_str(), part(val, 7, 0).c_str());
+    push_byte(part(val, 15, 8).c_str());
+    push_byte(part(WQW, 7, 0).c_str());
 }
 
 void push_word(const char* val) {
     save_instruction();
-    auto byte_val = part(val, 31, 24);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 23, 16);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 15, 8);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 7, 0);
-    push_byte(byte_val.c_str());
+    assign(part(WQW, 23, 0).c_str(), part(val, 23, 0).c_str());
+    push_byte(part(val, 31, 24).c_str());
+    push_byte(part(WQW, 23, 16).c_str());
+    push_byte(part(WQW, 15, 8).c_str());
+    push_byte(part(WQW, 7, 0).c_str());
 }
 
 void push_double_word(const char* val) {
     save_instruction();
-    auto byte_val = part(val, 63, 56);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 55, 48);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 47, 40);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 39, 32);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 31, 24);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 23, 16);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 15, 8);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 7, 0);
-    push_byte(byte_val.c_str());
+    assign(part(WQW, 55, 0).c_str(), part(val, 55, 0).c_str());
+    push_byte(part(val, 63, 56).c_str());
+    push_byte(part(WQW, 55, 48).c_str());
+    push_byte(part(WQW, 47, 40).c_str());
+    push_byte(part(WQW, 39, 32).c_str());
+    push_byte(part(WQW, 31, 24).c_str());
+    push_byte(part(WQW, 23, 16).c_str());
+    push_byte(part(WQW, 15, 8).c_str());
+    push_byte(part(WQW, 7, 0).c_str());
 }
 
 void push_quad_word(const char* val) {
     save_instruction();
-    auto byte_val = part(val, 127, 120);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 119, 112);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 111, 104);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 103, 96);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 95, 88);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 87, 80);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 79, 72);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 71, 64);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 63, 56);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 55, 48);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 47, 40);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 39, 32);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 31, 24);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 23, 16);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 15, 8);
-    push_byte(byte_val.c_str());
-    byte_val = part(val, 7, 0);
-    push_byte(byte_val.c_str());
+    assign(part(WQW, 119, 0).c_str(), part(val, 119, 0).c_str());
+    push_byte(part(val, 127, 120).c_str());
+    push_byte(part(WQW, 119, 112).c_str());
+    push_byte(part(WQW, 111, 104).c_str());
+    push_byte(part(WQW, 103, 96).c_str());
+    push_byte(part(WQW, 95, 88).c_str());
+    push_byte(part(WQW, 87, 80).c_str());
+    push_byte(part(WQW, 79, 72).c_str());
+    push_byte(part(WQW, 71, 64).c_str());
+    push_byte(part(WQW, 63, 56).c_str());
+    push_byte(part(WQW, 55, 48).c_str());
+    push_byte(part(WQW, 47, 40).c_str());
+    push_byte(part(WQW, 39, 32).c_str());
+    push_byte(part(WQW, 31, 24).c_str());
+    push_byte(part(WQW, 23, 16).c_str());
+    push_byte(part(WQW, 15, 8).c_str());
+    push_byte(part(WQW, 7, 0).c_str());
 }
 
-void assign(Register reg, uint32_t n) {
+std::string get_read_byte_action(const char* address, const char* dst) {
+    std::string action("`READ_BYTE(");
+    action += address;
+    action += ",";
+    action += dst;
+    action += ");";
+    return action;
+}
+
+void pop_byte(const char* dst) {
+    save_instruction();
+    std::string action = get_read_byte_action(SP, dst);
+    action += " SP <= SP + 1;";
+    g_mi.action = action;
+    flush_cycle();
+}
+
+void pop_half_word(const char* dst) {
+    save_instruction();
+    pop_byte(part(RQW, 7, 0).c_str());
+    assign(part(dst, 7, 0).c_str(), part(RQW, 7, 0).c_str());
+    pop_byte(part(dst, 15, 8).c_str());
+}
+
+void pop_word(const char* dst) {
+    save_instruction();
+    pop_byte(part(RQW, 7, 0).c_str());
+    pop_byte(part(RQW, 15, 8).c_str());
+    pop_byte(part(RQW, 23, 16).c_str());
+    assign(part(dst, 23, 0).c_str(), part(RQW, 23, 0).c_str());
+    pop_byte(part(dst, 31, 24).c_str());
+}
+
+void pop_double_word(const char* dst) {
+    save_instruction();
+    pop_byte(part(RQW, 7, 0).c_str());
+    pop_byte(part(RQW, 15, 8).c_str());
+    pop_byte(part(RQW, 23, 16).c_str());
+    pop_byte(part(RQW, 31, 24).c_str());
+    pop_byte(part(RQW, 39, 32).c_str());
+    pop_byte(part(RQW, 47, 40).c_str());
+    pop_byte(part(RQW, 55, 48).c_str());
+    assign(part(dst, 55, 0).c_str(), part(RQW, 55, 0).c_str());
+    pop_byte(part(dst, 63, 56).c_str());
+}
+
+void pop_quad_word(const char* dst) {
+    save_instruction();
+    pop_byte(part(RQW, 7, 0).c_str());
+    pop_byte(part(RQW, 15, 8).c_str());
+    pop_byte(part(RQW, 23, 16).c_str());
+    pop_byte(part(RQW, 31, 24).c_str());
+    pop_byte(part(RQW, 39, 32).c_str());
+    pop_byte(part(RQW, 47, 40).c_str());
+    pop_byte(part(RQW, 55, 48).c_str());
+    pop_byte(part(RQW, 63, 56).c_str());
+    pop_byte(part(RQW, 71, 64).c_str());
+    pop_byte(part(RQW, 79, 72).c_str());
+    pop_byte(part(RQW, 87, 80).c_str());
+    pop_byte(part(RQW, 95, 88).c_str());
+    pop_byte(part(RQW, 103, 96).c_str());
+    pop_byte(part(RQW, 111, 104).c_str());
+    pop_byte(part(RQW, 119, 112).c_str());
+    assign(part(dst, 119, 0).c_str(), part(RQW, 119, 0).c_str());
+    pop_byte(part(dst, 127, 120).c_str());
+}
+
+void load_byte(const char* dst) {
+    save_instruction();
+    std::string action = get_read_byte_action(EPC, dst);
+    action += " EPC <= EPC + 1;";
+    g_mi.action = action;
+    flush_cycle();
+}
+
+void load_half_word(const char* dst) {
+    save_instruction();
+    load_byte(part(RQW, 7, 0).c_str());
+    assign(part(dst, 7, 0).c_str(), part(RQW, 7, 0).c_str());
+    load_byte(part(dst, 15, 8).c_str());
+}
+
+void load_word(const char* dst) {
+    save_instruction();
+    load_byte(part(RQW, 7, 0).c_str());
+    load_byte(part(RQW, 15, 8).c_str());
+    load_byte(part(RQW, 23, 16).c_str());
+    assign(part(dst, 23, 0).c_str(), part(RQW, 23, 0).c_str());
+    load_byte(part(dst, 31, 24).c_str());
+}
+
+void load_double_word(const char* dst) {
+    save_instruction();
+    load_byte(part(RQW, 7, 0).c_str());
+    load_byte(part(RQW, 15, 8).c_str());
+    load_byte(part(RQW, 23, 16).c_str());
+    load_byte(part(RQW, 31, 24).c_str());
+    load_byte(part(RQW, 39, 32).c_str());
+    load_byte(part(RQW, 47, 40).c_str());
+    load_byte(part(RQW, 55, 48).c_str());
+    assign(part(dst, 55, 0).c_str(), part(RQW, 55, 0).c_str());
+    load_byte(part(dst, 63, 56).c_str());
+}
+
+void load_quad_word(const char* dst) {
+    save_instruction();
+    load_byte(part(RQW, 7, 0).c_str());
+    load_byte(part(RQW, 15, 8).c_str());
+    load_byte(part(RQW, 23, 16).c_str());
+    load_byte(part(RQW, 31, 24).c_str());
+    load_byte(part(RQW, 39, 32).c_str());
+    load_byte(part(RQW, 47, 40).c_str());
+    load_byte(part(RQW, 55, 48).c_str());
+    load_byte(part(RQW, 63, 56).c_str());
+    load_byte(part(RQW, 71, 64).c_str());
+    load_byte(part(RQW, 79, 72).c_str());
+    load_byte(part(RQW, 87, 80).c_str());
+    load_byte(part(RQW, 95, 88).c_str());
+    load_byte(part(RQW, 103, 96).c_str());
+    load_byte(part(RQW, 111, 104).c_str());
+    load_byte(part(RQW, 119, 112).c_str());
+    assign(part(dst, 119, 0).c_str(), part(RQW, 119, 0).c_str());
+    load_byte(part(dst, 127, 120).c_str());
+}
+
+void update(Register reg, const char* oper, uint32_t n) {
     save_instruction();
     g_mi.action = reg;
     g_mi.action += " <= ";
+    g_mi.action += reg;
+    g_mi.action += " ";
+    g_mi.action += oper;
+    g_mi.action += " ";
     char nbr[11];
     sprintf(nbr, "%u", n);
     g_mi.action += nbr;
     g_mi.action += ";";
 }
 
-void assign(Register reg, const char* val) {
+void update(Register reg, const char* oper, const char* val) {
     save_instruction();
     g_mi.action = reg;
     g_mi.action += " <= ";
+    g_mi.action += reg;
+    g_mi.action += " ";
+    g_mi.action += oper;
+    g_mi.action += " ";
     g_mi.action += val;
     g_mi.action += ";";
 }
 
 void add(Register reg, uint32_t n) {
+    update(reg, "+", n);
+}
+
+void inc(Register reg) {
+    add(reg, 1);
+}
+
+void read_byte(Register address, const char* dst) {
     save_instruction();
-    g_mi.action = reg;
-    g_mi.action += " <= ";
-    g_mi.action = reg;
-    g_mi.action += " + ";
-    char nbr[11];
-    sprintf(nbr, "%u", n);
-    g_mi.action += nbr;
-    g_mi.action += ";";
+    std::string action = get_read_byte_action(address, dst);
+    g_mi.action = action;
+    flush_cycle();
+}
+
+void read_byte_with_inc(Register address, const char* dst) {
+    save_instruction();
+    std::string action = get_read_byte_action(address, dst);
+    inc(address);
+    g_mi.action = action;
+    flush_cycle();
+}
+
+void read_half_word(Register address, const char* dst) {
+    save_instruction();
+    read_byte(address, part(RQW, 7, 0).c_str());
+    assign(part(dst, 7, 0).c_str(), part(RQW, 7, 0).c_str());
+    read_byte(address, part(dst, 15, 8).c_str());
+}
+
+void read_word(Register address, const char* dst) {
+    save_instruction();
+    read_byte(address, part(RQW, 7, 0).c_str());
+    read_byte(address, part(RQW, 15, 8).c_str());
+    read_byte(address, part(RQW, 23, 16).c_str());
+    assign(part(dst, 23, 0).c_str(), part(RQW, 23, 0).c_str());
+    read_byte(address, part(dst, 31, 24).c_str());
+}
+
+void read_double_word(Register address, const char* dst) {
+    save_instruction();
+    read_byte(address, part(RQW, 7, 0).c_str());
+    read_byte(address, part(RQW, 15, 8).c_str());
+    read_byte(address, part(RQW, 23, 16).c_str());
+    read_byte(address, part(RQW, 31, 24).c_str());
+    read_byte(address, part(RQW, 39, 32).c_str());
+    read_byte(address, part(RQW, 47, 40).c_str());
+    read_byte(address, part(RQW, 55, 48).c_str());
+    assign(part(dst, 55, 0).c_str(), part(RQW, 55, 0).c_str());
+    read_byte(address, part(dst, 63, 56).c_str());
+}
+
+void read_quad_word(Register address, const char* dst) {
+    save_instruction();
+    read_byte(address, part(RQW, 7, 0).c_str());
+    read_byte(address, part(RQW, 15, 8).c_str());
+    read_byte(address, part(RQW, 23, 16).c_str());
+    read_byte(address, part(RQW, 31, 24).c_str());
+    read_byte(address, part(RQW, 39, 32).c_str());
+    read_byte(address, part(RQW, 47, 40).c_str());
+    read_byte(address, part(RQW, 55, 48).c_str());
+    read_byte(address, part(RQW, 63, 56).c_str());
+    read_byte(address, part(RQW, 71, 64).c_str());
+    read_byte(address, part(RQW, 79, 72).c_str());
+    read_byte(address, part(RQW, 87, 80).c_str());
+    read_byte(address, part(RQW, 95, 88).c_str());
+    read_byte(address, part(RQW, 103, 96).c_str());
+    read_byte(address, part(RQW, 111, 104).c_str());
+    read_byte(address, part(RQW, 119, 112).c_str());
+    assign(part(dst, 119, 0).c_str(), part(RQW, 119, 0).c_str());
+    read_byte(address, part(dst, 127, 120).c_str());
 }
 
 void sub(Register reg, uint32_t n) {
+    update(reg, "-", n);
+}
+
+void dec(Register reg) {
+    sub(reg, 1);
+}
+
+void mul(Register reg, uint32_t n) {
+    update(reg, "*", n);
+}
+
+void div(Register reg, uint32_t n) {
+    update(reg, "/", n);
+}
+
+void bitwise_or(Register reg, uint32_t n) {
+    update(reg, "|", n);
+}
+
+void bitwise_or(Register dst, Register src) {
+    update(dst, "|", src);
+}
+
+void eor(Register reg, uint32_t n) {
+    update(reg, "^", n);
+}
+
+void neg(Register reg) {
     save_instruction();
     g_mi.action = reg;
-    g_mi.action += " <= ";
+    g_mi.action += " <= 0 - ";
+    g_mi.action += reg;
+    g_mi.action += ";";
+}
+
+void invert(Register reg) {
+    save_instruction();
     g_mi.action = reg;
-    g_mi.action += " - ";
-    char nbr[11];
-    sprintf(nbr, "%u", n);
-    g_mi.action += nbr;
+    g_mi.action += " <= ~";
+    g_mi.action += reg;
     g_mi.action += ";";
 }
 
@@ -712,10 +947,17 @@ void gen_6502_instructions() {
     set_opcode(0x0D);
     set_operation(OP_ORA);
     set_address_mode(ABS_a);
+    load_half_word(ADDR);
+    read_byte(ADDR, RB);
+    bitwise_or(A, RB);
 
     set_opcode(0x0E);
     set_operation(OP_ASL);
     set_address_mode(ABS_a);
+    load_half_word(ADDR);
+    read_byte(ADDR, RB);
+    asl_byte(RB);
+    write_byte(ADDR, RB);
 
     set_opcode(0x0F);
     set_operation(OP_BBR);
