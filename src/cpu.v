@@ -26,15 +26,21 @@ typedef enum bit [2:0] {
     DATA_WIDTH_128 = 4
 } DataWidth;
 
+`define VB  [7:0]
+`define VHW [15:0]
+`define VW  [31:0]
+`define VDW [63:0]
+`define VQW [127:0]
+
 // CPU registers
 
-reg [127:0] reg_bank [2:0]; // Data registers for ALU
-reg [31:0] reg_a;           // Accumulator
-reg [31:0] reg_x;           // X index
-reg [31:0] reg_y;           // Y index
-reg [31:0] reg_pc;          // Program counter
-reg [31:0] reg_sp;          // Stack pointer
-reg [7:0] reg_status;       // Processor status
+reg `VQW reg_bank [2:0]; // Data registers for ALU
+reg `VW reg_a;           // Accumulator
+reg `VW reg_x;           // X index
+reg `VW reg_y;           // Y index
+reg `VW reg_pc;          // Program counter
+reg `VW reg_sp;          // Stack pointer
+reg `VB reg_status;       // Processor status
 
 /*
   Examples:
@@ -50,10 +56,10 @@ reg [7:0] reg_status;       // Processor status
 `define RD(bank,index) reg_bank[bank][index*64+63:index*64] // each bank has 2 double-words
 `define RQ(bank) reg_bank[bank]                             // each bank has 1 quad-word
 
-`define A   reg_a[7:0]      // Accumulator (6502)
-`define X   reg_x[7:0]      // X index (6502)
-`define Y   reg_y[7:0]      // Y index (6502)
-`define SP  reg_sp[7:0]     // Stack pointer
+`define A   reg_a`VB      // Accumulator (6502)
+`define X   reg_x`VB      // X index (6502)
+`define Y   reg_y`VB      // Y index (6502)
+`define SP  reg_sp`VB     // Stack pointer (6502)
 `define P   reg_status      // Processor status
 `define N   reg_status[7]   // Negative
 `define V   reg_status[6]   // Overflow
@@ -63,6 +69,22 @@ reg [7:0] reg_status;       // Processor status
 `define I   reg_status[2]   // IRQB disable
 `define Z   reg_status[1]   // Zero
 `define C   reg_status[0]   // Carry
+`define EA  reg_a           // Accumulator (65832)
+`define EX  reg_x           // X index (65832)
+`define EY  reg_y           // Y index (65832)
+`define ESP reg_sp          // Stack pointer (65832)
+`define RVB     reg_read_val`VB
+`define RVHW    reg_read_val`VHW
+`define RVW     reg_read_val`VW
+`define RVDW    reg_read_val`VDW
+`define RVQW    reg_read_val`VQW
+`define WVB     reg_write_val`VB
+`define WVHW    reg_write_val`VHW
+`define WVW     reg_write_val`VW
+`define WVDW    reg_write_val`VDW
+`define WVQW    reg_write_val`VQW
+`define ADDR    reg_address`VHW
+`define EADDR   reg_address`VDW
 
 `define ZERO_24 24'd0       // 24 zero bits, for value extension
 `define ONE_24 24'hFFFFFF   // 24 zero bits, for value extension
@@ -200,7 +222,7 @@ reg [7:0] reg_operation;
 reg [4:0] reg_address_mode;
 reg [2:0] reg_data_width;
 reg [2:0] reg_dst_reg;
-reg [31:0] reg_load_pc;
+reg `VW reg_load_pc;
 reg reg_6502;
 reg reg_65832;
 reg reg_overlay;
@@ -209,9 +231,9 @@ reg [3:0] reg_src_index;
 reg [2:0] reg_dst_bank;
 reg [3:0] reg_dst_index;
 reg [2:0] reg_which;
-reg [31:0] reg_address;
-reg [31:0] reg_src_data;
-reg [31:0] reg_dst_data;
+reg `VW reg_address;
+reg `VW reg_src_data;
+reg `VW reg_dst_data;
 reg [191:0] reg_code_cache; // 24 bytes
 reg [4:0] reg_cache_count;
 reg [4:0] reg_used_count;
@@ -243,16 +265,16 @@ logic [3:0] tmp_src_index;
 logic [2:0] tmp_dst_bank;
 logic [3:0] tmp_dst_index;
 logic [2:0] tmp_which;
-logic [31:0] tmp_address;
-logic [31:0] tmp_src_data;
-logic [31:0] tmp_dst_data;
-logic [31:0] tmp_pc;
-logic [31:0] tmp_new_code;
+logic `VW tmp_address;
+logic `VW tmp_src_data;
+logic `VW tmp_dst_data;
+logic `VW tmp_pc;
+logic `VW tmp_new_code;
 logic [191:0] tmp_code_cache; // 24 bytes
 logic [4:0] tmp_cache_count;
 logic [4:0] tmp_need_count;
 
-reg [31:0] reg_ram[0:16383];
+reg `VW reg_ram[0:16383];
 
 initial $readmemh("../ram/ram.bits", reg_ram);
 
@@ -382,14 +404,14 @@ always @(posedge i_rst or posedge i_clk) begin
             tmp_pc = reg_pc + 1;
 
             // Determine operation
-            case (tmp_code_cache[7:0])
+            case (tmp_code_cache`VB)
 
                 8'h00: begin
                         // BRK
                         if (tmp_6502) begin
                             tmp_push_count = 3;
                             tmp_push_data[0] = tmp_pc[15:8];
-                            tmp_push_data[1] = tmp_pc[7:0];
+                            tmp_push_data[1] = tmp_pc`VB;
                             tmp_push_data[2] = {reg_status[7:5],1'b1,reg_status[3:0]};
                             `I <= 1;
                         end else if (tmp_65832) begin
@@ -397,7 +419,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             tmp_push_data[0] = tmp_pc[31:24];
                             tmp_push_data[1] = tmp_pc[23:16];
                             tmp_push_data[2] = tmp_pc[15:8];
-                            tmp_push_data[3] = tmp_pc[7:0];
+                            tmp_push_data[3] = tmp_pc`VB;
                             tmp_push_data[4] = {reg_status[7:5],1'b1,reg_status[3:0]};
                             `I <= 1;
                         end
@@ -1501,7 +1523,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         tmp_operation = INC;
                         tmp_6502_addr_mode = AIX_a_x;
                     end
-            endcase // tmp_code_cache[7:0]
+            endcase // tmp_code_cache`VB
 
             reg_pc <= tmp_pc;
         end
@@ -1541,7 +1563,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     // See what to do next based on decoding thus far
                     if (tmp_load_code_byte) begin
-                        tmp_src_data[7:0] = reg_ram[tmp_address];
+                        tmp_src_data`VB = reg_ram[tmp_address];
                     end
 
                     // See what needs to happen based on the address mode

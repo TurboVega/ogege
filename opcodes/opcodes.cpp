@@ -685,6 +685,14 @@ void div(Register reg, uint32_t n) {
     update(reg, "/", n);
 }
 
+void bitwise_and(Register reg, uint32_t n) {
+    update(reg, "&", n);
+}
+
+void bitwise_and(Register dst, Register src) {
+    update(dst, "&", src);
+}
+
 void bitwise_or(Register reg, uint32_t n) {
     update(reg, "|", n);
 }
@@ -693,8 +701,12 @@ void bitwise_or(Register dst, Register src) {
     update(dst, "|", src);
 }
 
-void eor(Register reg, uint32_t n) {
+void bitwise_eor(Register reg, uint32_t n) {
     update(reg, "^", n);
+}
+
+void bitwise_eor(Register reg, Register src) {
+    update(reg, "^", src);
 }
 
 void neg(Register reg) {
@@ -1008,6 +1020,10 @@ void gen_6502_instructions() {
     set_opcode(0x0C);
     set_operation(OP_TSB);
     set_address_mode(ABS_a);
+    load_half_word(ADDR);
+    read_byte(ADDR, RB);
+    assign(Z, "(`RB & `A) == 0 ? 1 : 0");
+    write_byte(ADDR, "`RB | `A");
 
     set_opcode(0x0D);
     set_operation(OP_ORA);
@@ -1104,6 +1120,10 @@ void gen_6502_instructions() {
     set_opcode(0x1C);
     set_operation(OP_TRB);
     set_address_mode(ABS_a);
+    load_half_word(ADDR);
+    read_byte(ADDR, RB);
+    assign(Z, "(`RB & `A) == 0 ? 1 : 0");
+    write_byte(ADDR, "`RB & ~`A");
 
     set_opcode(0x1D);
     set_operation(OP_ORA);
@@ -1116,6 +1136,8 @@ void gen_6502_instructions() {
     set_opcode(0x20);
     set_operation(OP_JSR);
     set_address_mode(ABS_a);
+    load_half_word(ADDR);
+    assign(PC, ADDR);
 
     set_opcode(0x21);
     set_operation(OP_AND);
@@ -1156,10 +1178,20 @@ void gen_6502_instructions() {
     set_opcode(0x2C);
     set_operation(OP_BIT);
     set_address_mode(ABS_a);
+    load_half_word(ADDR);
+    read_byte(ADDR, RB);
+    assign(N, bit_of(RB, 7).c_str());
+    assign(V, bit_of(RB, 6).c_str());
+    assign(Z, "(`RB & `A) == 0 ? 1 : 0");
 
     set_opcode(0x2D);
     set_operation(OP_AND);
     set_address_mode(ABS_a);
+    load_half_word(ADDR);
+    read_byte(ADDR, RB);
+    bitwise_and(A, RB);
+    assign(N, "(`RB[7] & `A[7])");
+    assign(Z, "(`RB & `A) == 0 ? 1 : 0");
 
     set_opcode(0x2E);
     set_operation(OP_ROL);
