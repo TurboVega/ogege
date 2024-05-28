@@ -278,6 +278,121 @@ reg `VW reg_ram[0:16383];
 
 initial $readmemh("../ram/ram.bits", reg_ram);
 
+assign sext_a_9 = {`A[7], `A};
+assign sext_a_32 = {`A[7] ? 24'hFFFFFF : 24'd0, `A};
+assign sext_a_33 = {`A[7] ? 25'h1FFFFFF : 25'd0, `A};
+assign sext_ea_33 = {`EA[31], `EA};
+
+assign sext_c_8 = `C ? 8'hFF : 8'd0;
+assign sext_c_9 = `C ? 9'h1FF : 9'd0;
+assign sext_c_32 = `C ? 32'hFFFFFFFF : 32'd0;
+assign sext_c_33 = `C ? 33'h1FFFFFFFF : 33'd0;
+
+assign sext_src_9 = {`SRC[7], `SRC};
+assign sext_src_32 = {`SRC[7] ? 24'hFFFFFF : 24'd0, `SRC};
+assign sext_src_33 = {`SRC[7] ? 25'h1FFFFFF : 25'd0, `SRC};
+assign sext_esrc_33 = {`ESRC[31], `ESRC};
+
+assign sext_x_9 = {`X[7], `X};
+assign sext_x_32 = {`X[7] ? 24'hFFFFFF : 24'd0, `X};
+assign sext_x_33 = {`X[7] ? 25'h1FFFFFF : 25'd0, `X};
+assign sext_ex_33 = {`EX[31], `EX};
+
+assign sext_y_9 = {`Y[7], `Y};
+assign sext_y_32 = {`Y[7] ? 24'hFFFFFF : 24'd0, `Y};
+assign sext_y_33 = {`Y[7] ? 25'h1FFFFFF : 25'd0, `Y};
+assign sext_ey_33 = {`EY[31], `EY};
+
+assign uext_a_9 = { 1'd0, `A};
+assign uext_a_32 = { 24'd0, `A};
+assign uext_a_33 = { 25'd0, `A};
+assign uext_ea_33 = { 1'd0, `EA};
+
+assign uext_c_8 = { 7'd0, `C};
+assign uext_c_9 = { 8'd0, `C};
+assign uext_c_32 = { 31'd0, `C};
+assign uext_c_33 = { 32'd0, `C};
+
+assign uext_nc_8 = { 7'd0, `NC};
+assign uext_nc_9 = { 8'd0, `NC};
+assign uext_nc_32 = { 31'd0, `NC};
+assign uext_nc_33 = { 32'd0, `NC};
+
+assign uext_pc_17 = { 1'd0, `PC};
+assign uext_pc_32 = { 16'd0, `PC};
+assign uext_pc_33 = { 17'd0, `PC};
+assign uext_epc_33 = { 1'd0, `EPC};
+
+assign uext_sp_17 = { 1'd0, `SP};
+assign uext_sp_32 = { 16'd0, `SP};
+assign uext_sp_33 = { 17'd0, `SP};
+assign uext_esp_33 = { 1'd0, `ESP};
+
+assign uext_src_9 = { 1'd0, `SRC};
+assign uext_src_32 = { 24'd0, `SRC};
+assign uext_src_33 = { 25'd0, `SRC};
+assign uext_esrc_33 = { 1'd0, `ESRC};
+
+assign uext_x_9 = { 1'd0, `X};
+assign uext_x_32 = { 24'd0, `X};
+assign uext_x_33 = { 25'd0, `X};
+assign uext_ex_33 = { 1'd0, `EX};
+
+assign uext_y_9 = { 1'd0, `Y};
+assign uext_y_32 = { 24'd0, `Y};
+assign uext_y_33 = { 25'd0, `Y};
+assign uext_ey_33 = { 1'd0, `EY};
+
+assign add_a_src = uext_a_9 + uext_src_9;
+assign add_8_n = add_a_src[7];
+assign add_8_v = add_a_src[8] ^ add_a_src[7];
+assign add_8_z = (add_a_src == 9'd0) ? 1 : 0;
+assign add_8_c = add_a_src[8];
+
+assign add_ea_src = uext_ea_33 + uext_esrc_33;
+assign add_32_n = add_ea_src[31];
+assign add_32_v = add_ea_src[32] ^ add_a_src[31];
+assign add_32_z = (add_ea_src == 33'd0) ? 1 : 0;
+assign add_32_c = add_a_src[32];
+
+assign adc_a_src = uext_a_9 + uext_src_9 + uext_c_9;
+assign adc_8_n = adc_a_src[7];
+assign adc_8_v = adc_a_src[8] ^ adc_a_src[7];
+assign adc_8_z = (adc_a_src == 9'd0) ? 1 : 0;
+assign adc_8_c = adc_a_src[8];
+
+assign adc_ea_src = uext_ea_33 + uext_esrc_33 + uext_c_33;
+assign adc_32_n = adc_ea_src[31];
+assign adc_32_v = adc_ea_src[32] ^ adc_a_src[31];
+assign adc_32_z = (adc_ea_src == 33'd0) ? 1 : 0;
+assign adc_32_c = adc_a_src[32];
+
+assign sbc_a_src = uext_a_9 - uext_src_9 - uext_nc_9;
+assign sbc_8_n = sbc_a_src[7];
+assign sbc_8_v = sbc_a_src[8] ^ sbc_a_src[7];
+assign sbc_8_z = (sbc_a_src == 9'd0) ? 1 : 0;
+assign sbc_8_c = sbc_a_src[8];
+
+assign sbc_ea_src = uext_ea_33 - uext_esrc_33 - uext_nc_33;
+assign sbc_32_n = sbc_ea_src[31];
+assign sbc_32_v = sbc_ea_src[32] ^ sbc_a_src[31];
+assign sbc_32_z = (sbc_ea_src == 33'd0) ? 1 : 0;
+assign sbc_32_c = sbc_a_src[32];
+
+assign sub_a_src = uext_a_9 - uext_src_9;
+assign sub_8_n = sub_a_src[7];
+assign sub_8_v = sub_a_src[8] ^ sub_a_src[7];
+assign sub_8_z = (sub_a_src == 9'd0) ? 1 : 0;
+assign sub_8_c = sub_a_src[8];
+
+assign sub_ea_src = uext_ea_33 - uext_esrc_33;
+assign sub_32_n = sub_ea_src[31];
+assign sub_32_v = sub_ea_src[32] ^ sub_a_src[31];
+assign sub_32_z = (sub_ea_src == 33'd0) ? 1 : 0;
+assign sub_32_c = sub_a_src[32];
+
+
+
 /*
 always @(posedge i_rst or posedge i_clk) begin
     if (i_rst) begin
