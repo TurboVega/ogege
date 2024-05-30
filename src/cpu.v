@@ -112,6 +112,11 @@ reg `VB reg_estatus;        // Processor status
 `define ZERO_32 24'd0
 `define ZERO_33 24'd0
 
+`define ONE_8 8'd1
+`define ONE_9 9'd1
+`define ONE_32 32'd1
+`define ONE_33 33'd1
+
 `define ONES_24 24'hFFFFFF
 `define ONES_25 25'h1FFFFFF
 `define ONES_32 32'hFFFFFFFF
@@ -346,6 +351,38 @@ logic asl_32_n; assign asl_32_n = asl_ea_src[31];
 logic asl_32_z; assign asl_32_z = (asl_ea_src == `ZERO_32) ? 1 : 0;
 logic asl_32_c; assign asl_32_c = `eA[31];
 
+`LOGIC_8 dec_a_src; assign dec_a_src = `A - `ONE_8;
+logic dec_8_n; assign dec_8_n = dec_a_src[7];
+logic dec_8_z; assign dec_8_z = (dec_a_src == `ZERO_8) ? 1 : 0;
+
+`LOGIC_32 dec_ea_src; assign dec_ea_src = `eA - `ONE_32;
+logic dec_32_n; assign dec_32_n = dec_ea_src[31];
+logic dec_32_z; assign dec_32_z = (dec_ea_src == `ZERO_32) ? 1 : 0;
+
+`LOGIC_8 dec_pc_src; assign dec_pc_src = `PC - `ONE_8;
+
+`LOGIC_32 dec_epc_src; assign dec_epc_src = `ePC - `ONE_32;
+
+`LOGIC_8 dec_sp_src; assign dec_sp_src = `SP - `ONE_8;
+
+`LOGIC_32 dec_esp_src; assign dec_esp_src = `eSP - `ONE_32;
+
+`LOGIC_8 dec_x_src; assign dec_x_src = `X - `ONE_8;
+logic dec_8_n; assign dec_8_n = dec_x_src[7];
+logic dec_8_z; assign dec_8_z = (dec_x_src == `ZERO_8) ? 1 : 0;
+
+`LOGIC_32 dec_ex_src; assign dec_ex_src = `eX - `ONE_32;
+logic dec_32_n; assign dec_32_n = dec_ex_src[31];
+logic dec_32_z; assign dec_32_z = (dec_ex_src == `ZERO_32) ? 1 : 0;
+
+`LOGIC_8 dec_y_src; assign dec_y_src = `Y - `ONE_8;
+logic dec_8_n; assign dec_8_n = dec_y_src[7];
+logic dec_8_z; assign dec_8_z = (dec_y_src == `ZERO_8) ? 1 : 0;
+
+`LOGIC_32 dec_ey_src; assign dec_ey_src = `eY - `ONE_32;
+logic dec_32_n; assign dec_32_n = dec_ey_src[31];
+logic dec_32_z; assign dec_32_z = (dec_ey_src == `ZERO_32) ? 1 : 0;
+
 `LOGIC_8 eor_a_src; assign eor_a_src = `A ^ `SRC;
 logic eor_8_n; assign eor_8_n = eor_a_src[7];
 logic eor_8_z; assign eor_8_z = (eor_a_src == `ZERO_8) ? 1 : 0;
@@ -353,6 +390,38 @@ logic eor_8_z; assign eor_8_z = (eor_a_src == `ZERO_8) ? 1 : 0;
 `LOGIC_32 eor_ea_src; assign eor_ea_src = `eA ^ `eSRC;
 logic eor_32_n; assign eor_32_n = eor_ea_src[31];
 logic eor_32_z; assign eor_32_z = (eor_ea_src == `ZERO_32) ? 1 : 0;
+
+`LOGIC_8 inc_a_src; assign inc_a_src = `A + `ONE_8;
+logic inc_8_n; assign inc_8_n = inc_a_src[7];
+logic inc_8_z; assign inc_8_z = (inc_a_src == `ZERO_8) ? 1 : 0;
+
+`LOGIC_32 inc_ea_src; assign inc_ea_src = `eA + `ONE_32;
+logic inc_32_n; assign inc_32_n = inc_ea_src[31];
+logic inc_32_z; assign inc_32_z = (inc_ea_src == `ZERO_32) ? 1 : 0;
+
+`LOGIC_8 inc_pc_src; assign inc_pc_src = `PC + `ONE_8;
+
+`LOGIC_32 inc_epc_src; assign inc_epc_src = `ePC + `ONE_32;
+
+`LOGIC_8 inc_sp_src; assign inc_sp_src = `SP + `ONE_8;
+
+`LOGIC_32 inc_esp_src; assign inc_esp_src = `eSP + `ONE_32;
+
+`LOGIC_8 inc_x_src; assign inc_x_src = `X + `ONE_8;
+logic inc_8_n; assign inc_8_n = inc_x_src[7];
+logic inc_8_z; assign inc_8_z = (inc_x_src == `ZERO_8) ? 1 : 0;
+
+`LOGIC_32 inc_ex_src; assign inc_ex_src = `eX + `ONE_32;
+logic inc_32_n; assign inc_32_n = inc_ex_src[31];
+logic inc_32_z; assign inc_32_z = (inc_ex_src == `ZERO_32) ? 1 : 0;
+
+`LOGIC_8 inc_y_src; assign inc_y_src = `Y + `ONE_8;
+logic inc_8_n; assign inc_8_n = inc_y_src[7];
+logic inc_8_z; assign inc_8_z = (inc_y_src == `ZERO_8) ? 1 : 0;
+
+`LOGIC_32 inc_ey_src; assign inc_ey_src = `eY + `ONE_32;
+logic inc_32_n; assign inc_32_n = inc_ey_src[31];
+logic inc_32_z; assign inc_32_z = (inc_ey_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 neg_a_src; assign neg_a_src = `ZERO_8 - `A;
 logic neg_8_n; assign neg_8_n = neg_a_src[7];
