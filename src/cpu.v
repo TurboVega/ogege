@@ -117,6 +117,7 @@ reg `VB reg_estatus;        // Processor status
 `define ONE_32 32'd1
 `define ONE_33 33'd1
 
+`define ONES_8 8'hFF
 `define ONES_24 24'hFFFFFF
 `define ONES_25 25'h1FFFFFF
 `define ONES_32 32'hFFFFFFFF
@@ -240,7 +241,8 @@ initial $readmemh("../ram/ram.bits", reg_ram);
 
 `define LOGIC_8     logic [7:0]
 `define LOGIC_9     logic [8:0]
-`define LOGIC_17    logic [17:0]
+`define LOGIC_16    logic [15:0]
+`define LOGIC_17    logic [16:0]
 `define LOGIC_32    logic [31:0]
 `define LOGIC_33    logic [32:0]
 
@@ -255,6 +257,7 @@ initial $readmemh("../ram/ram.bits", reg_ram);
 `LOGIC_33 sext_c_33; assign sext_c_33 = `C ? `ONES_33 : `ZERO_33;
 
 `LOGIC_9 sext_src_9; assign sext_src_9 = {reg_src_data[7], `SRC};
+`LOGIC_16 sext_src_16; assign sext_src_16 = {reg_src_data[7] ? `ONES_8 : `ZERO_8, `SRC};
 `LOGIC_32 sext_src_32; assign sext_src_32 = {reg_src_data[7] ? `ONES_24 : `ZERO_24, `SRC};
 `LOGIC_33 sext_src_33; assign sext_src_33 = {reg_src_data[7] ? `ONES_25 : `ZERO_25, `SRC};
 `LOGIC_33 sext_esrc_33; assign sext_esrc_33 = {reg_src_data[31], `eSRC};
@@ -295,6 +298,7 @@ initial $readmemh("../ram/ram.bits", reg_ram);
 `LOGIC_33 uext_esp_33; assign uext_esp_33 = { 1'd0, `eSP};
 
 `LOGIC_9 uext_src_9; assign uext_src_9 = { 1'd0, `SRC};
+`LOGIC_16 uext_src_16; assign uext_src_16 = { `ZERO_8, `SRC};
 `LOGIC_32 uext_src_32; assign uext_src_32 = { `ZERO_24, `SRC};
 `LOGIC_33 uext_src_33; assign uext_src_33 = { `ZERO_25, `SRC};
 `LOGIC_33 uext_esrc_33; assign uext_esrc_33 = { 1'd0, `eSRC};
@@ -320,6 +324,10 @@ logic add_32_n; assign add_32_n = add_ea_src[31];
 logic add_32_v; assign add_32_v = add_ea_src[32] ^ add_ea_src[31];
 logic add_32_z; assign add_32_z = (add_ea_src`VW == `ZERO_32) ? 1 : 0;
 logic add_32_c; assign add_32_c = add_ea_src[32];
+
+`LOGIC_16 add_pc_src; assign add_pc_src = `PC + sext_src_16;
+
+`LOGIC_32 add_epc_src; assign add_epc_src = `ePC + sext_src_32;
 
 `LOGIC_9 adc_a_src; assign adc_a_src = uext_a_9 + uext_src_9 + uext_c_9;
 logic adc_a_n; assign adc_a_n = adc_a_src[7];
