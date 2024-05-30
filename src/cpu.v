@@ -222,7 +222,7 @@ typedef enum bit [7:0] {
 } Operation;
 
 // Processing registers
-reg [2:0] reg_stage;
+reg [2:0] reg_cycle;
 reg [7:0] reg_operation;
 reg [4:0] reg_address_mode;
 reg reg_6502;
@@ -232,10 +232,12 @@ reg `VW reg_address;
 reg `VW reg_src_data;
 reg `VW reg_dst_data;
 
+logic [7:0] var_opcode;
+
 `define SRC reg_src_data`VB
 `define eSRC reg_src_data`VW
 
-reg `VW reg_ram[0:16383];
+reg `VB reg_ram[0:65535]; // 64 KB
 
 initial $readmemh("../ram/ram.bits", reg_ram);
 
@@ -517,6 +519,7 @@ always @(posedge i_rst or posedge i_clk) begin
         `eX <= `ZERO_32;
         `eY <= `ZERO_32;
 
+        reg_cycle <= 0;
         reg_operation <= 0;
         reg_address_mode <= 0;
         reg_which <= 0;
@@ -525,6 +528,12 @@ always @(posedge i_rst or posedge i_clk) begin
         reg_dst_data <= 0;
     end else begin
 
+        if (reg_cycle == 0) begin
+            var_opcode = reg_ram[`PC];
+            case (var_opcode)
+                8'h00: reg_address_mode <= IMP_i;
+            endcase;
+        end
     end
 end
 
