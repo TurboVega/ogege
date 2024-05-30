@@ -322,16 +322,16 @@ logic add_32_z; assign add_32_z = (add_ea_src`VW == `ZERO_32) ? 1 : 0;
 logic add_32_c; assign add_32_c = add_ea_src[32];
 
 `LOGIC_9 adc_a_src; assign adc_a_src = uext_a_9 + uext_src_9 + uext_c_9;
-logic adc_8_n; assign adc_8_n = adc_a_src[7];
-logic adc_8_v; assign adc_8_v = adc_a_src[8] ^ adc_a_src[7];
-logic adc_8_z; assign adc_8_z = (adc_a_src`VB == `ZERO_8) ? 1 : 0;
-logic adc_8_c; assign adc_8_c = adc_a_src[8];
+logic adc_a_n; assign adc_a_n = adc_a_src[7];
+logic adc_a_v; assign adc_a_v = adc_a_src[8] ^ adc_a_src[7];
+logic adc_a_z; assign adc_a_z = (adc_a_src`VB == `ZERO_8) ? 1 : 0;
+logic adc_a_c; assign adc_a_c = adc_a_src[8];
 
 `LOGIC_33 adc_ea_src; assign adc_ea_src = uext_ea_33 + uext_esrc_33 + uext_c_33;
-logic adc_32_n; assign adc_32_n = adc_ea_src[31];
-logic adc_32_v; assign adc_32_v = adc_ea_src[32] ^ adc_ea_src[31];
-logic adc_32_z; assign adc_32_z = (adc_ea_src`VW == `ZERO_32) ? 1 : 0;
-logic adc_32_c; assign adc_32_c = adc_ea_src[32];
+logic adc_ea_n; assign adc_ea_n = adc_ea_src[31];
+logic adc_ea_v; assign adc_ea_v = adc_ea_src[32] ^ adc_ea_src[31];
+logic adc_ea_z; assign adc_ea_z = (adc_ea_src`VW == `ZERO_32) ? 1 : 0;
+logic adc_ea_c; assign adc_ea_c = adc_ea_src[32];
 
 `LOGIC_8 and_a_src; assign and_a_src = `A & `SRC;
 logic and_8_n; assign and_8_n = and_a_src[7];
@@ -342,22 +342,22 @@ logic and_32_n; assign and_32_n = and_ea_src[31];
 logic and_32_z; assign and_32_z = (and_ea_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 asl_a_src; assign asl_a_src = {`A[6:0], 1'b0};
-logic asl_8_n; assign asl_8_n = asl_a_src[7];
-logic asl_8_z; assign asl_8_z = (asl_a_src == `ZERO_8) ? 1 : 0;
-logic asl_8_c; assign asl_8_c = `A[7];
+logic asl_a_n; assign asl_a_n = asl_a_src[7];
+logic asl_a_z; assign asl_a_z = (asl_a_src == `ZERO_8) ? 1 : 0;
+logic asl_a_c; assign asl_a_c = `A[7];
 
 `LOGIC_32 asl_ea_src; assign asl_ea_src = {`eA[30:0], 1'b0};
-logic asl_32_n; assign asl_32_n = asl_ea_src[31];
-logic asl_32_z; assign asl_32_z = (asl_ea_src == `ZERO_32) ? 1 : 0;
-logic asl_32_c; assign asl_32_c = `eA[31];
+logic asl_ea_n; assign asl_ea_n = asl_ea_src[31];
+logic asl_ea_z; assign asl_ea_z = (asl_ea_src == `ZERO_32) ? 1 : 0;
+logic asl_ea_c; assign asl_ea_c = `eA[31];
 
 `LOGIC_8 dec_a_src; assign dec_a_src = `A - `ONE_8;
-logic dec_8_n; assign dec_8_n = dec_a_src[7];
-logic dec_8_z; assign dec_8_z = (dec_a_src == `ZERO_8) ? 1 : 0;
+logic dec_a_n; assign dec_a_n = dec_a_src[7];
+logic dec_a_z; assign dec_a_z = (dec_a_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 dec_ea_src; assign dec_ea_src = `eA - `ONE_32;
-logic dec_32_n; assign dec_32_n = dec_ea_src[31];
-logic dec_32_z; assign dec_32_z = (dec_ea_src == `ZERO_32) ? 1 : 0;
+logic dec_ea_n; assign dec_ea_n = dec_ea_src[31];
+logic dec_ea_z; assign dec_ea_z = (dec_ea_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 dec_pc_src; assign dec_pc_src = `PC - `ONE_8;
 
@@ -368,36 +368,36 @@ logic dec_32_z; assign dec_32_z = (dec_ea_src == `ZERO_32) ? 1 : 0;
 `LOGIC_32 dec_esp_src; assign dec_esp_src = `eSP - `ONE_32;
 
 `LOGIC_8 dec_x_src; assign dec_x_src = `X - `ONE_8;
-logic dec_8_n; assign dec_8_n = dec_x_src[7];
-logic dec_8_z; assign dec_8_z = (dec_x_src == `ZERO_8) ? 1 : 0;
+logic dec_x_n; assign dec_x_n = dec_x_src[7];
+logic dec_x_z; assign dec_x_z = (dec_x_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 dec_ex_src; assign dec_ex_src = `eX - `ONE_32;
-logic dec_32_n; assign dec_32_n = dec_ex_src[31];
-logic dec_32_z; assign dec_32_z = (dec_ex_src == `ZERO_32) ? 1 : 0;
+logic dec_ex_n; assign dec_ex_n = dec_ex_src[31];
+logic dec_ex_z; assign dec_ex_z = (dec_ex_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 dec_y_src; assign dec_y_src = `Y - `ONE_8;
-logic dec_8_n; assign dec_8_n = dec_y_src[7];
-logic dec_8_z; assign dec_8_z = (dec_y_src == `ZERO_8) ? 1 : 0;
+logic dec_y_n; assign dec_y_n = dec_y_src[7];
+logic dec_y_z; assign dec_y_z = (dec_y_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 dec_ey_src; assign dec_ey_src = `eY - `ONE_32;
-logic dec_32_n; assign dec_32_n = dec_ey_src[31];
-logic dec_32_z; assign dec_32_z = (dec_ey_src == `ZERO_32) ? 1 : 0;
+logic dec_ey_n; assign dec_ey_n = dec_ey_src[31];
+logic dec_ey_z; assign dec_ey_z = (dec_ey_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 eor_a_src; assign eor_a_src = `A ^ `SRC;
-logic eor_8_n; assign eor_8_n = eor_a_src[7];
-logic eor_8_z; assign eor_8_z = (eor_a_src == `ZERO_8) ? 1 : 0;
+logic eor_a_n; assign eor_a_n = eor_a_src[7];
+logic eor_a_z; assign eor_a_z = (eor_a_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 eor_ea_src; assign eor_ea_src = `eA ^ `eSRC;
-logic eor_32_n; assign eor_32_n = eor_ea_src[31];
-logic eor_32_z; assign eor_32_z = (eor_ea_src == `ZERO_32) ? 1 : 0;
+logic eor_ea_n; assign eor_ea_n = eor_ea_src[31];
+logic eor_ea_z; assign eor_ea_z = (eor_ea_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 inc_a_src; assign inc_a_src = `A + `ONE_8;
-logic inc_8_n; assign inc_8_n = inc_a_src[7];
-logic inc_8_z; assign inc_8_z = (inc_a_src == `ZERO_8) ? 1 : 0;
+logic inc_a_n; assign inc_a_n = inc_a_src[7];
+logic inc_a_z; assign inc_a_z = (inc_a_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 inc_ea_src; assign inc_ea_src = `eA + `ONE_32;
-logic inc_32_n; assign inc_32_n = inc_ea_src[31];
-logic inc_32_z; assign inc_32_z = (inc_ea_src == `ZERO_32) ? 1 : 0;
+logic inc_ea_n; assign inc_ea_n = inc_ea_src[31];
+logic inc_ea_z; assign inc_ea_z = (inc_ea_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 inc_pc_src; assign inc_pc_src = `PC + `ONE_8;
 
@@ -408,88 +408,88 @@ logic inc_32_z; assign inc_32_z = (inc_ea_src == `ZERO_32) ? 1 : 0;
 `LOGIC_32 inc_esp_src; assign inc_esp_src = `eSP + `ONE_32;
 
 `LOGIC_8 inc_x_src; assign inc_x_src = `X + `ONE_8;
-logic inc_8_n; assign inc_8_n = inc_x_src[7];
-logic inc_8_z; assign inc_8_z = (inc_x_src == `ZERO_8) ? 1 : 0;
+logic inc_x_n; assign inc_x_n = inc_x_src[7];
+logic inc_x_z; assign inc_x_z = (inc_x_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 inc_ex_src; assign inc_ex_src = `eX + `ONE_32;
-logic inc_32_n; assign inc_32_n = inc_ex_src[31];
-logic inc_32_z; assign inc_32_z = (inc_ex_src == `ZERO_32) ? 1 : 0;
+logic inc_ex_n; assign inc_ex_n = inc_ex_src[31];
+logic inc_ex_z; assign inc_ex_z = (inc_ex_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 inc_y_src; assign inc_y_src = `Y + `ONE_8;
-logic inc_8_n; assign inc_8_n = inc_y_src[7];
-logic inc_8_z; assign inc_8_z = (inc_y_src == `ZERO_8) ? 1 : 0;
+logic inc_y_n; assign inc_y_n = inc_y_src[7];
+logic inc_y_z; assign inc_y_z = (inc_y_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 inc_ey_src; assign inc_ey_src = `eY + `ONE_32;
-logic inc_32_n; assign inc_32_n = inc_ey_src[31];
-logic inc_32_z; assign inc_32_z = (inc_ey_src == `ZERO_32) ? 1 : 0;
+logic inc_ey_n; assign inc_ey_n = inc_ey_src[31];
+logic inc_ey_z; assign inc_ey_z = (inc_ey_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 neg_a_src; assign neg_a_src = `ZERO_8 - `A;
-logic neg_8_n; assign neg_8_n = neg_a_src[7];
-logic neg_8_z; assign neg_8_z = (neg_a_src == `ZERO_8) ? 1 : 0;
+logic neg_a_n; assign neg_a_n = neg_a_src[7];
+logic neg_a_z; assign neg_a_z = (neg_a_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 neg_ea_src; assign neg_ea_src = `ZERO_32 - `eA;
-logic neg_32_n; assign neg_32_n = neg_ea_src[31];
-logic neg_32_z; assign neg_32_z = (neg_ea_src == `ZERO_32) ? 1 : 0;
+logic neg_ea_n; assign neg_ea_n = neg_ea_src[31];
+logic neg_ea_z; assign neg_ea_z = (neg_ea_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 not_a_src; assign not_a_src = ~`A;
-logic not_8_n; assign not_8_n = not_a_src[7];
-logic not_8_z; assign not_8_z = (not_a_src == `ZERO_8) ? 1 : 0;
+logic not_a_n; assign not_a_n = not_a_src[7];
+logic not_a_z; assign not_a_z = (not_a_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 not_ea_src; assign not_ea_src = ~`eA;
-logic not_32_n; assign not_32_n = not_ea_src[31];
-logic not_32_z; assign not_32_z = (not_ea_src == `ZERO_32) ? 1 : 0;
+logic not_ea_n; assign not_ea_n = not_ea_src[31];
+logic not_ea_z; assign not_ea_z = (not_ea_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 or_a_src; assign or_a_src = `A | `SRC;
-logic or_8_n; assign or_8_n = or_a_src[7];
-logic or_8_z; assign or_8_z = (or_a_src == `ZERO_8) ? 1 : 0;
+logic or_a_n; assign or_a_n = or_a_src[7];
+logic or_a_z; assign or_a_z = (or_a_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 or_ea_src; assign or_ea_src = `eA | `eSRC;
 logic or_32_n; assign or_32_n = or_ea_src[31];
 logic or_32_z; assign or_32_z = (or_ea_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 rol_a_src; assign rol_a_src = {`A[6:0], `C};
-logic rol_8_n; assign rol_8_n = rol_a_src[7];
-logic rol_8_z; assign rol_8_z = (rol_a_src == `ZERO_8) ? 1 : 0;
-logic rol_8_c; assign rol_8_c = `A[7];
+logic rol_a_n; assign rol_a_n = rol_a_src[7];
+logic rol_a_z; assign rol_a_z = (rol_a_src == `ZERO_8) ? 1 : 0;
+logic rol_a_c; assign rol_a_c = `A[7];
 
 `LOGIC_32 rol_ea_src; assign rol_ea_src = {`eA[30:0], `eC};
-logic rol_32_n; assign rol_32_n = rol_ea_src[31];
-logic rol_32_z; assign rol_32_z = (rol_ea_src == `ZERO_32) ? 1 : 0;
-logic rol_32_c; assign rol_32_c = `eA[31];
+logic rol_ea_n; assign rol_ea_n = rol_ea_src[31];
+logic rol_ea_z; assign rol_ea_z = (rol_ea_src == `ZERO_32) ? 1 : 0;
+logic rol_ea_c; assign rol_ea_c = `eA[31];
 
 `LOGIC_8 ror_a_src; assign ror_a_src = {`C, `A[7:1]};
-logic ror_8_n; assign ror_8_n = ror_a_src[7];
-logic ror_8_z; assign ror_8_z = (ror_a_src == `ZERO_8) ? 1 : 0;
-logic ror_8_c; assign ror_8_c = `A[0];
+logic ror_a_n; assign ror_a_n = ror_a_src[7];
+logic ror_a_z; assign ror_a_z = (ror_a_src == `ZERO_8) ? 1 : 0;
+logic ror_a_c; assign ror_a_c = `A[0];
 
 `LOGIC_32 ror_ea_src; assign ror_ea_src = {`eC, `eA[30:0]};
-logic ror_32_n; assign ror_32_n = ror_ea_src[31];
-logic ror_32_z; assign ror_32_z = (ror_ea_src == `ZERO_32) ? 1 : 0;
-logic ror_32_c; assign ror_32_c = `eA[0];
+logic ror_ea_n; assign ror_ea_n = ror_ea_src[31];
+logic ror_ea_z; assign ror_ea_z = (ror_ea_src == `ZERO_32) ? 1 : 0;
+logic ror_ea_c; assign ror_ea_c = `eA[0];
 
 `LOGIC_9 sbc_a_src; assign sbc_a_src = uext_a_9 - uext_src_9 - uext_nc_9;
-logic sbc_8_n; assign sbc_8_n = sbc_a_src[7];
-logic sbc_8_v; assign sbc_8_v = sbc_a_src[8] ^ sbc_a_src[7];
-logic sbc_8_z; assign sbc_8_z = (sbc_a_src`VB == `ZERO_8) ? 1 : 0;
-logic sbc_8_c; assign sbc_8_c = sbc_a_src[8];
+logic sbc_a_n; assign sbc_a_n = sbc_a_src[7];
+logic sbc_a_v; assign sbc_a_v = sbc_a_src[8] ^ sbc_a_src[7];
+logic sbc_a_z; assign sbc_a_z = (sbc_a_src`VB == `ZERO_8) ? 1 : 0;
+logic sbc_a_c; assign sbc_a_c = sbc_a_src[8];
 
 `LOGIC_33 sbc_ea_src; assign sbc_ea_src = uext_ea_33 - uext_esrc_33 - uext_nc_33;
-logic sbc_32_n; assign sbc_32_n = sbc_ea_src[31];
-logic sbc_32_v; assign sbc_32_v = sbc_ea_src[32] ^ sbc_ea_src[31];
-logic sbc_32_z; assign sbc_32_z = (sbc_ea_src`VW == `ZERO_32) ? 1 : 0;
-logic sbc_32_c; assign sbc_32_c = sbc_ea_src[32];
+logic sbc_ea_n; assign sbc_ea_n = sbc_ea_src[31];
+logic sbc_ea_v; assign sbc_ea_v = sbc_ea_src[32] ^ sbc_ea_src[31];
+logic sbc_ea_z; assign sbc_ea_z = (sbc_ea_src`VW == `ZERO_32) ? 1 : 0;
+logic sbc_ea_c; assign sbc_ea_c = sbc_ea_src[32];
 
 `LOGIC_9 sub_a_src; assign sub_a_src = uext_a_9 - uext_src_9;
-logic sub_8_n; assign sub_8_n = sub_a_src[7];
-logic sub_8_v; assign sub_8_v = sub_a_src[8] ^ sub_a_src[7];
-logic sub_8_z; assign sub_8_z = (sub_a_src`VB == `ZERO_8) ? 1 : 0;
-logic sub_8_c; assign sub_8_c = sub_a_src[8];
+logic sub_a_n; assign sub_a_n = sub_a_src[7];
+logic sub_a_v; assign sub_a_v = sub_a_src[8] ^ sub_a_src[7];
+logic sub_a_z; assign sub_a_z = (sub_a_src`VB == `ZERO_8) ? 1 : 0;
+logic sub_a_c; assign sub_a_c = sub_a_src[8];
 
 `LOGIC_33 sub_ea_src; assign sub_ea_src = uext_ea_33 - uext_esrc_33;
-logic sub_32_n; assign sub_32_n = sub_ea_src[31];
-logic sub_32_v; assign sub_32_v = sub_ea_src[32] ^ sub_ea_src[31];
-logic sub_32_z; assign sub_32_z = (sub_ea_src`VW == `ZERO_32) ? 1 : 0;
-logic sub_32_c; assign sub_32_c = sub_ea_src[32];
+logic sub_ea_n; assign sub_ea_n = sub_ea_src[31];
+logic sub_ea_v; assign sub_ea_v = sub_ea_src[32] ^ sub_ea_src[31];
+logic sub_ea_z; assign sub_ea_z = (sub_ea_src`VW == `ZERO_32) ? 1 : 0;
+logic sub_ea_c; assign sub_ea_c = sub_ea_src[32];
 
 always @(posedge i_rst or posedge i_clk) begin
     integer i;
