@@ -354,6 +354,22 @@ logic eor_8_z; assign eor_8_z = (eor_a_src == `ZERO_8) ? 1 : 0;
 logic eor_32_n; assign eor_32_n = eor_ea_src[31];
 logic eor_32_z; assign eor_32_z = (eor_ea_src == `ZERO_32) ? 1 : 0;
 
+`LOGIC_8 neg_a_src; assign neg_a_src = `ZERO_8 - `A;
+logic neg_8_n; assign neg_8_n = neg_a_src[7];
+logic neg_8_z; assign neg_8_z = (neg_a_src == `ZERO_8) ? 1 : 0;
+
+`LOGIC_32 neg_ea_src; assign neg_ea_src = `ZERO_32 - `eA;
+logic neg_32_n; assign neg_32_n = neg_ea_src[31];
+logic neg_32_z; assign neg_32_z = (neg_ea_src == `ZERO_32) ? 1 : 0;
+
+`LOGIC_8 not_a_src; assign not_a_src = ~`A;
+logic not_8_n; assign not_8_n = not_a_src[7];
+logic not_8_z; assign not_8_z = (not_a_src == `ZERO_8) ? 1 : 0;
+
+`LOGIC_32 not_ea_src; assign not_ea_src = ~`eA;
+logic not_32_n; assign not_32_n = not_ea_src[31];
+logic not_32_z; assign not_32_z = (not_ea_src == `ZERO_32) ? 1 : 0;
+
 `LOGIC_8 or_a_src; assign or_a_src = `A | `SRC;
 logic or_8_n; assign or_8_n = or_a_src[7];
 logic or_8_z; assign or_8_z = (or_a_src == `ZERO_8) ? 1 : 0;
