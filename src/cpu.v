@@ -141,7 +141,6 @@ reg am_AIIX_A_X;    // Absolute Indexed Indirect with X (a,x) (6502)
 reg am_AIX_a_x;     // Absolute Indexed with X a,x (6502)
 reg am_AIY_a_y;     // Absolute Indexed with Y a,y (6502)
 reg am_IMM_m;       // Immediate Addressing # (6502)
-reg am_IMP_i;       // Implied i (6502)
 reg am_PCR_r;       // Program Counter Relative r (6502)
 reg am_STK_s;       // Stack s (6502)
 reg am_ZIIX_ZP_X;   // Zero Page Indexed Indirect (zp,x) (6502)
@@ -523,7 +522,6 @@ always @(posedge i_rst or posedge i_clk) begin
         ame_AIY_a_y <= 0;
         ame_STK_s <= 0;
         am_IMM_m <= 0;
-        am_IMP_i <= 0;
         am_PCR_r <= 0;
         am_STK_s <= 0;
         am_STK_s <= 0;
@@ -1372,7 +1370,6 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hCB: begin
                             op_WAI <= 1;
-                            am_IMP_i <= 1;
                         end
 
                     8'hCC: begin
@@ -1431,7 +1428,6 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hDB: begin
                             op_STP <= 1;
-                            am_IMP_i <= 1;
                         end
 
                     8'hDD: begin
