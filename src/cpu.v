@@ -123,82 +123,6 @@ reg `VB reg_estatus;        // Processor status
 `define ONES_32 32'hFFFFFFFF
 `define ONES_33 33'h1FFFFFFFF
 
-// Instruction (operation) mnemonics
-typedef enum bit [7:0] {
-    ADD,
-    ADC,
-    AND,
-    ASL,
-    BEQ,
-    BIT,
-    BBR,
-    BBS,
-    BCC,
-    BCS,
-    BMI,
-    BNE,
-    BPL,
-    BRA,
-    BRK,
-    BVC,
-    BVS,
-    CLC,
-    CLD,
-    CLI,
-    CLV,
-    CMP,
-    CPX,
-    CPY,
-    DEC,
-    DEX,
-    DEY,
-    EOR,
-    INC,
-    INX,
-    INY,
-    JMP,
-    JSR,
-    LDA,
-    LDX,
-    LDY,
-    LSR,
-    NOP,
-    ORA,
-    PHA,
-    PHP,
-    PHX,
-    PHY,
-    PLA,
-    PLP,
-    PLX,
-    PLY,
-    RMB,
-    ROL,
-    ROR,
-    RTI,
-    RTS,
-    SBC,
-    SEC,
-    SED,
-    SEI,
-    SMB,
-    STA,
-    STP,
-    STX,
-    STY,
-    STZ,
-    SUB,
-    TAX,
-    TAY,
-    TRB,
-    TSB,
-    TSX,
-    TXA,
-    TXS,
-    TYA,
-    WAI
-} Operation;
-
 // Processing registers
 reg [2:0] reg_cycle;
 reg reg_6502;
@@ -790,8 +714,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'h1A: begin
-                            op_INC <= 1;
-                            am_ACC_A <= 1;
+                            `A = inc_a;
+                            `N = inc_a_n;
+                            `Z = inc_a_z;
                         end
 
                     8'h1C: begin
@@ -914,8 +839,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'h3A: begin
-                            op_DEC <= 1;
-                            am_ACC_A <= 1;
+                        `A = dec_a;
+                        `N = dec_a_n;
+                        `Z = dec_a_z;
                         end
 
                     8'h3C: begin
@@ -1185,8 +1111,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'h88: begin
-                            // DEY
-                            `Y <= `Y - 1;
+                            `Y = dec_y;
+                            `N = dec_y_n;
+                            `Z = dec_y_z;
                         end
 
                     8'h89: begin
@@ -1427,8 +1354,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'hC8: begin
-                            // INY
-                            `Y <= `Y + 1;
+                            `Y = inc_y;
+                            `N = inc_y_n;
+                            `Z = inc_y_z;
                         end
 
                     8'hC9: begin
@@ -1437,8 +1365,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'hCA: begin
-                            // DEX
-                            `X <= `X - 1;
+                        `X = dec_x;
+                        `N = dec_x_n;
+                        `Z = dec_x_z;
                         end
 
                     8'hCB: begin
@@ -1541,8 +1470,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'hE8: begin
-                            // INX
-                            `X <= `X + 1;
+                            `X = inc_x;
+                            `N = inc_x_n;
+                            `Z = inc_x_z;
                         end
 
                     8'hE9: begin
@@ -1694,8 +1624,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'h1A: begin
-                            op_INC <= 1;
-							ame_ACC_A <= 1;
+                            `eA = inc_ea;
+                            `eN = inc_ea_n;
+                            `eZ = inc_ea_z;
                         end
 
                     8'h1C: begin
@@ -1788,8 +1719,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'h3A: begin
-                            op_DEC <= 1;
-							ame_ACC_A <= 1;
+                        `eA = dec_ea;
+                        `eN = dec_ea_n;
+                        `eZ = dec_ea_z;
                         end
 
                     8'h3C: begin
@@ -1986,8 +1918,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'h88: begin
-                            // DEY
-                            reg_y <= reg_y - 1;
+                            `eY = dec_ey;
+                            `eN = dec_ey_n;
+                            `eZ = dec_ey_z;
                         end
 
                     8'h89: begin
@@ -2170,8 +2103,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'hC8: begin
-                            // INY
-                            reg_y <= reg_y + 1;
+                            `eY = inc_ey;
+                            `eN = inc_ey_n;
+                            `eZ = inc_ey_z;
                         end
 
                     8'hC9: begin
@@ -2180,8 +2114,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'hCA: begin
-                            // DEX
-                            reg_x <= reg_x - 1;
+                        `eX = dec_ex;
+                        `eN = dec_ex_n;
+                        `eZ = dec_ex_z;
                         end
 
                     8'hCC: begin
@@ -2249,8 +2184,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'hE8: begin
-                            // INX
-                            reg_x <= reg_x + 1;
+                            `eX = inc_ex;
+                            `eN = inc_ex_n;
+                            `eZ = inc_ex_z;
                         end
 
                     8'hE9: begin
