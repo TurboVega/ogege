@@ -305,7 +305,7 @@ assign new_color =
 */
 
 cpu cpu_inst (
-	.i_clk(pix_clk)
+	.i_clk(clk_100mhz)
 );
 
 assign new_color = 12'h123;
