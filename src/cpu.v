@@ -123,28 +123,6 @@ reg `VB reg_estatus;        // Processor status
 `define ONES_32 32'hFFFFFFFF
 `define ONES_33 33'h1FFFFFFFF
 
-// Address modes
-typedef enum bit [4:0] {
-    AM_INVALID, // Invalid (none)
-    ABS_a,      // Absolute a
-    AIIX_A_X,   // Absolute Indexed Indirect with X (a,x)
-    AIX_a_x,    // Absolute Indexed with X a,x
-    AIY_a_y,    // Absolute Indexed with Y a,y
-    AIIY_A_y,   // Absolute Indexed Indirect with Y (a),y
-    AIA_A,      // Absolute Indirect (a)
-    ACC_A,      // Accumulator A
-    IMM_m,      // Immediate Addressing #
-    IMP_i,      // Implied i
-    PCR_r,      // Program Counter Relative r
-    STK_s,      // Stack s
-    ZPG_zp,     // Zero Page zp
-    ZIIX_ZP_X,  // Zero Page Indexed Indirect (zp,x)
-    ZIX_zp_x,   // Zero Page Indexed with X zp,x
-    ZIY_zp_y,   // Zero Page Indexed with Y zp,y
-    ZPI_ZP,     // Zero Page Indirect (zp)
-    ZIIY_ZP_y   // Zero Page Indirect Indexed with Y (zp),y
-} AddressMode;
-
 // Instruction (operation) mnemonics
 typedef enum bit [7:0] {
     ADD,
@@ -233,6 +211,109 @@ reg `VW reg_src_data;
 reg `VW reg_dst_data;
 
 logic [7:0] var_opcode;
+
+// Address modes
+typedef enum bit [4:0] {
+    AM_INVALID, // Invalid (none)
+    AIIX_A_X,   
+    AIX_a_x,    
+    AIY_a_y,    
+    AIIY_A_y,   
+    AIA_A,      
+    ACC_A,      
+    IMM_m,      
+    IMP_i,      
+    PCR_r,      
+    STK_s,      
+    ZPG_zp,     
+    ZIIX_ZP_X,  
+    ZIX_zp_x,   
+    ZIY_zp_y,   
+    ZPI_ZP,     
+    ZIIY_ZP_y   
+} AddressMode;
+
+
+reg am_ABS_a;       // Absolute a (6502)
+reg am_ACC_A;       // Accumulator A (6502)
+reg am_AIA_A;       // Absolute Indirect (a) (6502)
+reg am_AIIX_A_X;    // Absolute Indexed Indirect with X (a,x) (6502)
+reg am_AIX_a_x;     // Absolute Indexed with X a,x (6502)
+reg am_AIY_a_y;     // Absolute Indexed with Y a,y (6502)
+reg am_IMM_m;       // Immediate Addressing # (6502)
+reg am_IMP_i;       // Implied i (6502)
+reg am_PCR_r;       // Program Counter Relative r (6502)
+reg am_STK_s;       // Stack s (6502)
+reg am_ZIIX_ZP_X;   // Zero Page Indexed Indirect (zp,x) (6502)
+reg am_ZIIY_ZP_y;   // Zero Page Indirect Indexed with Y (zp),y (6502)
+reg am_ZIX_zp_x;    // Zero Page Indexed with X zp,x (6502)
+reg am_ZIY_zp_y;    // Zero Page Indexed with Y zp,y (6502)
+reg am_ZPG_zp;      // Zero Page zp (6502)
+reg am_ZPI_ZP;      // Zero Page Indirect (zp) (6502)
+reg ame_ABS_a;      // Absolute a (65832)
+reg ame_AIA_A;      // Absolute Indirect (a) (65832)
+reg ame_AIIX_A_X;   // Absolute Indexed Indirect with X (a,x) (65832)
+reg ame_AIIY_A_y;   // Absolute Indexed Indirect with Y (a),y (65832)
+reg ame_AIX_a_x;    // Absolute Indexed with X a,x (65832)
+reg ame_AIY_a_y;    // Absolute Indexed with Y a,y (65832)
+reg ame_STK_s;      // Stack s (65832)
+reg op_ADC;
+reg op_ADD;
+reg op_AND;
+reg op_ASL;
+reg op_BBR;
+reg op_BBS;
+reg op_BCC;
+reg op_BCS;
+reg op_BEQ;
+reg op_BIT;
+reg op_BMI;
+reg op_BNE;
+reg op_BPL;
+reg op_BRA;
+reg op_BRK;
+reg op_BVC;
+reg op_BVS;
+reg op_CMP;
+reg op_CPX;
+reg op_CPY;
+reg op_DEC;
+reg op_EOR;
+reg op_INC;
+reg op_JMP;
+reg op_JSR;
+reg op_LDA;
+reg op_LDX;
+reg op_LDY;
+reg op_LSR;
+reg op_ORA;
+reg op_PHA;
+reg op_PHP;
+reg op_PHX;
+reg op_PHY;
+reg op_PLA;
+reg op_PLP;
+reg op_PLX;
+reg op_PLY;
+reg op_RMB;
+reg op_ROL;
+reg op_ROR;
+reg op_RTI;
+reg op_RTS;
+reg op_SBC;
+reg op_SMB;
+reg op_STA;
+reg op_STP;
+reg op_STX;
+reg op_STX;
+reg op_STY;
+reg op_STY;
+reg op_STZ;
+reg op_STZ;
+reg op_SUB;
+reg op_TRB;
+reg op_TSB;
+reg op_WAI;
 
 `define SRC reg_src_data`VB
 `define eSRC reg_src_data`VW
@@ -526,13 +607,1802 @@ always @(posedge i_rst or posedge i_clk) begin
         reg_address <= 0;
         reg_src_data <= 0;
         reg_dst_data <= 0;
+
+        am_ABS_a <= 0;
+        am_ACC_A <= 0;
+        am_AIA_A <= 0;
+        am_AIIX_A_X <= 0;
+        am_AIX_a_x <= 0;
+        am_AIY_a_y <= 0;
+        ame_ABS_a <= 0;
+        ame_AIA_A <= 0;
+        ame_AIIX_A_X <= 0;
+        ame_AIIY_A_y <= 0;
+        ame_AIX_a_x <= 0;
+        ame_AIY_a_y <= 0;
+        ame_STK_s <= 0;
+        am_IMM_m <= 0;
+        am_IMP_i <= 0;
+        am_PCR_r <= 0;
+        am_STK_s <= 0;
+        am_STK_s <= 0;
+        am_ZIIX_ZP_X <= 0;
+        am_ZIIY_ZP_y <= 0;
+        am_ZIX_zp_x <= 0;
+        am_ZIY_zp_y <= 0;
+        am_ZPG_zp <= 0;
+        am_ZPI_ZP <= 0;
+        op_ADC <= 0;
+        op_ADD <= 0;
+        op_AND <= 0;
+        op_ASL <= 0;
+        op_BBR <= 0;
+        op_BBS <= 0;
+        op_BCC <= 0;
+        op_BCS <= 0;
+        op_BEQ <= 0;
+        op_BIT <= 0;
+        op_BMI <= 0;
+        op_BNE <= 0;
+        op_BPL <= 0;
+        op_BRA <= 0;
+        op_BRK <= 0;
+        op_BVC <= 0;
+        op_BVS <= 0;
+        op_CMP <= 0;
+        op_CPX <= 0;
+        op_CPY <= 0;
+        op_DEC <= 0;
+        op_EOR <= 0;
+        op_INC <= 0;
+        op_JMP <= 0;
+        op_JSR <= 0;
+        op_LDA <= 0;
+        op_LDX <= 0;
+        op_LDY <= 0;
+        op_LSR <= 0;
+        op_ORA <= 0;
+        op_PHA <= 0;
+        op_PHP <= 0;
+        op_PHX <= 0;
+        op_PHY <= 0;
+        op_PLA <= 0;
+        op_PLP <= 0;
+        op_PLX <= 0;
+        op_PLY <= 0;
+        op_RMB <= 0;
+        op_ROL <= 0;
+        op_ROR <= 0;
+        op_RTI <= 0;
+        op_RTS <= 0;
+        op_SBC <= 0;
+        op_SMB <= 0;
+        op_STA <= 0;
+        op_STP <= 0;
+        op_STX <= 0;
+        op_STX <= 0;
+        op_STY <= 0;
+        op_STY <= 0;
+        op_STZ <= 0;
+        op_STZ <= 0;
+        op_SUB <= 0;
+        op_TRB <= 0;
+        op_TSB <= 0;
+        op_WAI <= 0;
+
     end else begin
 
-        if (reg_cycle == 0) begin
-            var_opcode = reg_ram[`PC];
-            case (var_opcode)
-                8'h00: reg_address_mode <= IMP_i;
-            endcase;
+        if (reg_6502) begin
+            if (reg_cycle == 0) begin
+                var_opcode = reg_ram[`ePC];
+                `ePC <= inc_epc;
+                case (var_opcode)
+                    8'h00: begin
+                            op_BRK <= 1;
+                            am_STK_s <= 1;
+                        end
+
+                    8'h01: begin
+                            op_ORA <= 1;
+                            am_ZIIX_ZP_X <= 1;
+                        end
+
+                    8'h02: begin
+                            op_ADD <= 1;
+                            am_ZIIX_ZP_X <= 1;
+                        end
+
+                    8'h04: begin
+                            op_TSB <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h05: begin
+                            op_ORA <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h06: begin
+                            op_ASL <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h07, 8'h17, 8'h27, 8'h37,
+                    8'h47, 8'h57, 8'h67, 8'h77:
+                        begin
+                            op_RMB <= 1;
+                            am_ZPG_zp <= 1;
+                            reg_which <= var_opcode[6:4];
+                        end
+
+                    8'h08: begin
+                            op_PHP <= 1;
+                            am_STK_s <= 1;
+                        end
+
+                    8'h09: begin
+                            op_ORA <= 1;
+                            am_IMM_m <= 1;
+                        end
+
+                    8'h0A: begin
+                            op_ASL <= 1;
+                            am_ACC_A <= 1;
+                        end
+
+                    8'h0C: begin
+                            op_TSB <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h0D: begin
+                            op_ORA <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h0E: begin
+                            op_ASL <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h0F, 8'h1F, 8'h2F, 8'h3F,
+                    8'h4F, 8'h5F, 8'h6F, 8'h7F:
+                        begin
+                            op_BBR <= 1;
+                            am_PCR_r <= 1;
+                            reg_which <= var_opcode[6:4];
+                        end
+
+                    8'h10: begin
+                            op_BPL <= 1;
+                            am_PCR_r <= 1;
+                        end
+
+                    8'h11: begin
+                            op_ORA <= 1;
+                            am_ZIIY_ZP_y <= 1;
+                        end
+
+                    8'h12: begin
+                            op_ORA <= 1;
+                            am_ZPI_ZP <= 1;
+                        end
+
+                    8'h14: begin
+                            op_TRB <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h15: begin
+                            op_ORA <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'h16: begin
+                            op_ASL <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'h18: begin
+                            `C <= 0; // CLC
+                        end
+
+                    8'h19: begin
+                            op_ORA <= 1;
+                            am_AIY_a_y <= 1;
+                        end
+
+                    8'h1A: begin
+                            op_INC <= 1;
+                            am_ACC_A <= 1;
+                        end
+
+                    8'h1C: begin
+                            op_TRB <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h1D: begin
+                            op_ORA <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'h1E: begin
+                            op_ASL <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'h20: begin
+                            op_JSR <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h21: begin
+                            op_AND <= 1;
+                            am_ZIIX_ZP_X <= 1;
+                        end
+
+                    8'h22: begin
+                            op_JSR <= 1;
+                            am_AIA_A <= 1;
+                        end
+
+                    8'h23: begin
+                            op_SUB <= 1;
+                            am_ZIIX_ZP_X <= 1;
+                        end
+
+                    8'h24: begin
+                            op_BIT <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h25: begin
+                            op_AND <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h26: begin
+                            op_ROL <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h28: begin
+                            op_PLP <= 1;
+                            am_STK_s <= 1;
+                        end
+
+                    8'h29: begin
+                            op_AND <= 1;
+                            am_IMM_m <= 1;
+                        end
+
+                    8'h2A: begin
+                            op_ROL <= 1;
+                            am_ACC_A <= 1;
+                        end
+
+                    8'h2C: begin
+                            op_BIT <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h2D: begin
+                            op_AND <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h2E: begin
+                            op_ROL <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h30: begin
+                            op_BMI <= 1;
+                            am_PCR_r <= 1;
+                        end
+
+                    8'h31: begin
+                            op_AND <= 1;
+                            am_ZIIY_ZP_y <= 1;
+                        end
+
+                    8'h32: begin
+                            op_AND <= 1;
+                            am_ZPI_ZP <= 1;
+                        end
+
+                    8'h34: begin
+                            op_BIT <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'h35: begin
+                            op_AND <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'h36: begin
+                            op_ROL <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'h38: begin
+                            `C <= 1; // SEC
+                        end
+
+                    8'h39: begin
+                            op_AND <= 1;
+                            am_AIY_a_y <= 1;
+                        end
+
+                    8'h3A: begin
+                            op_DEC <= 1;
+                            am_ACC_A <= 1;
+                        end
+
+                    8'h3C: begin
+                            op_BIT <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'h3D: begin
+                            op_AND <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'h3E: begin
+                            op_ROL <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'h40: begin
+                            op_RTI <= 1;
+                            am_STK_s <= 1;
+                        end
+
+                    8'h41: begin
+                            op_EOR <= 1;
+                            am_ZIIX_ZP_X <= 1;
+                        end
+
+                    8'h45: begin
+                            op_EOR <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h46: begin
+                            op_LSR <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h48: begin
+                            op_PHA <= 1;
+                            am_STK_s <= 1;
+                        end
+
+                    8'h49: begin
+                            op_EOR <= 1;
+                            am_IMM_m <= 1;
+                        end
+
+                    8'h4A: begin
+                            op_LSR <= 1;
+                            am_ACC_A <= 1;
+                        end
+
+                    8'h4C: begin
+                            op_JMP <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h4D: begin
+                            op_EOR <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h4E: begin
+                            op_LSR <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h50: begin
+                            op_BVC <= 1;
+                            am_PCR_r <= 1;
+                        end
+
+                    8'h51: begin
+                            op_EOR <= 1;
+                            am_ZIIY_ZP_y <= 1;
+                        end
+
+                    8'h52: begin
+                            op_EOR <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h55: begin
+                            op_EOR <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'h56: begin
+                            op_LSR <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'h58: begin
+                            `I <= 0; // CLI
+                        end
+
+                    8'h59: begin
+                            op_EOR <= 1;
+                            am_AIY_a_y <= 1;
+                        end
+
+                    8'h5A: begin
+                            op_PHY <= 1;
+                            am_STK_s <= 1;
+                        end
+
+                    8'h5C: begin
+                            op_JSR <= 1;
+                            am_AIIX_A_X <= 1;
+                        end
+
+                    8'h5D: begin
+                            op_EOR <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'h5E: begin
+                            op_LSR <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'h60: begin
+                            op_RTS <= 1;
+                            am_STK_s <= 1;
+                        end
+
+                    8'h61: begin
+                            op_ADC <= 1;
+                            am_ZIIX_ZP_X <= 1;
+                        end
+
+                    8'h64: begin
+                            op_STZ <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h65: begin
+                            op_ADC <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h66: begin
+                            op_ROR <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h68: begin
+                            op_PLA <= 1;
+                            am_STK_s <= 1;
+                        end
+
+                    8'h69: begin
+                            op_ADC <= 1;
+                            am_IMM_m <= 1;
+                        end
+
+                    8'h6A: begin
+                            op_ROR <= 1;
+                            am_ACC_A <= 1;
+                        end
+
+                    8'h6C: begin
+                            op_JMP <= 1;
+                            am_AIA_A <= 1;
+                        end
+
+                    8'h6D: begin
+                            op_ADC <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h6E: begin
+                            op_ROR <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h70: begin
+                            op_BVS <= 1;
+                            am_PCR_r <= 1;
+                        end
+
+                    8'h71: begin
+                            op_ADC <= 1;
+                            am_ZIIY_ZP_y <= 1;
+                        end
+
+                    8'h72: begin
+                            op_ADC <= 1;
+                            am_ZPI_ZP <= 1;
+                        end
+
+                    8'h74: begin
+                            op_STZ <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'h75: begin
+                            op_ADC <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'h76: begin
+                            op_ROR <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'h78: begin
+                            `I <= 1; // SEI
+                        end
+
+                    8'h79: begin
+                            op_ADC <= 1;
+                            am_AIY_a_y <= 1;
+                        end
+
+                    8'h7A: begin
+                            op_PLY <= 1;
+                            am_STK_s <= 1;
+                        end
+
+                    8'h7C: begin
+                            op_JMP <= 1;
+                            am_AIIX_A_X <= 1;
+                        end
+
+                    8'h7D: begin
+                            op_ADC <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'h7E: begin
+                            op_ROR <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'h80: begin
+                            op_BRA <= 1;
+                            am_PCR_r <= 1;
+                        end
+
+                    8'h81: begin
+                            op_STA <= 1;
+                            am_ZIIX_ZP_X <= 1;
+                        end
+
+                    8'h84: begin
+                            op_STY <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h85: begin
+                            op_STA <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h86: begin
+                            op_STX <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'h87, 8'h97, 8'hA7, 8'hB7,
+                    8'hC7, 8'hD7, 8'hE7, 8'hF7:
+                        begin
+                            op_SMB <= 1;
+                            am_ZPG_zp <= 1;
+                            reg_which <= var_opcode[6:4];
+                        end
+
+                    8'h88: begin
+                            // DEY
+                            if (reg_6502)
+                                `Y <= `Y - 1;
+                            else // 65832
+                                reg_y <= reg_y - 1;
+                        end
+
+                    8'h89: begin
+                            op_BIT <= 1;
+                            am_IMM_m <= 1;
+                        end
+
+                    8'h8A: begin
+                            // TXA
+                            if (reg_6502)
+                                `A <= `X;
+                            else // 65832
+                                reg_a <= reg_x;
+                        end
+
+                    8'h8C: begin
+                            op_STY <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h8D: begin
+                            op_STA <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h8E: begin
+                            op_STX <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'h8F, 8'h9F, 8'hAF, 8'hBF,
+                    8'hCF, 8'hDF, 8'hEF, 8'hFF:
+                        begin
+                            op_BBS <= 1;
+                            am_PCR_r <= 1;
+                            reg_which <= var_opcode[6:4];
+                        end
+
+                    8'h90: begin
+                            op_BCC <= 1;
+                            am_PCR_r <= 1;
+                        end
+
+                    8'h91: begin
+                            op_STA <= 1;
+                            am_ZIIY_ZP_y <= 1;
+                        end
+
+                    8'h92: begin
+                            op_STA <= 1;
+                            am_ZIY_zp_y <= 1;
+                        end
+
+                    8'h94: begin
+                            op_STY <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'h95: begin
+                            op_STA <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'h96: begin
+                            op_STX <= 1;
+                            am_ZIY_zp_y <= 1;
+                        end
+
+                    8'h98: begin
+                            // TYA
+                            if (reg_6502)
+                                `A <= `Y;
+                            else // 65832
+                                reg_a <= reg_y;
+                        end
+
+                    8'h99: begin
+                            op_STA <= 1;
+                            am_AIY_a_y <= 1;
+                        end
+
+                    8'h9A: begin
+                            // TXS
+                            if (reg_6502)
+                                `SP <= `X;
+                            else // 65832
+                                reg_sp <= reg_x;
+                        end
+
+                    8'h9C: begin
+                            if (reg_6502) begin
+                                op_STZ <= 1;
+                                am_ABS_a <= 1;
+                            end else begin
+                                op_STY <= 1;
+                            end
+                        end
+
+                    8'h9D: begin
+                            op_STA <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'h9E: begin
+                            if (reg_6502) begin
+                                op_STZ <= 1;
+                                am_AIX_a_x <= 1;
+                            end else begin
+                                op_STX <= 1;
+                            end
+                        end
+
+                    8'hA0: begin
+                            op_LDY <= 1;
+                            am_IMM_m <= 1;
+                        end
+
+                    8'hA1: begin
+                            op_LDA <= 1;
+                            am_ZIIX_ZP_X <= 1;
+                        end
+
+                    8'hA2: begin
+                            op_LDX <= 1;
+                            am_IMM_m <= 1;
+                        end
+
+                    8'hA4: begin
+                            op_LDY <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'hA5: begin
+                            op_LDA <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'hA6: begin
+                            op_LDX <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'hA8: begin
+                            // TAY
+                            if (reg_6502)
+                                `Y <= `A;
+                            else // 65832
+                                reg_y <= reg_a;
+                        end
+
+                    8'hA9: begin
+                            op_LDA <= 1;
+                            am_IMM_m <= 1;
+                        end
+
+                    8'hAA: begin
+                            // TAX
+                            if (reg_6502)
+                                `X <= `A;
+                            else // 65832
+                                reg_x <= reg_a;
+                        end
+
+                    8'hAC: begin
+                            op_LDY <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'hAD: begin
+                            op_LDA <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'hAE: begin
+                            op_LDX <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'hB0: begin
+                            op_BCS <= 1;
+                            am_PCR_r <= 1;
+                        end
+
+                    8'hB1: begin
+                            op_LDA <= 1;
+                            am_ZIIY_ZP_y <= 1;
+                        end
+
+                    8'hB2: begin
+                            op_LDA <= 1;
+                            am_ZPI_ZP <= 1;
+                        end
+
+                    8'hB4: begin
+                            op_LDY <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'hB5: begin
+                            op_LDA <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'hB6: begin
+                            op_LDX <= 1;
+                            am_ZIY_zp_y <= 1;
+                        end
+
+                    8'hB8: begin
+                            `V <= 0; // CLV
+                        end
+
+                    8'hB9: begin
+                            op_LDA <= 1;
+                            am_AIY_a_y <= 1;
+                        end
+
+                    8'hBA: begin
+                            // TSX
+                            if (reg_6502)
+                                `X <= `SP;
+                            else // 65832
+                                reg_x <= reg_sp;
+                        end
+
+                    8'hBC: begin
+                            op_LDY <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'hBD: begin
+                            op_LDA <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'hBE: begin
+                            op_LDX <= 1;
+                            am_AIY_a_y <= 1;
+                        end
+
+                    8'hC0: begin
+                            op_CPY <= 1;
+                            am_IMM_m <= 1;
+                        end
+
+                    8'hC1: begin
+                            op_CMP <= 1;
+                            am_ZIIX_ZP_X <= 1;
+                        end
+
+                    8'hC4: begin
+                            op_CPY <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'hC5: begin
+                            op_CMP <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'hC6: begin
+                            op_DEC <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'hC8: begin
+                            // INY
+                            if (reg_6502)
+                                `Y <= `Y + 1;
+                            else // 65832
+                                reg_y <= reg_y + 1;
+                        end
+
+                    8'hC9: begin
+                            op_CMP <= 1;
+                            am_IMM_m <= 1;
+                        end
+
+                    8'hCA: begin
+                            // DEX
+                            if (reg_6502)
+                                `X <= `X - 1;
+                            else // 65832
+                                reg_x <= reg_x - 1;
+                        end
+
+                    8'hCB: begin
+                            op_WAI <= 1;
+                            am_IMP_i <= 1;
+                        end
+
+                    8'hCC: begin
+                            op_CPY <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'hCD: begin
+                            op_CMP <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'hCE: begin
+                            op_DEC <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'hD0: begin
+                            op_BNE <= 1;
+                            am_PCR_r <= 1;
+                        end
+
+                    8'hD1: begin
+                            op_CMP <= 1;
+                            am_ZIIY_ZP_y <= 1;
+                        end
+
+                    8'hD2: begin
+                            op_CMP <= 1;
+                            am_ZPI_ZP <= 1;
+                        end
+
+                    8'hD5: begin
+                            op_CMP <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'hD6: begin
+                            op_DEC <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'hD8: begin
+                            `D <= 0; // CLD
+                        end
+
+                    8'hD9: begin
+                            op_CMP <= 1;
+                            am_AIY_a_y <= 1;
+                        end
+
+                    8'hDA: begin
+                            op_PHX <= 1;
+                            am_STK_s <= 1;
+                        end
+
+                    8'hDB: begin
+                            op_STP <= 1;
+                            am_IMP_i <= 1;
+                        end
+
+                    8'hDD: begin
+                            op_CMP <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'hDE: begin
+                            op_DEC <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'hE0: begin
+                            op_CPX <= 1;
+                            am_IMM_m <= 1;
+                        end
+
+                    8'hE1: begin
+                            op_SBC <= 1;
+                            am_ZIIX_ZP_X <= 1;
+                        end
+
+                    8'hE4: begin
+                            op_CPX <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'hE5: begin
+                            op_SBC <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'hE6: begin
+                            op_INC <= 1;
+                            am_ZPG_zp <= 1;
+                        end
+
+                    8'hE8: begin
+                            // INX
+                            if (reg_6502)
+                                `X <= `X + 1;
+                            else // 65832
+                                reg_x <= reg_x + 1;
+                        end
+
+                    8'hE9: begin
+                            op_SBC <= 1;
+                            am_IMM_m <= 1;
+                        end
+
+                    8'hEA: begin
+                            // NOP
+                        end
+
+                    8'hEC: begin
+                            op_CPX <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'hED: begin
+                            op_SBC <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'hEE: begin
+                            op_INC <= 1;
+                            am_ABS_a <= 1;
+                        end
+
+                    8'hF0: begin
+                            op_BEQ <= 1;
+                            am_PCR_r <= 1;
+                        end
+
+                    8'hF1: begin
+                            op_SBC <= 1;
+                            am_ZIIY_ZP_y <= 1;
+                        end
+
+                    8'hF2: begin
+                            op_SBC <= 1;
+                            am_ZPI_ZP <= 1;
+                        end
+
+                    8'hF5: begin
+                            op_SBC <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'hF6: begin
+                            op_INC <= 1;
+                            am_ZIX_zp_x <= 1;
+                        end
+
+                    8'hF8: begin
+                            `D <= 1; // SED
+                        end
+
+                    8'hF9: begin
+                            op_SBC <= 1;
+                            am_AIY_a_y <= 1;
+                        end
+
+                    8'hFA: begin
+                            op_PLX <= 1;
+                            am_STK_s <= 1;
+                        end
+
+                    8'hFD: begin
+                            op_SBC <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+
+                    8'hFE: begin
+                            op_INC <= 1;
+                            am_AIX_a_x <= 1;
+                        end
+                endcase;
+            end
+        end else begin
+            if (reg_cycle == 0) begin
+                var_opcode = reg_ram[`ePC];
+                `ePC <= inc_epc;
+                case (var_opcode)
+                    8'h00: begin
+                            op_BRK <= 1;
+                            ame_STK_s <= 1;
+                        end
+
+                    8'h01: begin
+                            op_ORA <= 1;
+                            ame_AIIX_A_X <= 1;
+                        end
+
+                    8'h06: begin
+                            op_ASL <= 1;
+                            ame_ABS_a <= 1;
+                        end
+
+                    8'h08: begin
+                            op_PHP <= 1;
+                            ame_STK_s <= 1;
+                        end
+
+                    8'h09: begin
+                            op_ORA <= 1;
+							ame_IMM_i <= 1;
+                        end
+
+                    8'h0A: begin
+                            op_ASL <= 1;
+							ame_ACC_A <= 1;
+                        end
+
+                    8'h0C: begin
+                            op_TSB <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'h0D: begin
+                            op_ORA <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'h10: begin
+                            op_BPL <= 1;
+							ame_PCR_r <= 1;
+                        end
+
+                    8'h11: begin
+                            op_ORA <= 1;
+                            ame_AIIY_A_y <= 1;
+                        end
+
+                    8'h12: begin
+                            op_ORA <= 1;
+                            ame_AIA_A <= 1;
+                        end
+
+                    8'h16: begin
+                            op_ASL <= 1;
+                            ame_AIX_a_x <= 1;
+                        end
+
+                    8'h18: begin
+                            `C <= 0; // CLC
+                        end
+
+                    8'h19: begin
+                            op_ORA <= 1;
+							ame_AIY_a_y <= 1;
+                        end
+
+                    8'h1A: begin
+                            op_INC <= 1;
+							ame_ACC_A <= 1;
+                        end
+
+                    8'h1C: begin
+                            op_TRB <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'h1D: begin
+                            op_ORA <= 1;
+							ame_AIX_a_x <= 1;
+                        end
+
+                    8'h20: begin
+                            op_JSR <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'h21: begin
+                            op_AND <= 1;
+                            ame_AIIX_A_X <= 1;
+                        end
+
+                    8'h22: begin
+                            op_JSR <= 1;
+							ame_AIA_A <= 1;
+                        end
+
+                    8'h23: begin
+                            op_SUB <= 1;
+                            ame_AIIX_A_X <= 1;
+                        end
+
+                    8'h26: begin
+                            op_ROL <= 1;
+                            ame_ABS_a <= 1;
+                        end
+
+                    8'h28: begin
+                            op_PLP <= 1;
+                            ame_STK_s <= 1;
+                        end
+
+                    8'h29: begin
+                            op_AND <= 1;
+							ame_IMM_i <= 1;
+                        end
+
+                    8'h2A: begin
+                            op_ROL <= 1;
+							ame_ACC_A <= 1;
+                        end
+
+                    8'h2C: begin
+                            op_BIT <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'h2D: begin
+                            op_AND <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'h30: begin
+                            op_BMI <= 1;
+							ame_PCR_r <= 1;
+                        end
+
+                    8'h31: begin
+                            op_AND <= 1;
+                            ame_AIIY_A_y <= 1;
+                        end
+
+                    8'h32: begin
+                            op_AND <= 1;
+                            ame_AIA_A <= 1;
+                        end
+
+                    8'h36: begin
+                            op_ROL <= 1;
+                            ame_AIX_a_x <= 1;
+                        end
+
+                    8'h38: begin
+                            `C <= 1; // SEC
+                        end
+
+                    8'h39: begin
+                            op_AND <= 1;
+							ame_AIY_a_y <= 1;
+                        end
+
+                    8'h3A: begin
+                            op_DEC <= 1;
+							ame_ACC_A <= 1;
+                        end
+
+                    8'h3C: begin
+                            op_BIT <= 1;
+							ame_AIX_a_x;
+                        end
+
+                    8'h3D: begin
+                            op_AND <= 1;
+							ame_AIX_a_x;
+                        end
+
+                    8'h40: begin
+                            op_RTI <= 1;
+							ame_STK_s <= 1;
+                        end
+
+                    8'h41: begin
+                            op_EOR <= 1;
+                            ame_AIIX_A_X <= 1;
+                        end
+
+                    8'h46: begin
+                            op_LSR <= 1;
+                            ame_ABS_a <= 1;
+                        end
+
+                    8'h48: begin
+                            op_PHA <= 1;
+                            ame_STK_s <= 1;
+                        end
+
+                    8'h49: begin
+                            op_EOR <= 1;
+							ame_IMM_i <= 1;
+                        end
+
+                    8'h4A: begin
+                            op_LSR <= 1;
+							ame_ACC_A <= 1;
+                        end
+
+                    8'h4C: begin
+                            op_JMP <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'h4D: begin
+                            op_EOR <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'h50: begin
+                            op_BVC <= 1;
+							ame_PCR_r <= 1;
+                        end
+
+                    8'h51: begin
+                            op_EOR <= 1;
+                            ame_AIIY_A_y <= 1;
+                        end
+
+                    8'h52: begin
+                            op_EOR <= 1;
+                            ame_AIA_A <= 1;
+                        end
+
+                    8'h56: begin
+                            op_LSR <= 1;
+                            ame_AIX_a_x <= 1;
+                        end
+
+                    8'h58: begin
+                            `I <= 0; // CLI
+                        end
+
+                    8'h59: begin
+                            op_EOR <= 1;
+							ame_AIY_a_y <= 1;
+                        end
+
+                    8'h5A: begin
+                            op_PHY <= 1;
+                            ame_STK_s <= 1;
+                        end
+
+                    8'h5C: begin
+                            op_JSR <= 1;
+							ame_AIIX_A_X <= 1;
+                        end
+
+                    8'h5D: begin
+                            op_EOR <= 1;
+							ame_AIX_a_x <= 1;
+                        end
+
+                    8'h60: begin
+                            op_RTS <= 1;
+							ame_PCR_r <= 1;
+                        end
+
+                    8'h61: begin
+                            op_ADC <= 1;
+                            ame_AIIX_A_X <= 1;
+                        end
+
+                    8'h66: begin
+                            op_ROR <= 1;
+                            ame_ABS_a <= 1;
+                        end
+
+                    8'h68: begin
+                            op_PLA <= 1;
+                            ame_STK_s <= 1;
+                        end
+
+                    8'h69: begin
+                            op_ADC <= 1;
+							ame_IMM_i <= 1;
+                        end
+
+                    8'h6A: begin
+                            op_ROR <= 1;
+							ame_ACC_A <= 1;
+                        end
+
+                    8'h6C: begin
+                            op_JMP <= 1;
+							ame_AIA_A <= 1;
+                        end
+
+                    8'h6D: begin
+                            op_ADC <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'h70: begin
+                            op_BVS <= 1;
+							ame_PCR_r <= 1;
+                        end
+
+                    8'h71: begin
+                            op_ADC <= 1;
+                            ame_AIIY_A_y <= 1;
+                        end
+
+                    8'h72: begin
+                            op_ADC <= 1;
+                            ame_AIA_A <= 1;
+                        end
+
+                    8'h76: begin
+                            op_ROR <= 1;
+                            ame_AIX_a_x <= 1;
+                        end
+
+                    8'h78: begin
+                            `I <= 1; // SEI
+                        end
+
+                    8'h79: begin
+                            op_ADC <= 1;
+							ame_AIY_a_y <= 1;
+                        end
+
+                    8'h7A: begin
+                            op_PLY <= 1;
+                            ame_STK_s <= 1;
+                        end
+
+                    8'h7C: begin
+                            op_JMP <= 1;
+							ame_AIIX_A_X <= 1;
+                        end
+
+                    8'h7D: begin
+                            op_ADC <= 1;
+							ame_AIX_a_x <= 1;
+                        end
+
+                    8'h80: begin
+                            op_BRA <= 1;
+							ame_PCR_r <= 1;
+                        end
+
+                    8'h81: begin
+                            op_STA <= 1;
+                            ame_AIIX_A_X <= 1;
+                        end
+
+                    8'h86: begin
+                            op_STZ <= 1;
+                            ame_ABS_a <= 1;
+                        end
+
+                    8'h88: begin
+                            // DEY
+                            if (reg_6502)
+                                `Y <= `Y - 1;
+                            else // 65832
+                                reg_y <= reg_y - 1;
+                        end
+
+                    8'h89: begin
+                            op_BIT <= 1;
+							ame_IMM_i <= 1;
+                        end
+
+                    8'h8A: begin
+                            // TXA
+                            if (reg_6502)
+                                `A <= `X;
+                            else // 65832
+                                reg_a <= reg_x;
+                        end
+
+                    8'h8C: begin
+                            op_STY <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'h8D: begin
+                            op_STA <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'h8E: begin
+                            op_STX <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'h90: begin
+                            op_BCC <= 1;
+							ame_PCR_r <= 1;
+                        end
+
+                    8'h91: begin
+                            op_STA <= 1;
+                            ame_AIIY_A_y <= 1;
+                        end
+
+                    8'h92: begin
+                            op_STA <= 1;
+                            ame_AIA_A <= 1;
+                        end
+
+                    8'h96: begin
+                            op_STZ <= 1;
+                            ame_AIX_a_x <= 1;
+                        end
+
+                    8'h98: begin
+                            // TYA
+                            if (reg_6502)
+                                `A <= `Y;
+                            else // 65832
+                                reg_a <= reg_y;
+                        end
+
+                    8'h99: begin
+                            op_STA <= 1;
+							ame_AIY_a_y <= 1;
+                        end
+
+                    8'h9A: begin
+                            // TXS
+                            if (reg_6502)
+                                `SP <= `X;
+                            else // 65832
+                                reg_sp <= reg_x;
+                        end
+
+                    8'h9C: begin
+							op_STY <= 1;
+							ame_AIX_a_x <= 1;
+                        end
+
+                    8'h9D: begin
+                            op_STA <= 1;
+							ame_AIX_a_x <= 1;
+                        end
+
+                    8'h9E: begin
+							op_STX <= 1;
+							ame_AIY_a_y <= 1;
+                        end
+
+                    8'hA0: begin
+                            op_LDY <= 1;
+							ame_IMM_i <= 1;
+                        end
+
+                    8'hA1: begin
+                            op_LDA <= 1;
+                            ame_AIIX_A_X <= 1;
+                        end
+
+                    8'hA2: begin
+                            op_LDX <= 1;
+							ame_IMM_i <= 1;
+                        end
+
+                    8'hA8: begin
+                            // TAY
+                            if (reg_6502)
+                                `Y <= `A;
+                            else // 65832
+                                reg_y <= reg_a;
+                        end
+
+                    8'hA9: begin
+                            op_LDA <= 1;
+							ame_IMM_i <= 1;
+                        end
+
+                    8'hAA: begin
+                            // TAX
+                            if (reg_6502)
+                                `X <= `A;
+                            else // 65832
+                                reg_x <= reg_a;
+                        end
+
+                    8'hAC: begin
+                            op_LDY <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'hAD: begin
+                            op_LDA <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'hAE: begin
+                            op_LDX <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'hB0: begin
+                            op_BCS <= 1;
+							ame_PCR_r <= 1;
+                        end
+
+                    8'hB1: begin
+                            op_LDA <= 1;
+                            ame_AIIY_A_y <= 1;
+                        end
+
+                    8'hB2: begin
+                            op_LDA <= 1;
+                            ame_AIA_A <= 1;
+                        end
+
+                    8'hB8: begin
+                            `V <= 0; // CLV
+                        end
+
+                    8'hB9: begin
+                            op_LDA <= 1;
+							ame_AIY_a_y <= 1;
+                        end
+
+                    8'hBA: begin
+                            // TSX
+                            if (reg_6502)
+                                `X <= `SP;
+                            else // 65832
+                                reg_x <= reg_sp;
+                        end
+
+                    8'hBC: begin
+                            op_LDY <= 1;
+							ame_AIX_a_x <= 1;
+                        end
+
+                    8'hBD: begin
+                            op_LDA <= 1;
+							ame_AIX_a_x <= 1;
+                        end
+
+                    8'hBE: begin
+                            op_LDX <= 1;
+							ame_AIY_a_y <= 1;
+                        end
+
+                    8'hC0: begin
+                            op_CPY <= 1;
+							ame_IMM_i <= 1;
+                        end
+
+                    8'hC1: begin
+                            op_CMP <= 1;
+                            ame_AIIX_A_X <= 1;
+                        end
+
+                    8'hC6: begin
+                            op_DEC <= 1;
+                            ame_ABS_a <= 1;
+                        end
+
+                    8'hC8: begin
+                            // INY
+                            if (reg_6502)
+                                `Y <= `Y + 1;
+                            else // 65832
+                                reg_y <= reg_y + 1;
+                        end
+
+                    8'hC9: begin
+                            op_CMP <= 1;
+							ame_IMM_i <= 1;
+                        end
+
+                    8'hCA: begin
+                            // DEX
+                            if (reg_6502)
+                                `X <= `X - 1;
+                            else // 65832
+                                reg_x <= reg_x - 1;
+                        end
+
+                    8'hCC: begin
+                            op_CPY <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'hCD: begin
+                            op_CMP <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'hD0: begin
+                            op_BNE <= 1;
+							ame_PCR_r <= 1;
+                        end
+
+                    8'hD1: begin
+                            op_CMP <= 1;
+                            ame_AIIY_A_y <= 1;
+                        end
+
+                    8'hD2: begin
+                            op_CMP <= 1;
+                            ame_AIA_A <= 1;
+                        end
+
+                    8'hD6: begin
+                            op_DEC <= 1;
+                            ame_AIX_a_x <= 1;
+                        end
+
+                    8'hD8: begin
+                            `D <= 0; // CLD
+                        end
+
+                    8'hD9: begin
+                            op_CMP <= 1;
+							ame_AIY_a_y <= 1;
+                        end
+
+                    8'hDA: begin
+                            op_PHX <= 1;
+                            ame_STK_s <= 1;
+                        end
+
+                    8'hDD: begin
+                            op_CMP <= 1;
+							ame_AIX_a_x <= 1;
+                        end
+
+                    8'hE0: begin
+                            op_CPX <= 1;
+							ame_IMM_i <= 1;
+                        end
+
+                    8'hE1: begin
+                            op_SBC <= 1;
+                            ame_AIIX_A_X <= 1;
+                        end
+
+                    8'hE6: begin
+                            op_INC <= 1;
+                            ame_ABS_a <= 1;
+                        end
+
+                    8'hE8: begin
+                            // INX
+                            if (reg_6502)
+                                `X <= `X + 1;
+                            else // 65832
+                                reg_x <= reg_x + 1;
+                        end
+
+                    8'hE9: begin
+                            op_SBC <= 1;
+							ame_IMM_i <= 1;
+                        end
+
+                    8'hEA: begin
+                            // NOP
+                        end
+
+                    8'hEC: begin
+                            op_CPX <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'hED: begin
+                            op_SBC <= 1;
+							ame_ABS_a <= 1;
+                        end
+
+                    8'hF0: begin
+                            op_BEQ <= 1;
+							ame_PCR_r <= 1;
+                        end
+
+                    8'hF1: begin
+                            op_SBC <= 1;
+                            ame_AIIY_A_y <= 1;
+                        end
+
+                    8'hF2: begin
+                            op_SBC <= 1;
+                            ame_AIA_A <= 1;
+                        end
+
+                    8'hF6: begin
+                            op_INC <= 1;
+                            ame_AIX_a_x <= 1;
+                        end
+
+                    8'hF8: begin
+                            `D <= 1; // SED
+                        end
+
+                    8'hF9: begin
+                            op_SBC <= 1;
+							ame_AIY_a_y <= 1;
+                        end
+
+                    8'hFA: begin
+                            op_PLX <= 1;
+                            ame_STK_s <= 1;
+                        end
+
+                    8'hFD: begin
+                            op_SBC <= 1;
+							ame_AIX_a_x <= 1;
+                        end
+                endcase;
+            end
         end
     end
 end
