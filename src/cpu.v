@@ -712,9 +712,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'h1A: begin
-                            `A = inc_a;
-                            `N = inc_a_n;
-                            `Z = inc_a_z;
+                            `A <= inc_a;
+                            `N <= inc_a_n;
+                            `Z <= inc_a_z;
                         end
 
                     8'h1C: begin
@@ -837,9 +837,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'h3A: begin
-                        `A = dec_a;
-                        `N = dec_a_n;
-                        `Z = dec_a_z;
+                        `A <= dec_a;
+                        `N <= dec_a_n;
+                        `Z <= dec_a_z;
                         end
 
                     8'h3C: begin
@@ -1109,9 +1109,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'h88: begin
-                            `Y = dec_y;
-                            `N = dec_y_n;
-                            `Z = dec_y_z;
+                            `Y <= dec_y;
+                            `N <= dec_y_n;
+                            `Z <= dec_y_z;
                         end
 
                     8'h89: begin
@@ -1352,9 +1352,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'hC8: begin
-                            `Y = inc_y;
-                            `N = inc_y_n;
-                            `Z = inc_y_z;
+                            `Y <= inc_y;
+                            `N <= inc_y_n;
+                            `Z <= inc_y_z;
                         end
 
                     8'hC9: begin
@@ -1363,9 +1363,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'hCA: begin
-                        `X = dec_x;
-                        `N = dec_x_n;
-                        `Z = dec_x_z;
+                        `X <= dec_x;
+                        `N <= dec_x_n;
+                        `Z <= dec_x_z;
                         end
 
                     8'hCB: begin
@@ -1466,9 +1466,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'hE8: begin
-                            `X = inc_x;
-                            `N = inc_x_n;
-                            `Z = inc_x_z;
+                            `X <= inc_x;
+                            `N <= inc_x_n;
+                            `Z <= inc_x_z;
                         end
 
                     8'hE9: begin
@@ -1620,9 +1620,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'h1A: begin
-                            `eA = inc_ea;
-                            `eN = inc_ea_n;
-                            `eZ = inc_ea_z;
+                            `eA <= inc_ea;
+                            `eN <= inc_ea_n;
+                            `eZ <= inc_ea_z;
                         end
 
                     8'h1C: begin
@@ -1715,9 +1715,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'h3A: begin
-                        `eA = dec_ea;
-                        `eN = dec_ea_n;
-                        `eZ = dec_ea_z;
+                        `eA <= dec_ea;
+                        `eN <= dec_ea_n;
+                        `eZ <= dec_ea_z;
                         end
 
                     8'h3C: begin
@@ -1914,9 +1914,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'h88: begin
-                            `eY = dec_ey;
-                            `eN = dec_ey_n;
-                            `eZ = dec_ey_z;
+                            `eY <= dec_ey;
+                            `eN <= dec_ey_n;
+                            `eZ <= dec_ey_z;
                         end
 
                     8'h89: begin
@@ -2099,9 +2099,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'hC8: begin
-                            `eY = inc_ey;
-                            `eN = inc_ey_n;
-                            `eZ = inc_ey_z;
+                            `eY <= inc_ey;
+                            `eN <= inc_ey_n;
+                            `eZ <= inc_ey_z;
                         end
 
                     8'hC9: begin
@@ -2110,9 +2110,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'hCA: begin
-                        `eX = dec_ex;
-                        `eN = dec_ex_n;
-                        `eZ = dec_ex_z;
+                        `eX <= dec_ex;
+                        `eN <= dec_ex_n;
+                        `eZ <= dec_ex_z;
                         end
 
                     8'hCC: begin
@@ -2180,9 +2180,9 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'hE8: begin
-                            `eX = inc_ex;
-                            `eN = inc_ex_n;
-                            `eZ = inc_ex_z;
+                            `eX <= inc_ex;
+                            `eN <= inc_ex_n;
+                            `eZ <= inc_ex_z;
                         end
 
                     8'hE9: begin
