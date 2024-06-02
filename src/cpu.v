@@ -201,8 +201,6 @@ typedef enum bit [7:0] {
 
 // Processing registers
 reg [2:0] reg_cycle;
-reg [7:0] reg_operation;
-reg [4:0] reg_address_mode;
 reg reg_6502;
 reg reg_65832;
 reg [2:0] reg_which;
@@ -211,28 +209,6 @@ reg `VW reg_src_data;
 reg `VW reg_dst_data;
 
 logic [7:0] var_opcode;
-
-// Address modes
-typedef enum bit [4:0] {
-    AM_INVALID, // Invalid (none)
-    AIIX_A_X,   
-    AIX_a_x,    
-    AIY_a_y,    
-    AIIY_A_y,   
-    AIA_A,      
-    ACC_A,      
-    IMM_m,      
-    IMP_i,      
-    PCR_r,      
-    STK_s,      
-    ZPG_zp,     
-    ZIIX_ZP_X,  
-    ZIX_zp_x,   
-    ZIY_zp_y,   
-    ZPI_ZP,     
-    ZIIY_ZP_y   
-} AddressMode;
-
 
 reg am_ABS_a;       // Absolute a (6502)
 reg am_ACC_A;       // Accumulator A (6502)
@@ -604,8 +580,6 @@ always @(posedge i_rst or posedge i_clk) begin
         `eY <= `ZERO_32;
 
         reg_cycle <= 0;
-        reg_operation <= 0;
-        reg_address_mode <= 0;
         reg_which <= 0;
         reg_address <= 0;
         reg_src_data <= 0;
