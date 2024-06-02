@@ -251,11 +251,14 @@ reg am_ZIY_zp_y;    // Zero Page Indexed with Y zp,y (6502)
 reg am_ZPG_zp;      // Zero Page zp (6502)
 reg am_ZPI_ZP;      // Zero Page Indirect (zp) (6502)
 reg ame_ABS_a;      // Absolute a (65832)
+reg ame_ACC_A;      // Accumulator A (65832)
 reg ame_AIA_A;      // Absolute Indirect (a) (65832)
 reg ame_AIIX_A_X;   // Absolute Indexed Indirect with X (a,x) (65832)
 reg ame_AIIY_A_y;   // Absolute Indexed Indirect with Y (a),y (65832)
 reg ame_AIX_a_x;    // Absolute Indexed with X a,x (65832)
 reg ame_AIY_a_y;    // Absolute Indexed with Y a,y (65832)
+reg ame_IMM_m;      // Immediate Addressing # (65832)
+reg ame_PCR_r;      // Program Counter Relative r (65832)
 reg ame_STK_s;      // Stack s (65832)
 reg op_ADC;
 reg op_ADD;
@@ -1209,10 +1212,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'h88: begin
                             // DEY
-                            if (reg_6502)
-                                `Y <= `Y - 1;
-                            else // 65832
-                                reg_y <= reg_y - 1;
+                            `Y <= `Y - 1;
                         end
 
                     8'h89: begin
@@ -1222,10 +1222,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'h8A: begin
                             // TXA
-                            if (reg_6502)
-                                `A <= `X;
-                            else // 65832
-                                reg_a <= reg_x;
+                            `A <= `X;
                         end
 
                     8'h8C: begin
@@ -1283,10 +1280,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'h98: begin
                             // TYA
-                            if (reg_6502)
-                                `A <= `Y;
-                            else // 65832
-                                reg_a <= reg_y;
+                            `A <= `Y;
                         end
 
                     8'h99: begin
@@ -1296,19 +1290,12 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'h9A: begin
                             // TXS
-                            if (reg_6502)
-                                `SP <= `X;
-                            else // 65832
-                                reg_sp <= reg_x;
+                            `SP <= `X;
                         end
 
                     8'h9C: begin
-                            if (reg_6502) begin
-                                op_STZ <= 1;
-                                am_ABS_a <= 1;
-                            end else begin
-                                op_STY <= 1;
-                            end
+                            op_STZ <= 1;
+                            am_ABS_a <= 1;
                         end
 
                     8'h9D: begin
@@ -1317,12 +1304,8 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
 
                     8'h9E: begin
-                            if (reg_6502) begin
-                                op_STZ <= 1;
-                                am_AIX_a_x <= 1;
-                            end else begin
-                                op_STX <= 1;
-                            end
+                            op_STZ <= 1;
+                            am_AIX_a_x <= 1;
                         end
 
                     8'hA0: begin
@@ -1357,10 +1340,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hA8: begin
                             // TAY
-                            if (reg_6502)
-                                `Y <= `A;
-                            else // 65832
-                                reg_y <= reg_a;
+                            `Y <= `A;
                         end
 
                     8'hA9: begin
@@ -1370,10 +1350,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hAA: begin
                             // TAX
-                            if (reg_6502)
-                                `X <= `A;
-                            else // 65832
-                                reg_x <= reg_a;
+                            `X <= `A;
                         end
 
                     8'hAC: begin
@@ -1432,10 +1409,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hBA: begin
                             // TSX
-                            if (reg_6502)
-                                `X <= `SP;
-                            else // 65832
-                                reg_x <= reg_sp;
+                            `X <= `SP;
                         end
 
                     8'hBC: begin
@@ -1480,10 +1454,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hC8: begin
                             // INY
-                            if (reg_6502)
-                                `Y <= `Y + 1;
-                            else // 65832
-                                reg_y <= reg_y + 1;
+                            `Y <= `Y + 1;
                         end
 
                     8'hC9: begin
@@ -1493,10 +1464,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hCA: begin
                             // DEX
-                            if (reg_6502)
-                                `X <= `X - 1;
-                            else // 65832
-                                reg_x <= reg_x - 1;
+                            `X <= `X - 1;
                         end
 
                     8'hCB: begin
@@ -1600,10 +1568,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hE8: begin
                             // INX
-                            if (reg_6502)
-                                `X <= `X + 1;
-                            else // 65832
-                                reg_x <= reg_x + 1;
+                            `X <= `X + 1;
                         end
 
                     8'hE9: begin
@@ -1707,7 +1672,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'h09: begin
                             op_ORA <= 1;
-							ame_IMM_i <= 1;
+							ame_IMM_m <= 1;
                         end
 
                     8'h0A: begin
@@ -1801,7 +1766,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'h29: begin
                             op_AND <= 1;
-							ame_IMM_i <= 1;
+							ame_IMM_m <= 1;
                         end
 
                     8'h2A: begin
@@ -1855,12 +1820,12 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'h3C: begin
                             op_BIT <= 1;
-							ame_AIX_a_x;
+							ame_AIX_a_x <= 1;
                         end
 
                     8'h3D: begin
                             op_AND <= 1;
-							ame_AIX_a_x;
+							ame_AIX_a_x <= 1;
                         end
 
                     8'h40: begin
@@ -1885,7 +1850,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'h49: begin
                             op_EOR <= 1;
-							ame_IMM_i <= 1;
+							ame_IMM_m <= 1;
                         end
 
                     8'h4A: begin
@@ -1969,7 +1934,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'h69: begin
                             op_ADC <= 1;
-							ame_IMM_i <= 1;
+							ame_IMM_m <= 1;
                         end
 
                     8'h6A: begin
@@ -2048,23 +2013,17 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'h88: begin
                             // DEY
-                            if (reg_6502)
-                                `Y <= `Y - 1;
-                            else // 65832
-                                reg_y <= reg_y - 1;
+                            reg_y <= reg_y - 1;
                         end
 
                     8'h89: begin
                             op_BIT <= 1;
-							ame_IMM_i <= 1;
+							ame_IMM_m <= 1;
                         end
 
                     8'h8A: begin
                             // TXA
-                            if (reg_6502)
-                                `A <= `X;
-                            else // 65832
-                                reg_a <= reg_x;
+                            reg_a <= reg_x;
                         end
 
                     8'h8C: begin
@@ -2104,10 +2063,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'h98: begin
                             // TYA
-                            if (reg_6502)
-                                `A <= `Y;
-                            else // 65832
-                                reg_a <= reg_y;
+                            reg_a <= reg_y;
                         end
 
                     8'h99: begin
@@ -2117,10 +2073,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'h9A: begin
                             // TXS
-                            if (reg_6502)
-                                `SP <= `X;
-                            else // 65832
-                                reg_sp <= reg_x;
+                            reg_sp <= reg_x;
                         end
 
                     8'h9C: begin
@@ -2140,7 +2093,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hA0: begin
                             op_LDY <= 1;
-							ame_IMM_i <= 1;
+							ame_IMM_m <= 1;
                         end
 
                     8'hA1: begin
@@ -2150,28 +2103,22 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hA2: begin
                             op_LDX <= 1;
-							ame_IMM_i <= 1;
+							ame_IMM_m <= 1;
                         end
 
                     8'hA8: begin
                             // TAY
-                            if (reg_6502)
-                                `Y <= `A;
-                            else // 65832
-                                reg_y <= reg_a;
+                            reg_y <= reg_a;
                         end
 
                     8'hA9: begin
                             op_LDA <= 1;
-							ame_IMM_i <= 1;
+							ame_IMM_m <= 1;
                         end
 
                     8'hAA: begin
                             // TAX
-                            if (reg_6502)
-                                `X <= `A;
-                            else // 65832
-                                reg_x <= reg_a;
+                            reg_x <= reg_a;
                         end
 
                     8'hAC: begin
@@ -2215,10 +2162,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hBA: begin
                             // TSX
-                            if (reg_6502)
-                                `X <= `SP;
-                            else // 65832
-                                reg_x <= reg_sp;
+                            reg_x <= reg_sp;
                         end
 
                     8'hBC: begin
@@ -2238,7 +2182,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hC0: begin
                             op_CPY <= 1;
-							ame_IMM_i <= 1;
+							ame_IMM_m <= 1;
                         end
 
                     8'hC1: begin
@@ -2253,23 +2197,17 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hC8: begin
                             // INY
-                            if (reg_6502)
-                                `Y <= `Y + 1;
-                            else // 65832
-                                reg_y <= reg_y + 1;
+                            reg_y <= reg_y + 1;
                         end
 
                     8'hC9: begin
                             op_CMP <= 1;
-							ame_IMM_i <= 1;
+							ame_IMM_m <= 1;
                         end
 
                     8'hCA: begin
                             // DEX
-                            if (reg_6502)
-                                `X <= `X - 1;
-                            else // 65832
-                                reg_x <= reg_x - 1;
+                            reg_x <= reg_x - 1;
                         end
 
                     8'hCC: begin
@@ -2323,7 +2261,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hE0: begin
                             op_CPX <= 1;
-							ame_IMM_i <= 1;
+							ame_IMM_m <= 1;
                         end
 
                     8'hE1: begin
@@ -2338,15 +2276,12 @@ always @(posedge i_rst or posedge i_clk) begin
 
                     8'hE8: begin
                             // INX
-                            if (reg_6502)
-                                `X <= `X + 1;
-                            else // 65832
-                                reg_x <= reg_x + 1;
+                            reg_x <= reg_x + 1;
                         end
 
                     8'hE9: begin
                             op_SBC <= 1;
-							ame_IMM_i <= 1;
+							ame_IMM_m <= 1;
                         end
 
                     8'hEA: begin
