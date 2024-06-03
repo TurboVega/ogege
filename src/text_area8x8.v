@@ -18,11 +18,14 @@ module text_area8x8 (
     input  wire i_rst,
     input  wire i_pix_clk,
     input  wire i_blank,
-    input  wire i_cmd_clk,
-    input  wire [31:0] i_cmd_data,
+    input  wire i_rd,
+    input  wire i_wr,
+    input  wire [4:0] i_addr,
+    input  wire [7:0] i_data,
     input  wire [8:0] i_scan_row,
     input  wire [9:0] i_scan_column,
     input  wire [11:0] i_bg_color,
+    output reg [7:0] o_data,
     output wire [11:0] o_color
 );
 
@@ -44,7 +47,7 @@ module text_area8x8 (
     // The text area alpha determines how the entire text area is
     // blended onto the given background.
     //
-    reg [2:0] reg_text_area_alpha = 3'b110; // 100%
+    reg [2:0] reg_text_area_alpha;
 
     // The items in this array are arranged as if it were a 2D array:
     // With 8x8 pixel cells on a 640x480 screen, there is enough room
@@ -65,7 +68,6 @@ module text_area8x8 (
     // Character code: 8 bits
     //
 
-    reg reg_cmd_in_progress;
     reg reg_wea;
     reg reg_web;
     reg reg_clka;
@@ -157,29 +159,34 @@ module text_area8x8 (
     );
 
 /*
-    Text Area commands:
+    Text Area control register addresses and data:
+    (All hex addresses here are offsets from the text controller base address.)
 
-    33222222222211111111110000000000
-    10987654321098765432109876543210
-    --------------------------------
-    0001xxxxxxxxxxxxxxxxxxXXXXXXXXXX    Set horizontal scroll position (X offset)
-    0010xxxxxxxxxxxxxxxxxxxYYYYYYYYY    Set vertical scroll position (Y offset)
-    0011xxxYYYYYYYYYxxxxxxXXXXXXXXXX    Set horizontal and vertical scroll positions (X and Y offsets)
-    0100xxxxxxxxxxxxIIIIRRRRGGGGBBBB    Set foreground palette color for index (RGB)
-    0101xxxxxxxxxxxxIIIIRRRRGGGGBBBB    Set background palette color for index (RGB)
-    0110xxxxxxxxxxxxxxxxxxxxxxxxxAAA    Set text area alpha value
-    0111xxxxxxxxxxxxxCCCCCCCxxRRRRRR    Set cursor position (row and column)
-    1000xxxxxxxxxxxxFFFFBBBBCCCCCCCC    Set cell attributes (FG index, BG index, Character code)
-    1001xxxxxxxxxxxxxxxxxxxxxxxxFFFF    Set cell foreground (FG index)
-    1010xxxxxxxxxxxxxxxxxxxxxxxxBBBB    Set cell background (BG index)
-    1011xxxxxxxxxxxxxxxxxxxxCCCCCCCC    Set cell character code
+    Addr R W   Value  Purpose
+    ---- - - -------- ------------------------------------------------------
+     00  r w GGGGBBBB Foreground palette color for index #0 (green & blue)
+     01  r w xxxxRRRR Foreground palette color for index #0 (red)
+     ..
+     1E  r w GGGGBBBB Foreground palette color for index #15 (green & blue)
+     1F  r w ----RRRR Foreground palette color for index #15 (red)
+     20  r w XXXXXXXX Horizontal scroll position in pixels (lower 8 bits)
+     21  r w ------XX Horizontal scroll position in pixels (upper 2 bits)
+     22  r w YYYYYYYY Vertical scroll position in pixels (lower 8 bits)
+     23  r w -------Y Vertical scroll position in pixels (upper 1 bit)
+     24  r w --RRRRRR Text row index
+     25  r w -CCCCCCC Text column index
+     26  r w CCCCCCCC Character code index
+     27  r w FFFFBBBB Character color palette indexes
+     28  r w ----FFFF Character color foreground palette index
+     29  r w ----BBBB Character color background palette index
+     2A  r w -------- Read/write entire character cell to/from registers
+     2B  r w -----AAA Text area alpha value
 */
 
-    always @(posedge i_rst or posedge i_cmd_clk) begin
+    always @(posedge i_rst or posedge i_wr or posedge i_rd) begin
         if (i_rst) begin
             reg_scroll_x_offset <= 0;
             reg_scroll_y_offset <= 0;
-            reg_cmd_in_progress <= 0;
             reg_wea <= 0;
             reg_web <= 0;
             reg_clka <= 0;
@@ -188,42 +195,359 @@ module text_area8x8 (
             reg_dib <= 0;
             reg_addra <= 0;
             //reg_addrb <= 0;
-        end else if (reg_cmd_in_progress) begin
-            reg_cmd_in_progress <= 0;
+            reg_text_area_alpha <= 3'b110; // 100%
+            reg_cursor_row <= 0;
+            reg_cursor_column <= 0;
         end else begin
-            reg_cmd_in_progress <= 1;
-            case (i_cmd_data[31:28])
-                4'b0001: reg_scroll_x_offset <= i_cmd_data[9:0];
-                4'b0010: reg_scroll_y_offset <= i_cmd_data[8:0];
-                4'b0011: begin
-                            reg_scroll_x_offset <= i_cmd_data[9:0];
-                            reg_scroll_y_offset <= i_cmd_data[24:16];
-                         end
-                4'b0100: reg_fg_palette_color[i_cmd_data[15:12]] <= i_cmd_data[11:0];
-                4'b0101: reg_bg_palette_color[i_cmd_data[15:12]] <= i_cmd_data[11:0];
-                4'b0110: reg_text_area_alpha <= i_cmd_data[2:0];
-                4'b0111: begin
-                            reg_cursor_row <= i_cmd_data[24:16];
-                            reg_cursor_column <= i_cmd_data[9:0];
-                         end
-                4'b1000: begin
-                            reg_addra = {reg_cursor_column, reg_cursor_row};
-                            reg_dia <= i_cmd_data[15:0];
-                            reg_wea <= 1;
-                            reg_clka <= 1;
-                         end
-                4'b1001: begin
-                            reg_addra = {reg_cursor_column, reg_cursor_row};
-                            //reg_cells[{reg_cursor_column, reg_cursor_row}][15:12] <= i_cmd_data[3:0];
-                         end
-                4'b1010: begin
-                            reg_addra = {reg_cursor_column, reg_cursor_row};
-                            //reg_cells[{reg_cursor_column, reg_cursor_row}][11:8] <= i_cmd_data[3:0];
-                         end
-                4'b1011: begin
-                            reg_addra = {reg_cursor_column, reg_cursor_row};
-                            //reg_cells[{reg_cursor_column, reg_cursor_row}][7:0] <= i_cmd_data[7:0];
-                         end
+            case (i_addr)
+                0: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[0][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[0][7:0];
+                      end
+                    end
+
+                1: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[0][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[0][11:8]};
+                      end
+                    end
+
+                2: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[1][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[1][7:0];
+                      end
+                    end
+                3: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[1][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[1][11:8]};
+                      end
+                    end
+
+                4: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[2][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[2][7:0];
+                      end
+                    end
+
+                5: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[2][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[2][11:8]};
+                      end
+                    end
+
+                6: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[3][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[3][7:0];
+                      end
+                    end
+
+                7: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[3][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[3][11:8]};
+                      end
+                    end
+
+                8: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[4][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[4][7:0];
+                      end
+                    end
+
+                9: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[4][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[4][11:8]};
+                      end
+                    end
+
+                10: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[5][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[5][7:0];
+                      end
+                    end
+
+                11: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[5][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[5][11:8]};
+                      end
+                    end
+
+                12: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[6][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[6][7:0];
+                      end
+                    end
+
+                13: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[6][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[6][11:8]};
+                      end
+                    end
+
+                14: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[7][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[7][7:0];
+                      end
+                    end
+
+                15: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[7][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[7][11:8]};
+                      end
+                    end
+
+                16: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[8][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[8][7:0];
+                      end
+                    end
+
+                17: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[8][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[8][11:8]};
+                      end
+                    end
+
+                18: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[9][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[9][7:0];
+                      end
+                    end
+
+                19: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[9][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[9][11:8]};
+                      end
+                    end
+
+                20: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[10][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[10][7:0];
+                      end
+                    end
+
+                21: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[10][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[10][11:8]};
+                      end
+                    end
+
+                22: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[11][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[11][7:0];
+                      end
+                    end
+
+                23: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[11][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[11][11:8]};
+                      end
+                    end
+
+                24: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[12][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[12][7:0];
+                      end
+                    end
+
+                25: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[12][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[12][11:8]};
+                      end
+                    end
+
+                26: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[13][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[13][7:0];
+                      end
+                    end
+
+                27: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[13][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[13][11:8]};
+                      end
+                    end
+
+                28: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[14][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[14][7:0];
+                      end
+                    end
+
+                29: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[14][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[14][11:8]};
+                      end
+                    end
+
+                30: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[15][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_fg_palette_color[15][7:0];
+                      end
+                    end
+
+                31: begin
+                      if (i_wr) begin
+                        reg_fg_palette_color[15][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_fg_palette_color[15][11:8]};
+                      end
+                    end
+
+                32: begin
+                      if (i_wr) begin
+                        reg_scroll_x_offset[7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_scroll_x_offset[7:0];
+                      end
+                    end
+
+                33: begin
+                      if (i_wr) begin
+                        reg_scroll_x_offset[9:8] <= i_data[1:0];
+                      end else if (i_rd) begin
+                        o_data <= {6'd0, reg_scroll_x_offset[9:8]};
+                      end
+                    end
+
+                34: begin
+                      if (i_wr) begin
+                        reg_scroll_y_offset[7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_scroll_y_offset[7:0];
+                      end
+                    end
+
+                35: begin
+                      if (i_wr) begin
+                        reg_scroll_y_offset[8] <= i_data[0];
+                      end else if (i_rd) begin
+                        o_data <= {7'd0, reg_scroll_y_offset[8]};
+                      end
+                    end
+
+                36: begin
+                      if (i_wr) begin
+                        reg_cursor_row[5:0] <= i_data[5:0];
+                      end else if (i_rd) begin
+                        o_data <= {2'd0, reg_cursor_row[5:0]};
+                      end
+                    end
+
+                37: begin
+                      if (i_wr) begin
+                        reg_cursor_column[6:0] <= i_data[6:0];
+                      end else if (i_rd) begin
+                        o_data <= {1'd0, reg_cursor_column[6:0]};
+                      end
+                    end
+
+                38: begin // set character code index
+                      if (i_wr) begin
+                        reg_dia[7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_doa[7:0];
+                      end
+                    end
+
+                39: begin // set character color palette indexes
+                      if (i_wr) begin
+                        reg_dia[15:8] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_doa[15:8];
+                      end
+                    end
+
+                40: begin // set character FG palette color index
+                      if (i_wr) begin
+                        reg_dia[15:12] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_doa[15:12]};
+                      end
+                    end
+
+                41: begin // set character BG palette color index
+                      if (i_wr) begin
+                        reg_dia[11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_doa[11:8]};
+                      end
+                    end
+
+                42: begin // read/write entire character cell
+                      if (i_wr) begin
+                        reg_addra = {reg_cursor_column, reg_cursor_row};
+                        reg_wea <= 1;
+                        reg_clka <= 1;
+                      end else if (i_rd) begin
+                        reg_addra = {reg_cursor_column, reg_cursor_row};
+                        reg_wea <= 0;
+                        reg_clka <= 1;
+                      end
+                    end
+
+                43: reg_text_area_alpha <= i_data[2:0];
             endcase
         end
     end

@@ -113,19 +113,27 @@ always @(posedge pix_clk) begin
 	end
 end
 
-/*
+reg reg_text_rd;
+reg reg_text_wr;
+reg [4:0] reg_text_addr;
+reg [7:0] reg_text_i_data;
+reg [7:0] reg_text_o_data;
+
 text_area8x8 text_area8x8_inst (
 	.i_rst(rst_s),
 	.i_pix_clk(pix_clk),
 	.i_blank(blank_s),
-    .i_cmd_clk(reg_cmd_clk),
-    .i_cmd_data(reg_cmd_data),
+    .i_rd(reg_text_rd),
+    .i_wr(reg_text_wr),
+    .i_addr(reg_text_addr),
+    .i_data(reg_text_i_data),
 	.i_scan_row(v_count_s),
 	.i_scan_column(h_count_s),
 	.i_bg_color(reg_bg_color),
+    .o_data(reg_text_o_data),
 	.o_color(new_color)
 );
-*/
+
 /*
 canvas canvas_inst (
 	.i_rst(rst_s),
@@ -139,176 +147,43 @@ canvas canvas_inst (
 );
 */
 
-/*
-reg psram_stb;
-reg psram_we;
-reg [23:0] psram_addr;
-reg [15:0] psram_din;
-reg psram_busy;
-reg psram_done;
-reg [15:0] psram_dout;
-reg [5:0] psram_state;
-wire [7:0] psram_dinout;
 reg [2:0] test_state;
-reg finished;
-reg success;
 
-always @(posedge rst_s or posedge pix_clk) begin
+always @(posedge rst_s or posedge o_vsync) begin
 	if (rst_s) begin
-		psram_stb <= 0;
-		psram_we <= 0;
-		psram_addr <= 0;
-		psram_din <= 0;
 		test_state <= 0;
-		finished <= 0;
-		success <= 0;
+        reg_text_rd <= 0;
+        reg_text_wr <= 0;
+        reg_text_addr <= 0;
+        reg_text_i_data <= 0;
+        reg_text_o_data <= 0;
 	end else begin
 		case (test_state)
 			3'd0: begin
-					// Wait for PSRAM startup
-					if (~psram_busy)
-						test_state <= 3'd1;
+					reg_text_addr <= 8'h26;
+				    reg_text_i_data <= 8'h62;
+                    reg_text_wr <= 1;
+					test_state <= 3'd1;
 				end
 			3'd1: begin
-					// Write a 16-bit value
-					psram_we <= 1;
-					psram_stb <= 1;
+                    reg_text_wr <= 0;
 					test_state <= 3'd2;
 				end
 			3'd2: begin
-					// Wait for the value to be written
-					if (psram_busy) begin
-						psram_stb <= 0;
-						psram_we <= 0;
-						test_state <= 3'd3;
-					end
 				end
 			3'd3: begin
-					// Read the value back again
-					if (~psram_busy) begin
-						psram_stb <= 1;
-						test_state <= 3'd4;
-					end
 				end
 			3'd4: begin
-					// Wait for the value to be read
-					if (psram_busy) begin
-						psram_stb <= 0;
-						test_state <= 3'd5;
-					end
 				end
 			3'd5: begin
-					// Indicate completion
-					if (~psram_busy) begin
-						if (psram_din == psram_dout) begin
-							if (psram_addr == 24'hFFFFFF) begin
-								if (psram_din == 16'hFFFF) begin
-									finished <= 1;
-									success <= 1;
-									test_state <= 3'd6;
-								end else begin
-									psram_addr <= 0;
-									psram_din <= psram_din + 1;
-									test_state <= 3'd1;
-								end
-							end else begin
-								psram_addr <= psram_addr + 1;
-								test_state <= 3'd1;
-							end
-						end else begin
-							finished <= 1;
-							success <= 0;
-							test_state <= 3'd6;
-						end
-					end
 				end
 		endcase;
 	end;
 end
 
-wire [34:0] states_hit;
-
-psram psram_inst (
-	.i_rst(rst_s),
-	.i_clk(pix_clk),
-	.i_stb(psram_stb),
-	.i_we(psram_we),
-	.i_addr(psram_addr),
-	.i_din(psram_din),
-	.o_busy(psram_busy),
-	.o_done(psram_done),
-	.o_dout(psram_dout),
-    .o_state(psram_state),
-	.o_psram_csn(o_psram_csn),
-	.o_psram_sclk(o_psram_sclk),
-	.io_psram_data0(io_psram_data0),
-	.io_psram_data1(io_psram_data1),
-	.io_psram_data2(io_psram_data2),
-	.io_psram_data3(io_psram_data3),
-	.io_psram_data4(io_psram_data4),
-	.io_psram_data5(io_psram_data5),
-	.io_psram_data6(io_psram_data6),
-	.io_psram_data7(io_psram_data7),
-	.states_hit(states_hit)
-);
-
-wire is_color_bar;
-wire is_past_states;
-wire is_din_area;
-wire is_dout_area;
-wire is_state;
-wire is_din;
-wire is_dout;
-wire is_address;
-wire is_address_area;
-wire is_hit_area;
-wire is_hit;
-wire [11:0] color_bar_color;
-wire [11:0] din_color;
-wire [11:0] dout_color;
-wire [11:0] state_color;
-wire [11:0] side_color;
-wire [11:0] address_color;
-wire [11:0] hit_color;
-wire [5:0] graph_col;
-
-assign graph_col = h_count_s[9:4];
-assign is_address_area = (v_count_s < 16);
-assign is_color_bar = (v_count_s >= 16 && v_count_s < 32);
-assign is_hit_area = (v_count_s >= 32 && v_count_s < 64);
-assign is_din_area = (v_count_s >= 64 && v_count_s < 96);
-assign is_dout_area = (v_count_s >= 96 && v_count_s < 128);
-assign is_state = (graph_col == psram_state);
-assign is_hit = (graph_col < 34 && states_hit[graph_col]);
-assign is_past_states = (h_count_s >= 16*34);
-assign is_din = (graph_col < 16 && psram_din[15-graph_col]);
-assign is_dout = (graph_col < 16 && psram_dout[15-graph_col]);
-assign is_address = (graph_col < 24 && psram_addr[23-graph_col]);
-
-assign color_bar_color = ({h_count_s[8:5],h_count_s[7:4],h_count_s[8:5]});
-assign din_color = (is_din ? 12'hC00 : 12'h000);
-assign dout_color = (is_dout ? 12'h0C0 : 12'h000);
-assign state_color = (is_state ? 12'hCC0 : 12'h000);
-assign side_color = (finished ? (success ? 12'h040 : 12'h400) : 12'h222);
-assign address_color = (is_address ? 12'h0C8 : 12'h000);
-assign hit_color = (is_hit ? 12'hC3C : 12'h000);
-
-assign new_color =
-	h_count_s[3:0] == 0 ? 12'h222 :
-	is_address_area ? address_color :
-	is_color_bar ? color_bar_color :
-	is_hit_area ? hit_color :
-	is_past_states ? side_color :
-	is_din_area ? din_color :
-	is_dout_area ? dout_color :
-	state_color;
-*/
-
 cpu cpu_inst (
 	.i_clk(clk_100mhz)
 );
-
-assign new_color = 12'h123;
 
 assign rst_s = ~rstn_i;
 assign o_led = 8'b0;
