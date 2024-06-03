@@ -123,6 +123,8 @@ reg `VB reg_estatus;        // Processor status
 `define ONES_32 32'hFFFFFFFF
 `define ONES_33 33'h1FFFFFFFF
 
+`define TWO_16 16'd2;
+
 // Processing registers
 reg [2:0] reg_cycle;
 reg reg_6502;
@@ -303,6 +305,7 @@ logic add_32_z; assign add_32_z = (add_ea_src`VW == `ZERO_32) ? 1 : 0;
 logic add_32_c; assign add_32_c = add_ea_src[32];
 
 `LOGIC_16 add_pc_src; assign add_pc_src = `PC + sext_src_16;
+`LOGIC_16 add_pc_2; assign add_pc_2 = `PC + `TWO_16;
 
 `LOGIC_32 add_epc_src; assign add_epc_src = `ePC + sext_src_32;
 
@@ -582,8 +585,8 @@ always @(posedge i_rst or posedge i_clk) begin
         if (reg_6502) begin
             case (reg_cycle)
                 0: begin // 6502 cycle 0
-                        var_opcode = reg_ram[`ePC];
-                        `ePC <= inc_epc;
+                        var_opcode = reg_ram[`PC];
+                        `PC <= inc_pc;
                         case (var_opcode)
                             8'h00: begin
                                     op_BRK <= 1;
@@ -662,6 +665,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'h10: begin
+                            ?? change to IF...
                                     op_BRANCH <= `NN; // BPL
                                     am_PCR_r <= 1;
                                 end
@@ -1560,8 +1564,16 @@ always @(posedge i_rst or posedge i_clk) begin
                         endcase;
                     end
                 1: begin // 6502 cycle 1
+                        if (am_PCR_r) begin
+                            `SRC <= reg_ram[`PC];
+                            `PC <= inc_pc;
+                        end
                     end
                 2: begin // 6502 cycle 2
+                        if (am_PCR_r) begin
+                            `PC <= add_pc_src;
+                            reg_cycle = 0;
+                        end
                     end
                 3: begin // 6502 cycle 3
                     end
