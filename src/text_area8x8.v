@@ -183,7 +183,9 @@ module text_area8x8 (
      2B  r w -----AAA Text area alpha value
 */
 
-    always @(posedge i_rst or posedge i_wr or posedge i_rd) begin
+    logic wr_or_rd; assign wr_or_rd = i_wr | i_rd;
+
+    always @(posedge i_rst or posedge wr_or_rd) begin
         if (i_rst) begin
             reg_scroll_x_offset <= 0;
             reg_scroll_y_offset <= 0;
@@ -551,5 +553,4 @@ module text_area8x8 (
             endcase
         end
     end
-
 endmodule
