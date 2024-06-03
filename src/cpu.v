@@ -665,11 +665,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'h10: begin
-                                    if (`NN) // BPL
+                                    if (`NN) begin // BPL
+                                        op_BRANCH <= 1;
                                         am_PCR_r <= 1;
-                                    else begin
-                                        `PC = add_pc_2;
-                                        reg_cycle = 0;
+                                    end else begin
+                                        `PC <= add_pc_2;
+                                        reg_cycle <= 0;
                                     end
                                 end
 
@@ -797,11 +798,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'h30: begin
-                                    if (`N) // BMI
+                                    if (`N) begin // BMI
+                                        op_BRANCH <= 1;
                                         am_PCR_r <= 1;
-                                    else begin
-                                        `PC = add_pc_2;
-                                        reg_cycle = 0;
+                                    end else begin
+                                        `PC <= add_pc_2;
+                                        reg_cycle <= 0;
                                     end
                                 end
 
@@ -914,11 +916,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'h50: begin
-                                    if (`NV) // BVC
+                                    if (`NV) begin // BVC
                                         am_PCR_r <= 1;
-                                    else begin
-                                        `PC = add_pc_2;
-                                        reg_cycle = 0;
+                                        op_BRANCH <= 1;
+                                    end else begin
+                                        `PC <= add_pc_2;
+                                        reg_cycle <= 0;
                                     end
                                 end
 
@@ -1027,11 +1030,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'h70: begin
-                                    if (`V) // BVS
+                                    if (`V) begin // BVS
                                         am_PCR_r <= 1;
-                                    else begin
-                                        `PC = add_pc_2;
-                                        reg_cycle = 0;
+                                        op_BRANCH <= 1;
+                                    end else begin
+                                        `PC <= add_pc_2;
+                                        reg_cycle <= 0;
                                     end
                                 end
 
@@ -1166,11 +1170,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'h90: begin
-                                    if (`NC) // BCC
+                                    if (`NC) begin // BCC
                                         am_PCR_r <= 1;
-                                    else begin
-                                        `PC = add_pc_2;
-                                        reg_cycle = 0;
+                                        op_BRANCH <= 1;
+                                    end else begin
+                                        `PC <= add_pc_2;
+                                        reg_cycle <= 0;
                                     end
                                 end
 
@@ -1294,8 +1299,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'hB0: begin
-                                    if (`C; // BCS
-                                    am_PCR_r <= 1;
+                                    if (`C) begin // BCS
+                                        am_PCR_r <= 1;
+                                        op_BRANCH <= 1;
+                                    end else begin
+                                        `PC <= add_pc_2;
+                                        reg_cycle <= 0;
+                                    end
                                 end
 
                             8'hB1: begin
@@ -1420,8 +1430,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'hD0: begin
-                                    if (`NZ; // BNE
-                                    am_PCR_r <= 1;
+                                    if (`NZ) begin // BNE
+                                        am_PCR_r <= 1;
+                                        op_BRANCH <= 1;
+                                    end else begin
+                                        `PC <= add_pc_2;
+                                        reg_cycle <= 0;
+                                    end
                                 end
 
                             8'hD1: begin
@@ -1532,8 +1547,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'hF0: begin
-                                    if (`Z; // BEQ
-                                    am_PCR_r <= 1;
+                                    if (`Z) begin // BEQ
+                                        am_PCR_r <= 1;
+                                        op_BRANCH <= 1;
+                                    end else begin
+                                        `PC <= add_pc_2;
+                                        reg_cycle <= 0;
+                                    end
                                 end
 
                             8'hF1: begin
@@ -1586,12 +1606,14 @@ always @(posedge i_rst or posedge i_clk) begin
                         if (am_PCR_r) begin
                             `SRC <= reg_ram[`PC];
                             `PC <= inc_pc;
+                            am_PCR_r <= 0;
                         end
                     end
                 2: begin // 6502 cycle 2
-                        if (am_PCR_r) begin
+                        if (op_BRANCH) begin
                             `PC <= add_pc_src;
-                            reg_cycle = 0;
+                            op_BRANCH <= 0;
+                            reg_cycle <= 0;
                         end
                     end
                 3: begin // 6502 cycle 3
@@ -1650,8 +1672,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'h10: begin
-                                    if (`eNN; // BPL
-                                    ame_PCR_r <= 1;
+                                    if (`eNN) begin // BPL
+                                        op_BRANCH <= 1;
+                                        ame_PCR_r <= 1;
+                                    end else begin
+                                        `ePC <= add_pc_4;
+                                        reg_cycle <= 0;
+                                    end
                                 end
 
                             8'h11: begin
@@ -1748,8 +1775,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'h30: begin
-                                    if (`eN; // BMI
-                                    ame_PCR_r <= 1;
+                                    if (`eN) begin // BMI
+                                        op_BRANCH <= 1;
+                                        ame_PCR_r <= 1;
+                                    end else begin
+                                        `ePC <= add_pc_4;
+                                        reg_cycle <= 0;
+                                    end
                                 end
 
                             8'h31: begin
@@ -1836,8 +1868,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'h50: begin
-                                    if (`eNV; // BVC
-                                    ame_PCR_r <= 1;
+                                    if (`eNV) begin // BVC
+                                        op_BRANCH <= 1;
+                                        ame_PCR_r <= 1;
+                                    end else begin
+                                        `ePC <= add_pc_4;
+                                        reg_cycle <= 0;
+                                    end
                                 end
 
                             8'h51: begin
@@ -1921,8 +1958,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'h70: begin
-                                    if (`eV; // BVS
-                                    ame_PCR_r <= 1;
+                                    if (`eV) begin // BVS
+                                        op_BRANCH <= 1;
+                                        ame_PCR_r <= 1;
+                                    end else begin
+                                        `ePC <= add_pc_4;
+                                        reg_cycle <= 0;
+                                    end
                                 end
 
                             8'h71: begin
@@ -1966,7 +2008,8 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'h80: begin
-                                    if (1; // BRA
+                                    // BRA
+                                    op_BRANCH <= 1;
                                     ame_PCR_r <= 1;
                                 end
 
@@ -2015,8 +2058,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'h90: begin
-                                    if (`eNC; // BCC
-                                    ame_PCR_r <= 1;
+                                    if (`eNC) // BCC
+                                        op_BRANCH <= 1;
+                                        ame_PCR_r <= 1;
+                                    end else begin
+                                        `ePC <= add_pc_4;
+                                        reg_cycle <= 0;
+                                    end
                                 end
 
                             8'h91: begin
@@ -2114,8 +2162,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'hB0: begin
-                                    if (`eC; // BCS
-                                    ame_PCR_r <= 1;
+                                    if (`eC) begin // BCS
+                                        op_BRANCH <= 1;
+                                        ame_PCR_r <= 1;
+                                    end else begin
+                                        `ePC <= add_pc_4;
+                                        reg_cycle <= 0;
+                                    end
                                 end
 
                             8'hB1: begin
@@ -2206,8 +2259,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'hD0: begin
-                                    if (`eNZ; // BNE
-                                    ame_PCR_r <= 1;
+                                    if (`eNZ) begin // BNE
+                                        op_BRANCH <= 1;
+                                        ame_PCR_r <= 1;
+                                    end else begin
+                                        `ePC <= add_pc_4;
+                                        reg_cycle <= 0;
+                                    end
                                 end
 
                             8'hD1: begin
@@ -2289,8 +2347,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'hF0: begin
-                                    if (`eZ; // BEQ
-                                    ame_PCR_r <= 1;
+                                    if (`eZ) // BEQ
+                                        op_BRANCH <= 1;
+                                        ame_PCR_r <= 1;
+                                    end else begin
+                                        `ePC <= add_pc_4;
+                                        reg_cycle <= 0;
+                                    end
                                 end
 
                             8'hF1: begin
@@ -2330,12 +2393,30 @@ always @(posedge i_rst or posedge i_clk) begin
                         endcase;
                     end
                 1: begin // 65832 cycle 1
+                        if (am_PCR_r) begin
+                            `SRC0 <= reg_ram[`PC];
+                            `PC <= inc_pc;
+                        end
                     end
                 2: begin // 65832 cycle 2
+                        if (am_PCR_r) begin
+                            `SRC1 <= reg_ram[`PC];
+                            `PC <= inc_pc;
+                        end
                     end
                 3: begin // 65832 cycle 3
+                        if (am_PCR_r) begin
+                            `SRC2 <= reg_ram[`PC];
+                            `PC <= inc_pc;
+                            am_PCR_r <= 0;
+                        end
                     end
                 4: begin // 65832 cycle 4
+                        if (op_BRANCH) begin
+                            `ePC <= add_epc_src;
+                            op_BRANCH <= 0;
+                            reg_cycle <= 0;
+                        end
                     end
                 5: begin // 65832 cycle 5
                     end
