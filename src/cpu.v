@@ -118,12 +118,15 @@ reg `VB reg_estatus;        // Processor status
 `define ONE_33 33'd1
 
 `define ONES_8 8'hFF
+`define ONES_9 9'h1FF
 `define ONES_24 24'hFFFFFF
 `define ONES_25 25'h1FFFFFF
 `define ONES_32 32'hFFFFFFFF
 `define ONES_33 33'h1FFFFFFFF
 
 `define TWO_16 16'd2;
+
+`define FOUR_32 32'd4;
 
 // Processing registers
 reg [2:0] reg_cycle;
@@ -213,6 +216,10 @@ reg op_WAI;
 
 `define SRC reg_src_data`VB
 `define eSRC reg_src_data`VW
+`define eSRC0 reg_src_data[7:0]
+`define eSRC1 reg_src_data[15:8]
+`define eSRC2 reg_src_data[23:16]
+`define eSRC3 reg_src_data[31:24]
 
 reg `VB reg_ram[0:65535]; // 64 KB
 
@@ -240,6 +247,10 @@ initial $readmemh("../ram/ram.bits", reg_ram);
 `LOGIC_32 sext_src_32; assign sext_src_32 = {reg_src_data[7] ? `ONES_24 : `ZERO_24, `SRC};
 `LOGIC_33 sext_src_33; assign sext_src_33 = {reg_src_data[7] ? `ONES_25 : `ZERO_25, `SRC};
 `LOGIC_33 sext_esrc_33; assign sext_esrc_33 = {reg_src_data[31], `eSRC};
+
+`LOGIC_32 sext_esrc_24_32; assign sext_esrc_24_32 = {reg_src_data[23] ? `ONES_8 : `ZERO_8, reg_src_data[23:0]};
+`LOGIC_33 sext_esrc_24_33; assign sext_esrc_24_33 = {reg_src_data[23] ? `ONES_9 : `ZERO_9, reg_src_data[23:0]};
+`LOGIC_33 sext_esrc_32_33; assign sext_esrc_24_33 = {reg_src_data[31], `eSRC};
 
 `LOGIC_9 sext_x_9; assign sext_x_9 = {`X[7], `X};
 `LOGIC_32 sext_x_32; assign sext_x_32 = {`X[7] ? `ONES_24 : `ZERO_24, `X};
@@ -307,7 +318,10 @@ logic add_32_c; assign add_32_c = add_ea_src[32];
 `LOGIC_16 add_pc_src; assign add_pc_src = `PC + sext_src_16;
 `LOGIC_16 add_pc_2; assign add_pc_2 = `PC + `TWO_16;
 
+`LOGIC_16 add_epc_4; assign add_epc_4 = `PC + `FOUR_32;
+
 `LOGIC_32 add_epc_src; assign add_epc_src = `ePC + sext_src_32;
+`LOGIC_32 add_epc_src_24; assign add_epc_src_24 = `ePC + sext_esrc_24_32;
 
 `LOGIC_9 adc_a_src; assign adc_a_src = uext_a_9 + uext_src_9 + uext_c_9;
 logic adc_a_n; assign adc_a_n = adc_a_src[7];
@@ -1676,7 +1690,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         op_BRANCH <= 1;
                                         ame_PCR_r <= 1;
                                     end else begin
-                                        `ePC <= add_pc_4;
+                                        `ePC <= add_epc_4;
                                         reg_cycle <= 0;
                                     end
                                 end
@@ -1779,7 +1793,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         op_BRANCH <= 1;
                                         ame_PCR_r <= 1;
                                     end else begin
-                                        `ePC <= add_pc_4;
+                                        `ePC <= add_epc_4;
                                         reg_cycle <= 0;
                                     end
                                 end
@@ -1872,7 +1886,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         op_BRANCH <= 1;
                                         ame_PCR_r <= 1;
                                     end else begin
-                                        `ePC <= add_pc_4;
+                                        `ePC <= add_epc_4;
                                         reg_cycle <= 0;
                                     end
                                 end
@@ -1962,7 +1976,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         op_BRANCH <= 1;
                                         ame_PCR_r <= 1;
                                     end else begin
-                                        `ePC <= add_pc_4;
+                                        `ePC <= add_epc_4;
                                         reg_cycle <= 0;
                                     end
                                 end
@@ -2058,11 +2072,11 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'h90: begin
-                                    if (`eNC) // BCC
+                                    if (`eNC) begin // BCC
                                         op_BRANCH <= 1;
                                         ame_PCR_r <= 1;
                                     end else begin
-                                        `ePC <= add_pc_4;
+                                        `ePC <= add_epc_4;
                                         reg_cycle <= 0;
                                     end
                                 end
@@ -2166,7 +2180,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         op_BRANCH <= 1;
                                         ame_PCR_r <= 1;
                                     end else begin
-                                        `ePC <= add_pc_4;
+                                        `ePC <= add_epc_4;
                                         reg_cycle <= 0;
                                     end
                                 end
@@ -2263,7 +2277,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         op_BRANCH <= 1;
                                         ame_PCR_r <= 1;
                                     end else begin
-                                        `ePC <= add_pc_4;
+                                        `ePC <= add_epc_4;
                                         reg_cycle <= 0;
                                     end
                                 end
@@ -2347,11 +2361,11 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
 
                             8'hF0: begin
-                                    if (`eZ) // BEQ
+                                    if (`eZ) begin // BEQ
                                         op_BRANCH <= 1;
                                         ame_PCR_r <= 1;
                                     end else begin
-                                        `ePC <= add_pc_4;
+                                        `ePC <= add_epc_4;
                                         reg_cycle <= 0;
                                     end
                                 end
@@ -2394,26 +2408,26 @@ always @(posedge i_rst or posedge i_clk) begin
                     end
                 1: begin // 65832 cycle 1
                         if (am_PCR_r) begin
-                            `SRC0 <= reg_ram[`PC];
-                            `PC <= inc_pc;
+                            `eSRC0 <= reg_ram[`PC];
+                            `ePC <= inc_epc;
                         end
                     end
                 2: begin // 65832 cycle 2
                         if (am_PCR_r) begin
-                            `SRC1 <= reg_ram[`PC];
-                            `PC <= inc_pc;
+                            `eSRC1 <= reg_ram[`PC];
+                            `ePC <= inc_epc;
                         end
                     end
                 3: begin // 65832 cycle 3
                         if (am_PCR_r) begin
-                            `SRC2 <= reg_ram[`PC];
-                            `PC <= inc_pc;
+                            `eSRC2 <= reg_ram[`PC];
+                            `ePC <= inc_epc;
                             am_PCR_r <= 0;
                         end
                     end
                 4: begin // 65832 cycle 4
                         if (op_BRANCH) begin
-                            `ePC <= add_epc_src;
+                            `ePC <= add_epc_src_24;
                             op_BRANCH <= 0;
                             reg_cycle <= 0;
                         end
