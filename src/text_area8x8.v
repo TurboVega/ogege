@@ -72,24 +72,24 @@ module text_area8x8 (
     reg reg_web;
     reg reg_clka;
     wire wire_clkb;
-    reg [15:0] reg_dia;
+    reg [15:0] reg_put_cell;
     reg [15:0] reg_dib;
     reg [12:0] reg_addra;
     wire [12:0] wire_addrb;
-    reg [15:0] reg_doa;
-    reg [15:0] reg_dob;
+    reg [15:0] reg_get_cell;
+    reg [15:0] reg_scan_cell;
 
     text_array8x8 text_array8x8_inst (
         .wea(reg_wea),
         .web(reg_web),
         .clka(reg_clka),
         .clkb(wire_clkb),
-        .dia(reg_dia),
+        .dia(reg_put_cell),
         .dib(reg_dib),
         .addra(reg_addra),
         .addrb(wire_addrb),
-        .doa(reg_doa),
-        .dob(reg_dob)
+        .doa(reg_get_cell),
+        .dob(reg_scan_cell)
     );
 
     initial begin
@@ -118,19 +118,19 @@ module text_area8x8 (
     wire [11:0] intermediate_color;
 
     assign adjusted_scan_row ={1'b0,i_scan_row} + {1'b0,reg_scroll_y_offset};
-    assign wrapped_scan_row = adjusted_scan_row >= 672 ?
-        adjusted_scan_row - 672 : adjusted_scan_row;
+    assign wrapped_scan_row = adjusted_scan_row >= 512 ?
+        adjusted_scan_row - 512 : adjusted_scan_row;
 
     assign adjusted_scan_column = {1'b0,i_scan_column} + {1'b0,reg_scroll_x_offset};
-    assign wrapped_scan_column = adjusted_scan_column >= 512 ?
-        adjusted_scan_column - 512 : adjusted_scan_column;
+    assign wrapped_scan_column = adjusted_scan_column >= 672 ?
+        adjusted_scan_column - 672 : adjusted_scan_column;
 
     assign text_cell_row = wrapped_scan_row[8:3];
     assign text_cell_column = wrapped_scan_column[9:3];
     assign cell_scan_row = wrapped_scan_row[2:0];
     assign cell_scan_column = wrapped_scan_column[2:0];
 
-    assign cell_value = reg_dob;
+    assign cell_value = reg_scan_cell;
     assign cell_fg_color_index = cell_value[15:12];
     assign cell_bg_color_index = cell_value[11:8];
     assign cell_char_code = cell_value[7:0];
@@ -198,7 +198,7 @@ module text_area8x8 (
             reg_web <= 0;
             reg_clka <= 0;
             //wire_clkb <= 0;
-            reg_dia <= 0;
+            reg_put_cell <= 0;
             reg_dib <= 0;
             reg_addra <= 0;
             //reg_addrb <= 0;
@@ -767,33 +767,33 @@ module text_area8x8 (
 
                 7'h46: begin // set character code index
                       if (i_wr) begin
-                        reg_dia[7:0] <= i_data;
+                        reg_put_cell[7:0] <= i_data;
                       end else if (i_rd) begin
-                        o_data <= reg_doa[7:0];
+                        o_data <= reg_get_cell[7:0];
                       end
                     end
 
                 7'h47: begin // set character color palette indexes
                       if (i_wr) begin
-                        reg_dia[15:8] <= i_data;
+                        reg_put_cell[15:8] <= i_data;
                       end else if (i_rd) begin
-                        o_data <= reg_doa[15:8];
+                        o_data <= reg_get_cell[15:8];
                       end
                     end
 
                 7'h48: begin // set character FG palette color index
                       if (i_wr) begin
-                        reg_dia[15:12] <= i_data[3:0];
+                        reg_put_cell[15:12] <= i_data[3:0];
                       end else if (i_rd) begin
-                        o_data <= {4'd0, reg_doa[15:12]};
+                        o_data <= {4'd0, reg_get_cell[15:12]};
                       end
                     end
 
                 7'h49: begin // set character BG palette color index
                       if (i_wr) begin
-                        reg_dia[11:8] <= i_data[3:0];
+                        reg_put_cell[11:8] <= i_data[3:0];
                       end else if (i_rd) begin
-                        o_data <= {4'd0, reg_doa[11:8]};
+                        o_data <= {4'd0, reg_get_cell[11:8]};
                       end
                     end
 
