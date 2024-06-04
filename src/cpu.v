@@ -158,7 +158,8 @@ reg `VW reg_address;
 reg `VW reg_src_data;
 reg `VW reg_dst_data;
 
-`LOGIC_8 var_opcode;
+`LOGIC_8 var_code_byte;
+`LOGIC_8 var_ram_byte;
 `LOGIC_8 var_val;
 
 reg am_ABS_a;       // Absolute a (6502)
@@ -247,6 +248,9 @@ reg `VB reg_ram[0:65535]; // 64 KB
 
 initial $readmemh("../ram/ram.bits", reg_ram);
 
+`define CODE_BYTE reg_ram[`PC]
+`define RAM_BYTE reg_ram[`ADDR]
+
 `LOGIC_9 sext_a_9; assign sext_a_9 = {`A[7], `A};
 `LOGIC_32 sext_a_32; assign sext_a_32 = {`A[7] ? `ONES_24 : `ZERO_24, `A};
 `LOGIC_33 sext_a_33; assign sext_a_33 = {`A[7] ? `ONES_25 : `ZERO_25, `A};
@@ -266,6 +270,12 @@ initial $readmemh("../ram/ram.bits", reg_ram);
 `LOGIC_32 sext_esrc_24_32; assign sext_esrc_24_32 = {reg_src_data[23] ? `ONES_8 : `ZERO_8, reg_src_data[23:0]};
 `LOGIC_33 sext_esrc_24_33; assign sext_esrc_24_33 = {reg_src_data[23] ? `ONES_9 : `ZERO_9, reg_src_data[23:0]};
 `LOGIC_33 sext_esrc_32_33; assign sext_esrc_24_33 = {reg_src_data[31], `eSRC};
+
+`LOGIC_9 sext_src_9; assign sext_src_9 = {reg_src_data[7], `SRC};
+`LOGIC_16 sext_src_16; assign sext_src_16 = {reg_src_data[7] ? `ONES_8 : `ZERO_8, `SRC};
+`LOGIC_32 sext_src_32; assign sext_src_32 = {reg_src_data[7] ? `ONES_24 : `ZERO_24, `SRC};
+`LOGIC_33 sext_src_33; assign sext_src_33 = {reg_src_data[7] ? `ONES_25 : `ZERO_25, `SRC};
+`LOGIC_33 sext_esrc_33; assign sext_esrc_33 = {reg_src_data[31], `eSRC};
 
 `LOGIC_9 sext_x_9; assign sext_x_9 = {`X[7], `X};
 `LOGIC_32 sext_x_32; assign sext_x_32 = {`X[7] ? `ONES_24 : `ZERO_24, `X};
@@ -624,9 +634,9 @@ always @(posedge i_rst or posedge i_clk) begin
         if (reg_6502) begin
             case (reg_cycle)
                 0: begin // 6502 cycle 0
-                        var_opcode = reg_ram[`PC];
+                        var_code_byte = `CODE_BYTE;
                         `PC <= inc_pc;
-                        case (var_opcode)
+                        case (var_code_byte)
                             8'h00: begin
                                     op_BRK <= 1;
                                     am_STK_s <= 1;
@@ -662,7 +672,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 begin
                                     op_RMB <= 1;
                                     am_ZPG_zp <= 1;
-                                    reg_which <= var_opcode[6:4];
+                                    reg_which <= var_code_byte[6:4];
                                 end
 
                             8'h08: begin
@@ -700,7 +710,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 begin
                                     op_BBR <= 1;
                                     am_PCR_r <= 1;
-                                    reg_which <= var_opcode[6:4];
+                                    reg_which <= var_code_byte[6:4];
                                 end
 
                             8'h10: begin
@@ -1163,7 +1173,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 begin
                                     op_SMB <= 1;
                                     am_ZPG_zp <= 1;
-                                    reg_which <= var_opcode[6:4];
+                                    reg_which <= var_code_byte[6:4];
                                 end
 
                             8'h88: begin
@@ -1205,7 +1215,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 begin
                                     op_BBS <= 1;
                                     am_PCR_r <= 1;
-                                    reg_which <= var_opcode[6:4];
+                                    reg_which <= var_code_byte[6:4];
                                 end
 
                             8'h90: begin
@@ -1643,27 +1653,36 @@ always @(posedge i_rst or posedge i_clk) begin
                     end
                 1: begin // 6502 cycle 1
                         if (am_PCR_r) begin
-                            `SRC <= reg_ram[`PC];
-                            `PC <= inc_pc;
                             am_PCR_r <= 0;
+                            if (op_BRANCH) begin
+                                var_code_byte = `CODE_BYTE;
+                                `PC <= `PC + 1 + {var_code_byte[7] ? `ONES_8 : `ZERO_8, var_code_byte};
+                                op_BRANCH <= 0;
+                                reg_cycle <= 0;
+                            end else begin
+                                `PC <= inc_pc;
+                            end
                         end else if (am_ABS_a) begin
-                            `ADDR0 <= reg_ram[`PC];
+                            `ADDR0 <= `CODE_BYTE;
+                            `PC <= inc_pc;
+                        end else if (am_ZPG_zp) begin
+                            `ADDR0 <= `CODE_BYTE;
+                            `ADDR1 <= `ZERO_8;
                             `PC <= inc_pc;
                         end
                     end
                 2: begin // 6502 cycle 2
-                        if (op_BRANCH) begin
-                            `PC <= add_pc_src;
-                            op_BRANCH <= 0;
-                            reg_cycle <= 0;
-                        end else if (am_ABS_a) begin
-                            `ADDR1 <= reg_ram[`PC];
+                        if (am_ABS_a) begin
+                            `ADDR1 <= `CODE_BYTE;
                             `PC <= inc_pc;
+                        end else if (am_ZPG_zp) begin
+                            var_ram_byte = RAM_BYTE;
+                            ...
                         end
                     end
                 3: begin // 6502 cycle 3
                         if (am_ABS_a) begin
-                            var_val = reg_ram[`ADDR];
+                            var_ram_byte = RAM_BYTE;
                             reg_cycle <= 0;
                             am_ABS_a <= 0;
 
@@ -1674,11 +1693,6 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `Z <= or_a_z;
                                 op_ORA <= 0;
                             end else if (op_ASL) begin
-                                `A <= asl_a;
-                                `C <= asl_a_c;
-                                `N <= asl_a_n;
-                                `Z <= asl_a_z;
-                                op_ASL <= 0;
                             end else if (op_TRB) begin
                             end else if (op_JSR) begin
                             end else if (op_BIT) begin
@@ -1688,11 +1702,6 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `Z <= and_a_z;
                                 op_AND <= 0;
                             end else if (op_ROL) begin
-                                `A <= rol_a;
-                                `C <= rol_a_c;
-                                `N <= rol_a_n;
-                                `Z <= rol_a_z;
-                                op_ROL <= 0;
                             end else if (op_JMP) begin
                             end else if (op_EOR) begin
                                 `A <= eor_a_src;
@@ -1700,18 +1709,8 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `Z <= eor_a_z;
                                 op_EOR <= 0;
                             end else if (op_LSR) begin
-                                `A <= lsr_a;
-                                `C <= lsr_a_c;
-                                `N <= lsr_a_n;
-                                `Z <= lsr_a_z;
-                                op_LSR <= 0;
                             end else if (op_ADC) begin
                             end else if (op_ROR) begin
-                                `A <= ror_a;
-                                `C <= ror_a_c;
-                                `N <= ror_a_n;
-                                `Z <= ror_a_z;
-                                op_ROR <= 0;
                             end else if (op_STY) begin
                             end else if (op_STA) begin
                             end else if (op_STX) begin
@@ -1722,13 +1721,9 @@ always @(posedge i_rst or posedge i_clk) begin
                             end else if (op_CPY) begin
                             end else if (op_CMP) begin
                             end else if (op_DEC) begin
-                                `A <= dec_a;
-                                `N <= dec_a_n;
-                                `Z <= dec_a_z;
-                                op_DEC <= 0;
                             end else if (op_CPX) begin
                             end else if (op_SBC) begin
-                                `A <= sbc_a;
+                                `A <= sbc_a_src;
                                 `C <= sbc_a_c;
                                 `N <= sbc_a_n;
                                 `Z <= sbc_a_z;
@@ -1747,9 +1742,9 @@ always @(posedge i_rst or posedge i_clk) begin
         end else begin // 65832
             case (reg_cycle)
                 0: begin // 65832 cycle 0
-                        var_opcode = reg_ram[`ePC];
+                        var_code_byte = reg_ram[`ePC];
                         `ePC <= inc_epc;
-                        case (var_opcode)
+                        case (var_code_byte)
                             8'h00: begin
                                     op_BRK <= 1;
                                     ame_STK_s <= 1;
@@ -2513,19 +2508,19 @@ always @(posedge i_rst or posedge i_clk) begin
                     end
                 1: begin // 65832 cycle 1
                         if (am_PCR_r) begin
-                            `eSRC0 <= reg_ram[`PC];
+                            `eSRC0 <= `CODE_BYTE;
                             `ePC <= inc_epc;
                         end
                     end
                 2: begin // 65832 cycle 2
                         if (am_PCR_r) begin
-                            `eSRC1 <= reg_ram[`PC];
+                            `eSRC1 <= `CODE_BYTE;
                             `ePC <= inc_epc;
                         end
                     end
                 3: begin // 65832 cycle 3
                         if (am_PCR_r) begin
-                            `eSRC2 <= reg_ram[`PC];
+                            `eSRC2 <= `CODE_BYTE;
                             `ePC <= inc_epc;
                             am_PCR_r <= 0;
                         end
