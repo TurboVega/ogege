@@ -115,7 +115,7 @@ end
 
 reg reg_text_rd;
 reg reg_text_wr;
-reg [4:0] reg_text_addr;
+reg [6:0] reg_text_addr;
 reg [7:0] reg_text_i_data;
 reg [7:0] reg_text_o_data;
 
@@ -160,7 +160,7 @@ always @(posedge rst_s or posedge o_vsync) begin
 	end else begin
 		case (test_state)
 			3'd0: begin
-					reg_text_addr <= 8'h26;
+					reg_text_addr <= 7'h46; // Character
 				    reg_text_i_data <= 8'h62;
                     reg_text_wr <= 1;
 					test_state <= 3'd1;
@@ -170,12 +170,24 @@ always @(posedge rst_s or posedge o_vsync) begin
 					test_state <= 3'd2;
 				end
 			3'd2: begin
+					reg_text_addr <= 7'h47; // FG
+				    reg_text_i_data <= 8'h03;
+                    reg_text_wr <= 1;
+					test_state <= 3'd3;
 				end
 			3'd3: begin
+                    reg_text_wr <= 0;
+					test_state <= 3'd4;
 				end
 			3'd4: begin
+					reg_text_addr <= 7'h48; // BG
+				    reg_text_i_data <= 8'h07;
+                    reg_text_wr <= 1;
+					test_state <= 3'd5;
 				end
 			3'd5: begin
+                    reg_text_wr <= 0;
+					test_state <= 3'd0;
 				end
 		endcase;
 	end;

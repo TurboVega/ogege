@@ -20,7 +20,7 @@ module text_area8x8 (
     input  wire i_blank,
     input  wire i_rd,
     input  wire i_wr,
-    input  wire [4:0] i_addr,
+    input  wire [6:0] i_addr,
     input  wire [7:0] i_data,
     input  wire [8:0] i_scan_row,
     input  wire [9:0] i_scan_column,
@@ -169,18 +169,23 @@ module text_area8x8 (
      ..
      1E  r w GGGGBBBB Foreground palette color for index #15 (green & blue)
      1F  r w ----RRRR Foreground palette color for index #15 (red)
-     20  r w XXXXXXXX Horizontal scroll position in pixels (lower 8 bits)
-     21  r w ------XX Horizontal scroll position in pixels (upper 2 bits)
-     22  r w YYYYYYYY Vertical scroll position in pixels (lower 8 bits)
-     23  r w -------Y Vertical scroll position in pixels (upper 1 bit)
-     24  r w --RRRRRR Text row index
-     25  r w -CCCCCCC Text column index
-     26  r w CCCCCCCC Character code index
-     27  r w FFFFBBBB Character color palette indexes
-     28  r w ----FFFF Character color foreground palette index
-     29  r w ----BBBB Character color background palette index
-     2A  r w -------- Read/write entire character cell to/from registers
-     2B  r w -----AAA Text area alpha value
+     20  r w GGGGBBBB Background palette color for index #0 (green & blue)
+     21  r w xxxxRRRR Background palette color for index #0 (red)
+     ..
+     3E  r w GGGGBBBB Background palette color for index #15 (green & blue)
+     3F  r w ----RRRR Background palette color for index #15 (red)
+     40  r w XXXXXXXX Horizontal scroll position in pixels (lower 8 bits)
+     41  r w ------XX Horizontal scroll position in pixels (upper 2 bits)
+     42  r w YYYYYYYY Vertical scroll position in pixels (lower 8 bits)
+     43  r w -------Y Vertical scroll position in pixels (upper 1 bit)
+     44  r w --RRRRRR Text row index
+     45  r w -CCCCCCC Text column index
+     46  r w CCCCCCCC Character code index
+     47  r w FFFFBBBB Character color palette indexes
+     48  r w ----FFFF Character color foreground palette index
+     49  r w ----BBBB Character color background palette index
+     4A  r w -------- Read/write entire character cell to/from registers
+     4B  r w -----AAA Text area alpha value
 */
 
     logic wr_or_rd; assign wr_or_rd = i_wr | i_rd;
@@ -202,7 +207,7 @@ module text_area8x8 (
             reg_cursor_column <= 0;
         end else begin
             case (i_addr)
-                0: begin
+                7'h00: begin
                       if (i_wr) begin
                         reg_fg_palette_color[0][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -210,7 +215,7 @@ module text_area8x8 (
                       end
                     end
 
-                1: begin
+                7'h01: begin
                       if (i_wr) begin
                         reg_fg_palette_color[0][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -218,14 +223,14 @@ module text_area8x8 (
                       end
                     end
 
-                2: begin
+                7'h02: begin
                       if (i_wr) begin
                         reg_fg_palette_color[1][7:0] <= i_data;
                       end else if (i_rd) begin
                         o_data <= reg_fg_palette_color[1][7:0];
                       end
                     end
-                3: begin
+                7'h03: begin
                       if (i_wr) begin
                         reg_fg_palette_color[1][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -233,7 +238,7 @@ module text_area8x8 (
                       end
                     end
 
-                4: begin
+                7'h04: begin
                       if (i_wr) begin
                         reg_fg_palette_color[2][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -241,7 +246,7 @@ module text_area8x8 (
                       end
                     end
 
-                5: begin
+                7'h05: begin
                       if (i_wr) begin
                         reg_fg_palette_color[2][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -249,7 +254,7 @@ module text_area8x8 (
                       end
                     end
 
-                6: begin
+                7'h06: begin
                       if (i_wr) begin
                         reg_fg_palette_color[3][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -257,7 +262,7 @@ module text_area8x8 (
                       end
                     end
 
-                7: begin
+                7'h07: begin
                       if (i_wr) begin
                         reg_fg_palette_color[3][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -265,7 +270,7 @@ module text_area8x8 (
                       end
                     end
 
-                8: begin
+                7'h08: begin
                       if (i_wr) begin
                         reg_fg_palette_color[4][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -273,7 +278,7 @@ module text_area8x8 (
                       end
                     end
 
-                9: begin
+                7'h09: begin
                       if (i_wr) begin
                         reg_fg_palette_color[4][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -281,7 +286,7 @@ module text_area8x8 (
                       end
                     end
 
-                10: begin
+                7'h0A: begin
                       if (i_wr) begin
                         reg_fg_palette_color[5][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -289,7 +294,7 @@ module text_area8x8 (
                       end
                     end
 
-                11: begin
+                7'h0B: begin
                       if (i_wr) begin
                         reg_fg_palette_color[5][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -297,7 +302,7 @@ module text_area8x8 (
                       end
                     end
 
-                12: begin
+                7'h0C: begin
                       if (i_wr) begin
                         reg_fg_palette_color[6][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -305,7 +310,7 @@ module text_area8x8 (
                       end
                     end
 
-                13: begin
+                7'h0D: begin
                       if (i_wr) begin
                         reg_fg_palette_color[6][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -313,7 +318,7 @@ module text_area8x8 (
                       end
                     end
 
-                14: begin
+                7'h0E: begin
                       if (i_wr) begin
                         reg_fg_palette_color[7][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -321,7 +326,7 @@ module text_area8x8 (
                       end
                     end
 
-                15: begin
+                7'h0F: begin
                       if (i_wr) begin
                         reg_fg_palette_color[7][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -329,7 +334,7 @@ module text_area8x8 (
                       end
                     end
 
-                16: begin
+                7'h10: begin
                       if (i_wr) begin
                         reg_fg_palette_color[8][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -337,7 +342,7 @@ module text_area8x8 (
                       end
                     end
 
-                17: begin
+                7'h11: begin
                       if (i_wr) begin
                         reg_fg_palette_color[8][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -345,7 +350,7 @@ module text_area8x8 (
                       end
                     end
 
-                18: begin
+                7'h12: begin
                       if (i_wr) begin
                         reg_fg_palette_color[9][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -353,7 +358,7 @@ module text_area8x8 (
                       end
                     end
 
-                19: begin
+                7'h13: begin
                       if (i_wr) begin
                         reg_fg_palette_color[9][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -361,7 +366,7 @@ module text_area8x8 (
                       end
                     end
 
-                20: begin
+                7'h14: begin
                       if (i_wr) begin
                         reg_fg_palette_color[10][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -369,7 +374,7 @@ module text_area8x8 (
                       end
                     end
 
-                21: begin
+                7'h15: begin
                       if (i_wr) begin
                         reg_fg_palette_color[10][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -377,7 +382,7 @@ module text_area8x8 (
                       end
                     end
 
-                22: begin
+                7'h16: begin
                       if (i_wr) begin
                         reg_fg_palette_color[11][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -385,7 +390,7 @@ module text_area8x8 (
                       end
                     end
 
-                23: begin
+                7'h17: begin
                       if (i_wr) begin
                         reg_fg_palette_color[11][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -393,7 +398,7 @@ module text_area8x8 (
                       end
                     end
 
-                24: begin
+                7'h18: begin
                       if (i_wr) begin
                         reg_fg_palette_color[12][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -401,7 +406,7 @@ module text_area8x8 (
                       end
                     end
 
-                25: begin
+                7'h19: begin
                       if (i_wr) begin
                         reg_fg_palette_color[12][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -409,7 +414,7 @@ module text_area8x8 (
                       end
                     end
 
-                26: begin
+                7'h1A: begin
                       if (i_wr) begin
                         reg_fg_palette_color[13][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -417,7 +422,7 @@ module text_area8x8 (
                       end
                     end
 
-                27: begin
+                7'h1B: begin
                       if (i_wr) begin
                         reg_fg_palette_color[13][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -425,7 +430,7 @@ module text_area8x8 (
                       end
                     end
 
-                28: begin
+                7'h1C: begin
                       if (i_wr) begin
                         reg_fg_palette_color[14][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -433,7 +438,7 @@ module text_area8x8 (
                       end
                     end
 
-                29: begin
+                7'h1D: begin
                       if (i_wr) begin
                         reg_fg_palette_color[14][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -441,7 +446,7 @@ module text_area8x8 (
                       end
                     end
 
-                30: begin
+                7'h1E: begin
                       if (i_wr) begin
                         reg_fg_palette_color[15][7:0] <= i_data;
                       end else if (i_rd) begin
@@ -449,7 +454,7 @@ module text_area8x8 (
                       end
                     end
 
-                31: begin
+                7'h1F: begin
                       if (i_wr) begin
                         reg_fg_palette_color[15][11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -457,7 +462,262 @@ module text_area8x8 (
                       end
                     end
 
-                32: begin
+                7'h20: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[0][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[0][7:0];
+                      end
+                    end
+
+                7'h21: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[0][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[0][11:8]};
+                      end
+                    end
+
+                7'h22: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[1][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[1][7:0];
+                      end
+                    end
+                7'h23: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[1][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[1][11:8]};
+                      end
+                    end
+
+                7'h24: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[2][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[2][7:0];
+                      end
+                    end
+
+                7'h25: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[2][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[2][11:8]};
+                      end
+                    end
+
+                7'h26: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[3][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[3][7:0];
+                      end
+                    end
+
+                7'h27: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[3][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[3][11:8]};
+                      end
+                    end
+
+                7'h28: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[4][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[4][7:0];
+                      end
+                    end
+
+                7'h29: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[4][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[4][11:8]};
+                      end
+                    end
+
+                7'h2A: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[5][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[5][7:0];
+                      end
+                    end
+
+                7'h2B: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[5][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[5][11:8]};
+                      end
+                    end
+
+                7'h2C: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[6][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[6][7:0];
+                      end
+                    end
+
+                7'h2D: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[6][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[6][11:8]};
+                      end
+                    end
+
+                7'h2E: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[7][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[7][7:0];
+                      end
+                    end
+
+                7'h2F: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[7][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[7][11:8]};
+                      end
+                    end
+
+                7'h30: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[8][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[8][7:0];
+                      end
+                    end
+
+                7'h31: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[8][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[8][11:8]};
+                      end
+                    end
+
+                7'h32: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[9][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[9][7:0];
+                      end
+                    end
+
+                7'h33: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[9][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[9][11:8]};
+                      end
+                    end
+
+                7'h34: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[10][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[10][7:0];
+                      end
+                    end
+
+                7'h35: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[10][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[10][11:8]};
+                      end
+                    end
+
+                7'h36: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[11][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[11][7:0];
+                      end
+                    end
+
+                7'h37: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[11][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[11][11:8]};
+                      end
+                    end
+
+                7'h38: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[12][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[12][7:0];
+                      end
+                    end
+
+                7'h39: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[12][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[12][11:8]};
+                      end
+                    end
+
+                7'h3A: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[13][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[13][7:0];
+                      end
+                    end
+
+                7'h3B: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[13][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[13][11:8]};
+                      end
+                    end
+
+                7'h3C: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[14][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[14][7:0];
+                      end
+                    end
+
+                7'h3D: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[14][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[14][11:8]};
+                      end
+                    end
+
+                7'h3E: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[15][7:0] <= i_data;
+                      end else if (i_rd) begin
+                        o_data <= reg_bg_palette_color[15][7:0];
+                      end
+                    end
+
+                7'h3F: begin
+                      if (i_wr) begin
+                        reg_bg_palette_color[15][11:8] <= i_data[3:0];
+                      end else if (i_rd) begin
+                        o_data <= {4'd0, reg_bg_palette_color[15][11:8]};
+                      end
+                    end
+
+                7'h40: begin
                       if (i_wr) begin
                         reg_scroll_x_offset[7:0] <= i_data;
                       end else if (i_rd) begin
@@ -465,7 +725,7 @@ module text_area8x8 (
                       end
                     end
 
-                33: begin
+                7'h41: begin
                       if (i_wr) begin
                         reg_scroll_x_offset[9:8] <= i_data[1:0];
                       end else if (i_rd) begin
@@ -473,7 +733,7 @@ module text_area8x8 (
                       end
                     end
 
-                34: begin
+                7'h42: begin
                       if (i_wr) begin
                         reg_scroll_y_offset[7:0] <= i_data;
                       end else if (i_rd) begin
@@ -481,7 +741,7 @@ module text_area8x8 (
                       end
                     end
 
-                35: begin
+                7'h43: begin
                       if (i_wr) begin
                         reg_scroll_y_offset[8] <= i_data[0];
                       end else if (i_rd) begin
@@ -489,7 +749,7 @@ module text_area8x8 (
                       end
                     end
 
-                36: begin
+                7'h44: begin
                       if (i_wr) begin
                         reg_cursor_row[5:0] <= i_data[5:0];
                       end else if (i_rd) begin
@@ -497,7 +757,7 @@ module text_area8x8 (
                       end
                     end
 
-                37: begin
+                7'h45: begin
                       if (i_wr) begin
                         reg_cursor_column[6:0] <= i_data[6:0];
                       end else if (i_rd) begin
@@ -505,7 +765,7 @@ module text_area8x8 (
                       end
                     end
 
-                38: begin // set character code index
+                7'h46: begin // set character code index
                       if (i_wr) begin
                         reg_dia[7:0] <= i_data;
                       end else if (i_rd) begin
@@ -513,7 +773,7 @@ module text_area8x8 (
                       end
                     end
 
-                39: begin // set character color palette indexes
+                7'h47: begin // set character color palette indexes
                       if (i_wr) begin
                         reg_dia[15:8] <= i_data;
                       end else if (i_rd) begin
@@ -521,7 +781,7 @@ module text_area8x8 (
                       end
                     end
 
-                40: begin // set character FG palette color index
+                7'h48: begin // set character FG palette color index
                       if (i_wr) begin
                         reg_dia[15:12] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -529,7 +789,7 @@ module text_area8x8 (
                       end
                     end
 
-                41: begin // set character BG palette color index
+                7'h49: begin // set character BG palette color index
                       if (i_wr) begin
                         reg_dia[11:8] <= i_data[3:0];
                       end else if (i_rd) begin
@@ -537,7 +797,7 @@ module text_area8x8 (
                       end
                     end
 
-                42: begin // read/write entire character cell
+                7'h4A: begin // read/write entire character cell
                       if (i_wr) begin
                         reg_addra = {reg_cursor_column, reg_cursor_row};
                         reg_wea <= 1;
@@ -549,7 +809,7 @@ module text_area8x8 (
                       end
                     end
 
-                43: reg_text_area_alpha <= i_data[2:0];
+                7'h4B: reg_text_area_alpha <= i_data[2:0];
             endcase
         end
     end
