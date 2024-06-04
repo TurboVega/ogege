@@ -156,7 +156,6 @@ always @(posedge rst_s or posedge pix_clk) begin
         reg_text_wr <= 0;
         reg_text_addr <= 0;
         reg_text_i_data <= 0;
-        reg_text_o_data <= 0;
 	end else begin
 		case (test_state)
 			0: begin
@@ -170,7 +169,7 @@ always @(posedge rst_s or posedge pix_clk) begin
 					test_state <= 2;
 				end
 			2: begin
-					reg_text_addr <= 7'h47; // FG
+					reg_text_addr <= 7'h48; // FG
 				    reg_text_i_data <= 8'h03;
                     reg_text_wr <= 1;
 					test_state <= 3;
@@ -180,7 +179,7 @@ always @(posedge rst_s or posedge pix_clk) begin
 					test_state <= 4;
 				end
 			4: begin
-					reg_text_addr <= 7'h48; // BG
+					reg_text_addr <= 7'h49; // BG
 				    reg_text_i_data <= 8'h07;
                     reg_text_wr <= 1;
 					test_state <= 5;
