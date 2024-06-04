@@ -113,8 +113,8 @@ always @(posedge pix_clk) begin
 	end
 end
 
-reg reg_text_rd;
-reg reg_text_wr;
+reg reg_text_clk;
+reg reg_text_we;
 reg [6:0] reg_text_addr;
 reg [7:0] reg_text_i_data;
 reg [7:0] reg_text_o_data;
@@ -123,8 +123,8 @@ text_area8x8 text_area8x8_inst (
 	.i_rst(rst_s),
 	.i_pix_clk(pix_clk),
 	.i_blank(blank_s),
-    .i_rd(reg_text_rd),
-    .i_wr(reg_text_wr),
+    .i_cmd_clk(reg_text_clk),
+    .i_we(reg_text_we),
     .i_addr(reg_text_addr),
     .i_data(reg_text_i_data),
 	.i_scan_row(v_count_s),
@@ -152,8 +152,8 @@ reg [3:0] test_state;
 always @(posedge rst_s or posedge pix_clk) begin
 	if (rst_s) begin
 		test_state <= 0;
-        reg_text_rd <= 0;
-        reg_text_wr <= 0;
+        reg_text_clk <= 0;
+        reg_text_we <= 0;
         reg_text_addr <= 0;
         reg_text_i_data <= 0;
 	end else begin
@@ -161,40 +161,41 @@ always @(posedge rst_s or posedge pix_clk) begin
 			0: begin
 					reg_text_addr <= 7'h46; // Character
 				    reg_text_i_data <= 8'h62;
-                    reg_text_wr <= 1;
+                    reg_text_we <= 1;
+                    reg_text_clk <= 1;
 					test_state <= 1;
 				end
 			1: begin
-                    reg_text_wr <= 0;
+                    reg_text_clk <= 0;
 					test_state <= 2;
 				end
 			2: begin
 					reg_text_addr <= 7'h48; // FG
 				    reg_text_i_data <= 8'h03;
-                    reg_text_wr <= 1;
+                    reg_text_clk <= 1;
 					test_state <= 3;
 				end
 			3: begin
-                    reg_text_wr <= 0;
+                    reg_text_clk <= 0;
 					test_state <= 4;
 				end
 			4: begin
 					reg_text_addr <= 7'h49; // BG
 				    reg_text_i_data <= 8'h07;
-                    reg_text_wr <= 1;
+                    reg_text_clk <= 1;
 					test_state <= 5;
 				end
 			5: begin
-                    reg_text_wr <= 0;
+                    reg_text_clk <= 0;
 					test_state <= 6;
 				end
 			6: begin
 					reg_text_addr <= 7'h4A; // Entire cell
-                    reg_text_wr <= 1;
+                    reg_text_clk <= 1;
 					test_state <= 7;
 				end
 			7: begin
-                    reg_text_wr <= 0;
+                    reg_text_clk <= 0;
 					test_state <= 0;
 				end
 		endcase;

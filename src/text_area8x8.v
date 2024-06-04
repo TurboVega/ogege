@@ -18,8 +18,8 @@ module text_area8x8 (
     input  wire i_rst,
     input  wire i_pix_clk,
     input  wire i_blank,
-    input  wire i_rd,
-    input  wire i_wr,
+    input  wire i_cmd_clk,
+    input  wire i_we,
     input  wire [6:0] i_addr,
     input  wire [7:0] i_data,
     input  wire [8:0] i_scan_row,
@@ -189,9 +189,7 @@ module text_area8x8 (
      4B  r w -----AAA Text area alpha value
 */
 
-    logic wr_or_rd; assign wr_or_rd = i_wr | i_rd;
-
-    always @(posedge i_rst or posedge wr_or_rd) begin
+    always @(posedge i_rst or posedge i_cmd_clk) begin
         if (i_rst) begin
             reg_scroll_x_offset <= 0;
             reg_scroll_y_offset <= 0;
@@ -216,601 +214,601 @@ module text_area8x8 (
 
             case (i_addr)
                 7'h00: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[0][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[0][7:0];
                       end
                     end
 
                 7'h01: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[0][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[0][11:8]};
                       end
                     end
 
                 7'h02: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[1][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[1][7:0];
                       end
                     end
                 7'h03: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[1][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[1][11:8]};
                       end
                     end
 
                 7'h04: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[2][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[2][7:0];
                       end
                     end
 
                 7'h05: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[2][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[2][11:8]};
                       end
                     end
 
                 7'h06: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[3][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[3][7:0];
                       end
                     end
 
                 7'h07: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[3][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[3][11:8]};
                       end
                     end
 
                 7'h08: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[4][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[4][7:0];
                       end
                     end
 
                 7'h09: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[4][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[4][11:8]};
                       end
                     end
 
                 7'h0A: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[5][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[5][7:0];
                       end
                     end
 
                 7'h0B: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[5][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[5][11:8]};
                       end
                     end
 
                 7'h0C: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[6][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[6][7:0];
                       end
                     end
 
                 7'h0D: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[6][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[6][11:8]};
                       end
                     end
 
                 7'h0E: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[7][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[7][7:0];
                       end
                     end
 
                 7'h0F: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[7][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[7][11:8]};
                       end
                     end
 
                 7'h10: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[8][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[8][7:0];
                       end
                     end
 
                 7'h11: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[8][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[8][11:8]};
                       end
                     end
 
                 7'h12: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[9][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[9][7:0];
                       end
                     end
 
                 7'h13: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[9][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[9][11:8]};
                       end
                     end
 
                 7'h14: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[10][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[10][7:0];
                       end
                     end
 
                 7'h15: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[10][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[10][11:8]};
                       end
                     end
 
                 7'h16: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[11][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[11][7:0];
                       end
                     end
 
                 7'h17: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[11][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[11][11:8]};
                       end
                     end
 
                 7'h18: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[12][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[12][7:0];
                       end
                     end
 
                 7'h19: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[12][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[12][11:8]};
                       end
                     end
 
                 7'h1A: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[13][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[13][7:0];
                       end
                     end
 
                 7'h1B: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[13][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[13][11:8]};
                       end
                     end
 
                 7'h1C: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[14][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[14][7:0];
                       end
                     end
 
                 7'h1D: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[14][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[14][11:8]};
                       end
                     end
 
                 7'h1E: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[15][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_fg_palette_color[15][7:0];
                       end
                     end
 
                 7'h1F: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_fg_palette_color[15][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_fg_palette_color[15][11:8]};
                       end
                     end
 
                 7'h20: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[0][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[0][7:0];
                       end
                     end
 
                 7'h21: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[0][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[0][11:8]};
                       end
                     end
 
                 7'h22: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[1][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[1][7:0];
                       end
                     end
                 7'h23: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[1][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[1][11:8]};
                       end
                     end
 
                 7'h24: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[2][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[2][7:0];
                       end
                     end
 
                 7'h25: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[2][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[2][11:8]};
                       end
                     end
 
                 7'h26: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[3][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[3][7:0];
                       end
                     end
 
                 7'h27: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[3][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[3][11:8]};
                       end
                     end
 
                 7'h28: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[4][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[4][7:0];
                       end
                     end
 
                 7'h29: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[4][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[4][11:8]};
                       end
                     end
 
                 7'h2A: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[5][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[5][7:0];
                       end
                     end
 
                 7'h2B: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[5][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[5][11:8]};
                       end
                     end
 
                 7'h2C: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[6][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[6][7:0];
                       end
                     end
 
                 7'h2D: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[6][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[6][11:8]};
                       end
                     end
 
                 7'h2E: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[7][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[7][7:0];
                       end
                     end
 
                 7'h2F: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[7][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[7][11:8]};
                       end
                     end
 
                 7'h30: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[8][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[8][7:0];
                       end
                     end
 
                 7'h31: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[8][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[8][11:8]};
                       end
                     end
 
                 7'h32: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[9][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[9][7:0];
                       end
                     end
 
                 7'h33: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[9][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[9][11:8]};
                       end
                     end
 
                 7'h34: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[10][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[10][7:0];
                       end
                     end
 
                 7'h35: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[10][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[10][11:8]};
                       end
                     end
 
                 7'h36: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[11][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[11][7:0];
                       end
                     end
 
                 7'h37: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[11][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[11][11:8]};
                       end
                     end
 
                 7'h38: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[12][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[12][7:0];
                       end
                     end
 
                 7'h39: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[12][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[12][11:8]};
                       end
                     end
 
                 7'h3A: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[13][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[13][7:0];
                       end
                     end
 
                 7'h3B: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[13][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[13][11:8]};
                       end
                     end
 
                 7'h3C: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[14][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[14][7:0];
                       end
                     end
 
                 7'h3D: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[14][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[14][11:8]};
                       end
                     end
 
                 7'h3E: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[15][7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_bg_palette_color[15][7:0];
                       end
                     end
 
                 7'h3F: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_bg_palette_color[15][11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_bg_palette_color[15][11:8]};
                       end
                     end
 
                 7'h40: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_scroll_x_offset[7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_scroll_x_offset[7:0];
                       end
                     end
 
                 7'h41: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_scroll_x_offset[9:8] <= i_data[1:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {6'd0, reg_scroll_x_offset[9:8]};
                       end
                     end
 
                 7'h42: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_scroll_y_offset[7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_scroll_y_offset[7:0];
                       end
                     end
 
                 7'h43: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_scroll_y_offset[8] <= i_data[0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {7'd0, reg_scroll_y_offset[8]};
                       end
                     end
 
                 7'h44: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_cursor_row[5:0] <= i_data[5:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {2'd0, reg_cursor_row[5:0]};
                       end
                     end
 
                 7'h45: begin
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_cursor_column[6:0] <= i_data[6:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {1'd0, reg_cursor_column[6:0]};
                       end
                     end
 
                 7'h46: begin // set character code index
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_put_cell[7:0] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_get_cell[7:0];
                       end
                     end
 
                 7'h47: begin // set character color palette indexes
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_put_cell[15:8] <= i_data;
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= reg_get_cell[15:8];
                       end
                     end
 
                 7'h48: begin // set character FG palette color index
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_put_cell[15:12] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_get_cell[15:12]};
                       end
                     end
 
                 7'h49: begin // set character BG palette color index
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_put_cell[11:8] <= i_data[3:0];
-                      end else if (i_rd) begin
+                      end else begin
                         o_data <= {4'd0, reg_get_cell[11:8]};
                       end
                     end
 
                 7'h4A: begin // read/write entire character cell
-                      if (i_wr) begin
+                      if (i_we) begin
                         reg_addra = {reg_cursor_column, reg_cursor_row};
                         reg_wea <= 1;
                         reg_clka <= 1;
-                      end else if (i_rd) begin
+                      end else begin
                         reg_addra = {reg_cursor_column, reg_cursor_row};
                         reg_wea <= 0;
                         reg_clka <= 1;
