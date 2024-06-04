@@ -12,8 +12,10 @@
 
 `default_nettype none
 
-`define RESET_PC_ADDRESS            16'hFFFC // initial program counter
-`define RESET_SP_ADDRESS            16'h0100 // initial stack pointer
+`define BRK_IRQ_ADDRESS             16'hFFFE // Break/IRQ interrupt handler
+`define RESET_PC_ADDRESS            16'hFFFC // Initial program counter
+`define NMI_ADDRESS                 16'hFFFA // Non-maskable interrupt handler
+`define RESET_SP_ADDRESS            16'h0100 // Initial stack pointer
 `define RESET_STATUS_BITS           8'b00110100 // initial program status flags
 `define TEXT_PERIPH_BASE_ADDRESS    16'hFF80 // location of text area peripheral
 
@@ -107,7 +109,10 @@ reg `VB reg_estatus;        // Processor status
 `define WVB     reg_write_val`VB
 `define WVHW    reg_write_val`VHW
 `define WVW     reg_write_val`VW
+
 `define ADDR    reg_address`VHW
+`define ADDR0   reg_address[7:0]
+`define ADDR1   reg_address[15:8]
 `define EADDR   reg_address`VW
 
 `define ZERO_7 7'd0
@@ -137,6 +142,13 @@ reg `VB reg_estatus;        // Processor status
 
 `define FOUR_32 32'd4;
 
+`define LOGIC_8     logic [7:0]
+`define LOGIC_9     logic [8:0]
+`define LOGIC_16    logic [15:0]
+`define LOGIC_17    logic [16:0]
+`define LOGIC_32    logic [31:0]
+`define LOGIC_33    logic [32:0]
+
 // Processing registers
 reg [2:0] reg_cycle;
 reg reg_6502;
@@ -146,7 +158,8 @@ reg `VW reg_address;
 reg `VW reg_src_data;
 reg `VW reg_dst_data;
 
-logic [7:0] var_opcode;
+`LOGIC_8 var_opcode;
+`LOGIC_8 var_val;
 
 reg am_ABS_a;       // Absolute a (6502)
 reg am_ACC_A;       // Accumulator A (6502)
@@ -233,13 +246,6 @@ reg op_WAI;
 reg `VB reg_ram[0:65535]; // 64 KB
 
 initial $readmemh("../ram/ram.bits", reg_ram);
-
-`define LOGIC_8     logic [7:0]
-`define LOGIC_9     logic [8:0]
-`define LOGIC_16    logic [15:0]
-`define LOGIC_17    logic [16:0]
-`define LOGIC_32    logic [31:0]
-`define LOGIC_33    logic [32:0]
 
 `LOGIC_9 sext_a_9; assign sext_a_9 = {`A[7], `A};
 `LOGIC_32 sext_a_32; assign sext_a_32 = {`A[7] ? `ONES_24 : `ZERO_24, `A};
@@ -1635,6 +1641,9 @@ always @(posedge i_rst or posedge i_clk) begin
                             `SRC <= reg_ram[`PC];
                             `PC <= inc_pc;
                             am_PCR_r <= 0;
+                        end else if (am_ABS_a) begin
+                            `ADDR0 <= reg_ram[`PC];
+                            `PC <= inc_pc;
                         end
                     end
                 2: begin // 6502 cycle 2
@@ -1642,9 +1651,49 @@ always @(posedge i_rst or posedge i_clk) begin
                             `PC <= add_pc_src;
                             op_BRANCH <= 0;
                             reg_cycle <= 0;
+                        end else if (am_ABS_a) begin
+                            `ADDR1 <= reg_ram[`PC];
+                            `PC <= inc_pc;
                         end
                     end
                 3: begin // 6502 cycle 3
+                        if (am_ABS_a) begin
+                            var_val = reg_ram[`ADDR];
+                            reg_cycle <= 0;
+
+                            if (op_TSB) begin
+                            end else if (op_ORA) begin
+                                `A = or_a_src;
+                                `N = or_a_n;
+                                `Z = or_a_z;
+                                op_ORA <= 0;
+                            end else if (op_ASL) begin
+                            end else if (op_TRB) begin
+                            end else if (op_JSR) begin
+                            end else if (op_BIT) begin
+                            end else if (op_AND) begin
+                            end else if (op_ROL) begin
+                            end else if (op_JMP) begin
+                            end else if (op_EOR) begin
+                            end else if (op_LSR) begin
+                            end else if (op_ADC) begin
+                            end else if (op_ROR) begin
+                            end else if (op_STY) begin
+                            end else if (op_STA) begin
+                            end else if (op_STX) begin
+                            end else if (op_STZ) begin
+                            end else if (op_LDY) begin
+                            end else if (op_LDA) begin
+                            end else if (op_LDX) begin
+                            end else if (op_CPY) begin
+                            end else if (op_CMP) begin
+                            end else if (op_DEC) begin
+                            end else if (op_CPX) begin
+                            end else if (op_SBC) begin
+                            end else if (op_INC) begin
+                            end
+                            am_ABS_a <= 0;
+                        end
                     end
                 4: begin // 6502 cycle 4
                     end
