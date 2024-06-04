@@ -11,6 +11,10 @@
 
 `default_nettype none
 
+`define VB  [7:0]
+`define VHW [15:0]
+`define VW  [31:0]
+
 module ogege (
 	input  wire       clk_i, 
 	input  wire       rstn_i,
@@ -46,12 +50,6 @@ wire blank_s;
 reg [3:0] glyph_row_count;
 wire [2:0] cell_col_count;
 reg [4:0] text_row_count;
-
-reg reg_cmd_clk = 1'b0;
-reg [31:0] reg_cmd_data = 32'd0;
-reg [5:0] reg_frame_count = 6'd0;
-reg [9:0] reg_scroll_x_offset = 10'd0;
-reg [8:0] reg_scroll_y_offset = 9'd0;
 
 /* 10 MHz to 100 MHz */
 pll pll_inst (
@@ -100,7 +98,6 @@ vga_core #(
 assign cell_col_count = h_count_s[2:0];
 
 always @(posedge pix_clk) begin
-	reg_cmd_clk = 0;
 	if (h_count_s == 639) begin
 		if (v_count_s == 479) begin
 			glyph_row_count <= 0;
@@ -113,97 +110,44 @@ always @(posedge pix_clk) begin
 	end
 end
 
-reg reg_text_clk;
-reg reg_text_we;
-reg [6:0] reg_text_addr;
-reg [7:0] reg_text_i_data;
-reg [7:0] reg_text_o_data;
+// Memory/peripheral bus (32-bit)
+logic bus_clk;
+logic bus_we;
+logic `VW bus_addr;
+logic `VW bus_wr_data;
+logic `VW bus_rd_data;
 
+// Connection to text area peripheral
+logic periph_text_clk; assign periph_text_clk = bus_clk;
+logic periph_text_we; assign periph_text_we = bus_we;
+logic [6:0] periph_text_addr; assign periph_text_addr = bus_addr[6:0];
+logic [7:0] periph_text_i_data; assign periph_text_i_data = bus_wr_data[7:0];
+logic [7:0] periph_text_o_data; assign periph_text_o_data = bus_rd_data[7:0];
+
+// Text area peripheral
 text_area8x8 text_area8x8_inst (
 	.i_rst(rst_s),
 	.i_pix_clk(pix_clk),
 	.i_blank(blank_s),
-    .i_cmd_clk(reg_text_clk),
-    .i_we(reg_text_we),
-    .i_addr(reg_text_addr),
-    .i_data(reg_text_i_data),
+    .i_cmd_clk(periph_text_clk),
+    .i_we(periph_text_we),
+    .i_addr(periph_text_addr),
+    .i_data(periph_text_i_data),
 	.i_scan_row(v_count_s),
 	.i_scan_column(h_count_s),
 	.i_bg_color(reg_bg_color),
-    .o_data(reg_text_o_data),
+    .o_data(periph_text_o_data),
 	.o_color(new_color)
 );
-
-/*
-canvas canvas_inst (
-	.i_rst(rst_s),
-	.i_pix_clk(pix_clk),
-	.i_blank(blank_s),
-    .i_cmd_clk(reg_cmd_clk),
-    .i_cmd_data(reg_cmd_data),
-	.i_scan_row({1'b0, v_count_s[8:1]}),
-	.i_scan_column({1'b0, h_count_s[9:1]}),
-	.o_color(new_color)
-);
-*/
-
-reg [3:0] test_state;
-
-always @(posedge rst_s or posedge pix_clk) begin
-	if (rst_s) begin
-		test_state <= 0;
-        reg_text_clk <= 0;
-        reg_text_we <= 0;
-        reg_text_addr <= 0;
-        reg_text_i_data <= 0;
-	end else begin
-		case (test_state)
-			0: begin
-					reg_text_addr <= 7'h46; // Character
-				    reg_text_i_data <= 8'h62;
-                    reg_text_we <= 1;
-                    reg_text_clk <= 1;
-					test_state <= 1;
-				end
-			1: begin
-                    reg_text_clk <= 0;
-					test_state <= 2;
-				end
-			2: begin
-					reg_text_addr <= 7'h48; // FG
-				    reg_text_i_data <= 8'h03;
-                    reg_text_clk <= 1;
-					test_state <= 3;
-				end
-			3: begin
-                    reg_text_clk <= 0;
-					test_state <= 4;
-				end
-			4: begin
-					reg_text_addr <= 7'h49; // BG
-				    reg_text_i_data <= 8'h07;
-                    reg_text_clk <= 1;
-					test_state <= 5;
-				end
-			5: begin
-                    reg_text_clk <= 0;
-					test_state <= 6;
-				end
-			6: begin
-					reg_text_addr <= 7'h4A; // Entire cell
-                    reg_text_clk <= 1;
-					test_state <= 7;
-				end
-			7: begin
-                    reg_text_clk <= 0;
-					test_state <= 0;
-				end
-		endcase;
-	end;
-end
 
 cpu cpu_inst (
-	.i_clk(clk_100mhz)
+    .i_rst(rst_s),
+	.i_clk(clk_100mhz),
+    .o_bus_clk(bus_clk),
+    .o_bus_we(bus_we),
+    .o_bus_addr(bus_addr),
+    .o_bus_data(bus_wr_data),
+    .i_bus_data(bus_rd_data)
 );
 
 assign rst_s = ~rstn_i;

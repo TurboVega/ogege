@@ -12,15 +12,24 @@
 
 `default_nettype none
 
-module cpu (
-    input   logic i_rst,
-    input   logic i_clk
-);
-
+`define RESET_PC_ADDRESS            16'hFFFC // initial program counter
+`define RESET_SP_ADDRESS            16'h0100 // initial stack pointer
+`define RESET_STATUS_BITS           8'b00110100 // initial program status flags
+`define TEXT_PERIPH_BASE_ADDRESS    16'hFF80 // location of text area peripheral
 
 `define VB  [7:0]
 `define VHW [15:0]
 `define VW  [31:0]
+
+module cpu (
+    input   logic i_rst,
+    input   logic i_clk,
+    output  reg   o_bus_clk,
+    output  reg   o_bus_we,
+    output  reg `VW o_bus_addr,
+    output  reg `VW o_bus_data,
+    input   logic `VW i_bus_data
+);
 
 // 6502 CPU registers
 
@@ -500,16 +509,16 @@ always @(posedge i_rst or posedge i_clk) begin
 
     if (i_rst) begin
         reg_6502 <= 1;
-        `PC <= 16'hFFFC;
-        `SP <= 16'h0100;
-        `P <= 8'b00110100;
+        `PC <= `RESET_PC_ADDRESS;
+        `SP <= `RESET_SP_ADDRESS;
+        `P <= `RESET_STATUS_BITS;
         `X <= `ZERO_8;
         `Y <= `ZERO_8;
 
         reg_65832 <= 0;
         `ePC <= `ZERO_32;
         `eSP <= `ZERO_32;
-        `eP <= 8'b00110100;
+        `eP <= `RESET_STATUS_BITS;
         `eX <= `ZERO_32;
         `eY <= `ZERO_32;
 
@@ -591,6 +600,11 @@ always @(posedge i_rst or posedge i_clk) begin
         op_TRB <= 0;
         op_TSB <= 0;
         op_WAI <= 0;
+
+        o_bus_clk <= 0;
+        o_bus_we <= 0;
+        o_bus_addr <= 0;
+        o_bus_data <= 0;
 
     end else begin
 
