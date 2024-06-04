@@ -351,12 +351,12 @@ logic adc_ea_z; assign adc_ea_z = (adc_ea_src`VW == `ZERO_32) ? 1 : 0;
 logic adc_ea_c; assign adc_ea_c = adc_ea_src[32];
 
 `LOGIC_8 and_a_src; assign and_a_src = `A & `SRC;
-logic and_8_n; assign and_8_n = and_a_src[7];
-logic and_8_z; assign and_8_z = (and_a_src == `ZERO_8) ? 1 : 0;
+logic and_a_n; assign and_a_n = and_a_src[7];
+logic and_a_z; assign and_a_z = (and_a_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 and_ea_src; assign and_ea_src = `eA & `eSRC;
-logic and_32_n; assign and_32_n = and_ea_src[31];
-logic and_32_z; assign and_32_z = (and_ea_src == `ZERO_32) ? 1 : 0;
+logic and_ea_n; assign and_ea_n = and_ea_src[31];
+logic and_ea_z; assign and_ea_z = (and_ea_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 asl_a; assign asl_a = {`A[6:0], 1'b0};
 logic asl_a_n; assign asl_a_n = asl_a[7];
@@ -439,6 +439,11 @@ logic inc_y_z; assign inc_y_z = (inc_y == `ZERO_8) ? 1 : 0;
 `LOGIC_32 inc_ey; assign inc_ey = `eY + `ONE_32;
 logic inc_ey_n; assign inc_ey_n = inc_ey[31];
 logic inc_ey_z; assign inc_ey_z = (inc_ey == `ZERO_32) ? 1 : 0;
+
+`LOGIC_8 lsr_a; assign lsr_a = {1'b0, `A[7:1]};
+logic lsr_a_n; assign lsr_a_n = lsr_a[7];
+logic lsr_a_z; assign lsr_a_z = (lsr_a == `ZERO_8) ? 1 : 0;
+logic lsr_a_c; assign lsr_a_c = `A[0];
 
 `LOGIC_8 neg_a; assign neg_a = `ZERO_8 - `A;
 logic neg_a_n; assign neg_a_n = neg_a[7];
@@ -1660,24 +1665,53 @@ always @(posedge i_rst or posedge i_clk) begin
                         if (am_ABS_a) begin
                             var_val = reg_ram[`ADDR];
                             reg_cycle <= 0;
+                            am_ABS_a <= 0;
 
                             if (op_TSB) begin
                             end else if (op_ORA) begin
-                                `A = or_a_src;
-                                `N = or_a_n;
-                                `Z = or_a_z;
+                                `A <= or_a_src;
+                                `N <= or_a_n;
+                                `Z <= or_a_z;
                                 op_ORA <= 0;
                             end else if (op_ASL) begin
+                                `A <= asl_a;
+                                `C <= asl_a_c;
+                                `N <= asl_a_n;
+                                `Z <= asl_a_z;
+                                op_ASL <= 0;
                             end else if (op_TRB) begin
                             end else if (op_JSR) begin
                             end else if (op_BIT) begin
                             end else if (op_AND) begin
+                                `A <= and_a_src;
+                                `N <= and_a_n;
+                                `Z <= and_a_z;
+                                op_AND <= 0;
                             end else if (op_ROL) begin
+                                `A <= rol_a;
+                                `C <= rol_a_c;
+                                `N <= rol_a_n;
+                                `Z <= rol_a_z;
+                                op_ROL <= 0;
                             end else if (op_JMP) begin
                             end else if (op_EOR) begin
+                                `A <= eor_a_src;
+                                `N <= eor_a_n;
+                                `Z <= eor_a_z;
+                                op_EOR <= 0;
                             end else if (op_LSR) begin
+                                `A <= lsr_a;
+                                `C <= lsr_a_c;
+                                `N <= lsr_a_n;
+                                `Z <= lsr_a_z;
+                                op_LSR <= 0;
                             end else if (op_ADC) begin
                             end else if (op_ROR) begin
+                                `A <= ror_a;
+                                `C <= ror_a_c;
+                                `N <= ror_a_n;
+                                `Z <= ror_a_z;
+                                op_ROR <= 0;
                             end else if (op_STY) begin
                             end else if (op_STA) begin
                             end else if (op_STX) begin
@@ -1688,11 +1722,19 @@ always @(posedge i_rst or posedge i_clk) begin
                             end else if (op_CPY) begin
                             end else if (op_CMP) begin
                             end else if (op_DEC) begin
+                                `A <= dec_a;
+                                `N <= dec_a_n;
+                                `Z <= dec_a_z;
+                                op_DEC <= 0;
                             end else if (op_CPX) begin
                             end else if (op_SBC) begin
+                                `A <= sbc_a;
+                                `C <= sbc_a_c;
+                                `N <= sbc_a_n;
+                                `Z <= sbc_a_z;
+                                op_SBC <= 0;
                             end else if (op_INC) begin
                             end
-                            am_ABS_a <= 0;
                         end
                     end
                 4: begin // 6502 cycle 4
