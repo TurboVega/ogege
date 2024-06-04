@@ -206,6 +206,8 @@ module text_area8x8 (
             reg_cursor_row <= 0;
             reg_cursor_column <= 0;
         end else begin
+            reg_clka <= 0;
+
             case (i_addr)
                 7'h00: begin
                       if (i_wr) begin
