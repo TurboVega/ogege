@@ -68,6 +68,7 @@ module text_area8x8 (
     // Character code: 8 bits
     //
 
+    reg reg_read_cell;
     reg reg_wea;
     reg reg_web;
     reg reg_clka;
@@ -194,6 +195,7 @@ module text_area8x8 (
         if (i_rst) begin
             reg_scroll_x_offset <= 0;
             reg_scroll_y_offset <= 0;
+            reg_read_cell <= 0;
             reg_wea <= 0;
             reg_web <= 0;
             reg_clka <= 0;
@@ -207,6 +209,10 @@ module text_area8x8 (
             reg_cursor_column <= 0;
         end else begin
             reg_clka <= 0;
+            if (reg_read_cell) begin
+                reg_read_cell <= 0;
+                reg_put_cell <= reg_get_cell;
+            end
 
             case (i_addr)
                 7'h00: begin
@@ -808,6 +814,7 @@ module text_area8x8 (
                         reg_addra = {reg_cursor_column, reg_cursor_row};
                         reg_wea <= 0;
                         reg_clka <= 1;
+                        reg_read_cell <= 1;
                       end
                     end
 
