@@ -147,9 +147,9 @@ canvas canvas_inst (
 );
 */
 
-reg [2:0] test_state;
+reg [3:0] test_state;
 
-always @(posedge rst_s or posedge o_vsync) begin
+always @(posedge rst_s or posedge pix_clk) begin
 	if (rst_s) begin
 		test_state <= 0;
         reg_text_rd <= 0;
@@ -159,35 +159,44 @@ always @(posedge rst_s or posedge o_vsync) begin
         reg_text_o_data <= 0;
 	end else begin
 		case (test_state)
-			3'd0: begin
+			0: begin
 					reg_text_addr <= 7'h46; // Character
 				    reg_text_i_data <= 8'h62;
                     reg_text_wr <= 1;
-					test_state <= 3'd1;
+					test_state <= 1;
 				end
-			3'd1: begin
+			1: begin
                     reg_text_wr <= 0;
-					test_state <= 3'd2;
+					test_state <= 2;
 				end
-			3'd2: begin
+			2: begin
 					reg_text_addr <= 7'h47; // FG
 				    reg_text_i_data <= 8'h03;
                     reg_text_wr <= 1;
-					test_state <= 3'd3;
+					test_state <= 3;
 				end
-			3'd3: begin
+			3: begin
                     reg_text_wr <= 0;
-					test_state <= 3'd4;
+					test_state <= 4;
 				end
-			3'd4: begin
+			4: begin
 					reg_text_addr <= 7'h48; // BG
 				    reg_text_i_data <= 8'h07;
                     reg_text_wr <= 1;
-					test_state <= 3'd5;
+					test_state <= 5;
 				end
-			3'd5: begin
+			5: begin
                     reg_text_wr <= 0;
-					test_state <= 3'd0;
+					test_state <= 6;
+				end
+			6: begin
+					reg_text_addr <= 7'h4A; // Entire cell
+                    reg_text_wr <= 1;
+					test_state <= 7;
+				end
+			7: begin
+                    reg_text_wr <= 0;
+					test_state <= 0;
 				end
 		endcase;
 	end;
