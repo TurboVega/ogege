@@ -105,7 +105,7 @@ always @(posedge pix_clk) begin
 		if (v_count_s == 479) begin
 			glyph_row_count <= 0;
 			text_row_count <= 0;
-		end else if (glyph_row_count == 11) begin
+		end else if (glyph_row_count == 7) begin
 			glyph_row_count <= 0;
 			text_row_count <= text_row_count + 1;
 		end else
