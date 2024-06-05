@@ -458,13 +458,17 @@ logic lsr_a_n; assign lsr_a_n = lsr_a[7];
 logic lsr_a_z; assign lsr_a_z = (lsr_a == `ZERO_8) ? 1 : 0;
 logic lsr_a_c; assign lsr_a_c = `A[0];
 
-`LOGIC_8 neg_a; assign neg_a = `ZERO_8 - `A;
+`LOGIC_9 neg_a; assign neg_a = `ZERO_9 - uext_a_9;
 logic neg_a_n; assign neg_a_n = neg_a[7];
-logic neg_a_z; assign neg_a_z = (neg_a == `ZERO_8) ? 1 : 0;
+logic neg_a_v; assign neg_a_v = neg_a[8] ^ neg_a[7];
+logic neg_a_z; assign neg_a_z = (neg_a`VB == `ZERO_8) ? 1 : 0;
+logic neg_a_c; assign neg_a_c = neg_a[8];
 
-`LOGIC_32 neg_ea; assign neg_ea = `ZERO_32 - `eA;
+`LOGIC_33 neg_ea; assign neg_ea = `ZERO_33 - uext_ea_33;
 logic neg_ea_n; assign neg_ea_n = neg_ea[31];
-logic neg_ea_z; assign neg_ea_z = (neg_ea == `ZERO_32) ? 1 : 0;
+logic neg_ea_v; assign neg_ea_v = neg_ea[32] ^ neg_ea[31];
+logic neg_ea_z; assign neg_ea_z = (neg_ea`VW == `ZERO_32) ? 1 : 0;
+logic neg_ea_c; assign neg_ea_c = neg_ea[32];
 
 `LOGIC_8 not_a; assign not_a = ~`A;
 logic not_a_n; assign not_a_n = not_a[7];
@@ -927,6 +931,23 @@ always @(posedge i_rst or posedge i_clk) begin
                             8'h12: begin
                                     op_ORA <= 1;
                                     am_ZPI_ZP <= 1;
+                                end
+
+                            8'h13: begin
+                                    // NEG
+                                    `A <= neg_a;
+                                    `C <= neg_a_c;
+                                    `N <= neg_a_n;
+                                    `Z <= neg_a_z;
+                                    reg_cycle <= 0;
+                                end
+
+                            8'h14: begin
+                                    // NOT
+                                    `A <= not_a;
+                                    `N <= not_a_n;
+                                    `Z <= not_a_z;
+                                    reg_cycle <= 0;
                                 end
 
                             8'h14: begin
