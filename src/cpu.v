@@ -819,6 +819,11 @@ always @(posedge i_rst or posedge i_clk) begin
                                     am_ZIIX_ZP_X <= 1;
                                 end
 
+                            8'h03: begin
+                                    op_SUB <= 1;
+                                    am_IMM_m <= 1;
+                                end
+
                             8'h04: begin
                                     op_TSB <= 1;
                                     am_ZPG_zp <= 1;
@@ -955,16 +960,6 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'h21: begin
                                     op_AND <= 1;
-                                    am_ZIIX_ZP_X <= 1;
-                                end
-
-                            8'h22: begin
-                                    op_JSR <= 1;
-                                    am_AIA_A <= 1;
-                                end
-
-                            8'h23: begin
-                                    op_SUB <= 1;
                                     am_ZIIX_ZP_X <= 1;
                                 end
 
@@ -1912,10 +1907,18 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `do_uext_var_9;
                                 `do_sub_a_var;
                                 `do_sub_a_var_n; `N <= sub_a_var_n;
-                                `do_sub_a_var_v; `N <= sub_a_var_v;
-                                `do_sub_a_var_z; `N <= sub_a_var_z;
-                                `do_sub_a_var_c; `N <= sub_a_var_c;
+                                `do_sub_a_var_v; `V <= sub_a_var_v;
+                                `do_sub_a_var_z; `Z <= sub_a_var_z;
+                                `do_sub_a_var_c; `C <= sub_a_var_c;
                                 op_CMP <= 0;
+                            end else if (op_SUB) begin
+                                `do_uext_var_9;
+                                `do_sub_a_var; `A <= sub_a_var;
+                                `do_sub_a_var_n; `N <= sub_a_var_n;
+                                `do_sub_a_var_v; `V <= sub_a_var_v;
+                                `do_sub_a_var_z; `Z <= sub_a_var_z;
+                                `do_sub_a_var_c; `C <= sub_a_var_c;
+                                op_SUB <= 0;
                             end else if (op_DEC) begin
                                 `do_dec_var; `DST <= var_ram_byte;
                                 `do_dec_var_n; `N <= dec_var_n;
