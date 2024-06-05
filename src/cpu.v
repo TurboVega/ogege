@@ -244,6 +244,13 @@ reg op_WAI;
 `define eSRC2 reg_src_data[23:16]
 `define eSRC3 reg_src_data[31:24]
 
+`define DST reg_dst_data`VB
+`define eDST reg_dst_data`VW
+`define eDST0 reg_dst_data[7:0]
+`define eDST1 reg_dst_data[15:8]
+`define eDST2 reg_dst_data[23:16]
+`define eDST3 reg_dst_data[31:24]
+
 reg `VB reg_ram[0:65535]; // 64 KB
 
 initial $readmemh("../ram/ram.bits", reg_ram);
@@ -1847,25 +1854,29 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             if (op_TSB) begin
                             end else if (op_ORA) begin
-                                `do_or_a_var
-                                `do_or_a_var_n
-                                `do_or_a_var_z
+                                `do_or_a_var; `A = or_a_var;
+                                `do_or_a_var_n; `N = or_a_var_n;
+                                `do_or_a_var_z; `Z = or_a_var_z;
                                 op_ORA <= 0;
                             end else if (op_ASL) begin
+                                `do_asl_var; `DST = var_ram_byte;
+                                `do_asl_var_n; `N = asl_var_n;
+                                `do_asl_var_z; `Z = asl_var_z;
+                                `do_asl_var_c; `C = asl_var_c;
                             end else if (op_TRB) begin
                             end else if (op_JSR) begin
                             end else if (op_BIT) begin
                             end else if (op_AND) begin
-                                `do_and_a_var
-                                `do_and_a_var_n
-                                `do_and_a_var_z
+                                `do_and_a_var; `A = and_a_var;
+                                `do_and_a_var_n; `N = and_a_var_n;
+                                `do_and_a_var_z; `Z = and_a_var_z;
                                 op_AND <= 0;
                             end else if (op_ROL) begin
                             end else if (op_JMP) begin
                             end else if (op_EOR) begin
-                                `do_eor_a_var
-                                `do_eor_a_var_n
-                                `do_eor_a_var_z
+                                `do_eor_a_var; `A = eor_a_var;
+                                `do_eor_a_var_n; `N = eor_a_var_n;
+                                `do_eor_a_var_z; `Z = eor_a_var_z;
                                 op_EOR <= 0;
                             end else if (op_LSR) begin
                             end else if (op_ADC) begin
@@ -1882,11 +1893,11 @@ always @(posedge i_rst or posedge i_clk) begin
                             end else if (op_DEC) begin
                             end else if (op_CPX) begin
                             end else if (op_SBC) begin
-                                `do_uext_var_9
-                                `do_sbc_a_var
-                                `do_sbc_a_var_c
-                                `do_sbc_a_var_n
-                                `do_sbc_a_var_z
+                                `do_uext_var_9;
+                                `do_sbc_a_var; `A = sbc_a_var;
+                                `do_sbc_a_var_c; `C = sbc_a_var_c;
+                                `do_sbc_a_var_n; `N = sbc_a_var_n;
+                                `do_sbc_a_var_z; `Z = sbc_a_var_z;
                                 op_SBC <= 0;
                             end else if (op_INC) begin
                             end
