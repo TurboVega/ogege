@@ -1854,45 +1854,52 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             if (op_TSB) begin
                             end else if (op_ORA) begin
-                                `do_or_a_var; `A = or_a_var;
-                                `do_or_a_var_n; `N = or_a_var_n;
-                                `do_or_a_var_z; `Z = or_a_var_z;
+                                `do_or_a_var; `A <= or_a_var;
+                                `do_or_a_var_n; `N <= or_a_var_n;
+                                `do_or_a_var_z; `Z <= or_a_var_z;
                                 op_ORA <= 0;
                             end else if (op_ASL) begin
-                                `do_asl_var; `DST = var_ram_byte;
-                                `do_asl_var_n; `N = asl_var_n;
-                                `do_asl_var_z; `Z = asl_var_z;
-                                `do_asl_var_c; `C = asl_var_c;
+                                `do_asl_var; `DST <= var_ram_byte;
+                                `do_asl_var_n; `N <= asl_var_n;
+                                `do_asl_var_z; `Z <= asl_var_z;
+                                `do_asl_var_c; `C <= asl_var_c;
                             end else if (op_TRB) begin
                             end else if (op_JSR) begin
                             end else if (op_BIT) begin
                             end else if (op_AND) begin
-                                `do_and_a_var; `A = and_a_var;
-                                `do_and_a_var_n; `N = and_a_var_n;
-                                `do_and_a_var_z; `Z = and_a_var_z;
+                                `do_and_a_var; `A <= and_a_var;
+                                `do_and_a_var_n; `N <= and_a_var_n;
+                                `do_and_a_var_z; `Z <= and_a_var_z;
                                 op_AND <= 0;
                             end else if (op_ROL) begin
-                                `do_rol_var; `DST = var_ram_byte;
-                                `do_rol_var_n; `N = rol_var_n;
-                                `do_rol_var_z; `Z = rol_var_z;
-                                `do_rol_var_c; `C = rol_var_c;
+                                `do_rol_var; `DST <= var_ram_byte;
+                                `do_rol_var_n; `N <= rol_var_n;
+                                `do_rol_var_z; `Z <= rol_var_z;
+                                `do_rol_var_c; `C <= rol_var_c;
                             end else if (op_JMP) begin
                             end else if (op_EOR) begin
-                                `do_eor_a_var; `A = eor_a_var;
-                                `do_eor_a_var_n; `N = eor_a_var_n;
-                                `do_eor_a_var_z; `Z = eor_a_var_z;
+                                `do_eor_a_var; `A <= eor_a_var;
+                                `do_eor_a_var_n; `N <= eor_a_var_n;
+                                `do_eor_a_var_z; `Z <= eor_a_var_z;
                                 op_EOR <= 0;
                             end else if (op_LSR) begin
-                                `do_lsr_var; `DST = var_ram_byte;
-                                `do_lsr_var_n; `N = lsr_var_n;
-                                `do_lsr_var_z; `Z = lsr_var_z;
-                                `do_lsr_var_c; `C = lsr_var_c;
+                                `do_lsr_var; `DST <= var_ram_byte;
+                                `do_lsr_var_n; `N <= lsr_var_n;
+                                `do_lsr_var_z; `Z <= lsr_var_z;
+                                `do_lsr_var_c; `C <= lsr_var_c;
                             end else if (op_ADC) begin
+                                `do_uext_var_9;
+                                `do_adc_a_var; `A <= adc_a_var;
+                                `do_adc_a_var_n; `N <= adc_a_var_n;
+                                `do_adc_a_var_v; `V <= adc_a_var_v;
+                                `do_adc_a_var_z; `Z <= adc_a_var_z;
+                                `do_adc_a_var_c; `C <= adc_a_var_c;
+                                op_ADC <= 0;
                             end else if (op_ROR) begin
-                                `do_ror_var; `DST = var_ram_byte;
-                                `do_ror_var_n; `N = ror_var_n;
-                                `do_ror_var_z; `Z = ror_var_z;
-                                `do_ror_var_c; `C = ror_var_c;
+                                `do_ror_var; `DST <= var_ram_byte;
+                                `do_ror_var_n; `N <= ror_var_n;
+                                `do_ror_var_z; `Z <= ror_var_z;
+                                `do_ror_var_c; `C <= ror_var_c;
                             end else if (op_STY) begin
                             end else if (op_STA) begin
                             end else if (op_STX) begin
@@ -1902,22 +1909,29 @@ always @(posedge i_rst or posedge i_clk) begin
                             end else if (op_LDX) begin
                             end else if (op_CPY) begin
                             end else if (op_CMP) begin
+                                `do_uext_var_9;
+                                `do_sub_a_var;
+                                `do_sub_a_var_n; `N <= sub_a_var_n;
+                                `do_sub_a_var_v; `N <= sub_a_var_v;
+                                `do_sub_a_var_z; `N <= sub_a_var_z;
+                                `do_sub_a_var_c; `N <= sub_a_var_c;
+                                op_CMP <= 0;
                             end else if (op_DEC) begin
-                                `do_dec_var; `DST = var_ram_byte;
-                                `do_dec_var_n; `N = dec_var_n;
-                                `do_dec_var_z; `Z = dec_var_z;
+                                `do_dec_var; `DST <= var_ram_byte;
+                                `do_dec_var_n; `N <= dec_var_n;
+                                `do_dec_var_z; `Z <= dec_var_z;
                             end else if (op_CPX) begin
                             end else if (op_SBC) begin
                                 `do_uext_var_9;
-                                `do_sbc_a_var; `A = sbc_a_var;
-                                `do_sbc_a_var_c; `C = sbc_a_var_c;
-                                `do_sbc_a_var_n; `N = sbc_a_var_n;
-                                `do_sbc_a_var_z; `Z = sbc_a_var_z;
+                                `do_sbc_a_var; `A <= sbc_a_var;
+                                `do_sbc_a_var_c; `C <= sbc_a_var_c;
+                                `do_sbc_a_var_n; `N <= sbc_a_var_n;
+                                `do_sbc_a_var_z; `Z <= sbc_a_var_z;
                                 op_SBC <= 0;
                             end else if (op_INC) begin
-                                `do_inc_var; `DST = var_ram_byte;
-                                `do_inc_var_n; `N = inc_var_n;
-                                `do_inc_var_z; `Z = inc_var_z;
+                                `do_inc_var; `DST <= var_ram_byte;
+                                `do_inc_var_n; `N <= inc_var_n;
+                                `do_inc_var_z; `Z <= inc_var_z;
                             end
                         end
                     end
