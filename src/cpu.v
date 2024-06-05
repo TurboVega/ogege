@@ -248,6 +248,8 @@ reg `VB reg_ram[0:65535]; // 64 KB
 
 initial $readmemh("../ram/ram.bits", reg_ram);
 
+//-------------------------------------------------------------------------------
+
 `define CODE_BYTE reg_ram[`PC]
 `define RAM_BYTE reg_ram[`ADDR]
 
@@ -516,6 +518,170 @@ logic sub_ea_src_n; assign sub_ea_src_n = sub_ea_src[31];
 logic sub_ea_src_v; assign sub_ea_src_v = sub_ea_src[32] ^ sub_ea_src[31];
 logic sub_ea_src_z; assign sub_ea_src_z = (sub_ea_src`VW == `ZERO_32) ? 1 : 0;
 logic sub_ea_src_c; assign sub_ea_src_c = sub_ea_src[32];
+
+//-------------------------------------------------------------------------------
+
+`define do_sext_var_9  `LOGIC_9 sext_var_9; sext_var_9 = {var_ram_byte[7], var_ram_byte};
+`define do_sext_var_16  `LOGIC_16 sext_var_16; sext_var_16 = {var_ram_byte[7] ? `ONES_8 : `ZERO_8, var_ram_byte};
+`define do_sext_var_32  `LOGIC_32 sext_var_32; sext_var_32 = {var_ram_byte[7] ? `ONES_24 : `ZERO_24, var_ram_byte};
+`define do_sext_var_33  `LOGIC_33 sext_var_33; sext_var_33 = {var_ram_byte[7] ? `ONES_25 : `ZERO_25, var_ram_byte};
+`define do_sext_evar_33  `LOGIC_33 sext_evar_33; sext_evar_33 = {var_ram_word[31], var_ram_word};
+
+`define do_sext_evar_24_32  `LOGIC_32 sext_evar_24_32; sext_evar_24_32 = {var_ram_word[23] ? `ONES_8 : `ZERO_8, var_ram_word[23:0]};
+`define do_sext_evar_24_33  `LOGIC_33 sext_evar_24_33; sext_evar_24_33 = {var_ram_word[23] ? `ONES_9 : `ZERO_9, var_ram_word[23:0]};
+`define do_sext_evar_32_33  `LOGIC_33 sext_evar_32_33; sext_evar_24_33 = {var_ram_word[31], var_ram_word};
+
+`define do_uext_var_9  `LOGIC_9 uext_var_9; uext_var_9 = { 1'd0, var_ram_byte};
+`define do_uext_var_16  `LOGIC_16 uext_var_16; uext_var_16 = { `ZERO_8, var_ram_byte};
+`define do_uext_var_32  `LOGIC_32 uext_var_32; uext_var_32 = { `ZERO_24, var_ram_byte};
+`define do_uext_var_33  `LOGIC_33 uext_var_33; uext_var_33 = { `ZERO_25, var_ram_byte};
+`define do_uext_evar_33  `LOGIC_33 uext_evar_33; uext_evar_33 = { 1'd0, var_ram_word};
+
+`define do_add_a_var  `LOGIC_9 add_a_var; add_a_var = uext_a_9 + uext_var_9;
+`define do_add_a_var_n  logic add_a_var_n; add_a_var_n = add_a_var[7];
+`define do_add_a_var_v  logic add_a_var_v; add_a_var_v = add_a_var[8] ^ add_a_var[7];
+`define do_add_a_var_z  logic add_a_var_z; add_a_var_z = (add_a_var`VB == `ZERO_8) ? 1 : 0;
+`define do_add_a_var_c  logic add_a_var_c; add_a_var_c = add_a_var[8];
+
+`define do_add_ea_var  `LOGIC_33 add_ea_var; add_ea_var = uext_ea_33 + uext_evar_33;
+`define do_add_ea_var_n  logic add_ea_var_n; add_ea_var_n = add_ea_var[31];
+`define do_add_ea_var_v  logic add_ea_var_v; add_ea_var_v = add_ea_var[32] ^ add_ea_var[31];
+`define do_add_ea_var_z  logic add_ea_var_z; add_ea_var_z = (add_ea_var`VW == `ZERO_32) ? 1 : 0;
+`define do_add_ea_var_c  logic add_ea_var_c; add_ea_var_c = add_ea_var[32];
+
+`define do_add_pc_var  `LOGIC_16 add_pc_var; add_pc_var = `PC + sext_var_16;
+
+`define do_add_epc_var  `LOGIC_32 add_epc_var; add_epc_var = `ePC + sext_var_32;
+`define do_add_epc_var_24  `LOGIC_32 add_epc_var_24; add_epc_var_24 = `ePC + sext_evar_24_32;
+
+`define do_adc_a_var  `LOGIC_9 adc_a_var; adc_a_var = uext_a_9 + uext_var_9 + uext_c_9;
+`define do_adc_a_var_n  logic adc_a_var_n; adc_a_var_n = adc_a_var[7];
+`define do_adc_a_var_v  logic adc_a_var_v; adc_a_var_v = adc_a_var[8] ^ adc_a_var[7];
+`define do_adc_a_var_z  logic adc_a_var_z; adc_a_var_z = (adc_a_var`VB == `ZERO_8) ? 1 : 0;
+`define do_adc_a_var_c  logic adc_a_var_c; adc_a_var_c = adc_a_var[8];
+
+`define do_adc_ea_var  `LOGIC_33 adc_ea_var; adc_ea_var = uext_ea_33 + uext_evar_33 + uext_c_33;
+`define do_adc_ea_var_n  logic adc_ea_var_n; adc_ea_var_n = adc_ea_var[31];
+`define do_adc_ea_var_v  logic adc_ea_var_v; adc_ea_var_v = adc_ea_var[32] ^ adc_ea_var[31];
+`define do_adc_ea_var_z  logic adc_ea_var_z; adc_ea_var_z = (adc_ea_var`VW == `ZERO_32) ? 1 : 0;
+`define do_adc_ea_var_c  logic adc_ea_var_c; adc_ea_var_c = adc_ea_var[32];
+
+`define do_and_a_var  `LOGIC_8 and_a_var; and_a_var = `A & var_ram_byte;
+`define do_and_a_var_n  logic and_a_var_n; and_a_var_n = and_a_var[7];
+`define do_and_a_var_z  logic and_a_var_z; and_a_var_z = (and_a_var == `ZERO_8) ? 1 : 0;
+
+`define do_and_ea_var  `LOGIC_32 and_ea_var; and_ea_var = `eA & var_ram_word;
+`define do_and_ea_var_n  logic and_ea_var_n; and_ea_var_n = and_ea_var[31];
+`define do_and_ea_var_z  logic and_ea_var_z; and_ea_var_z = (and_ea_var == `ZERO_32) ? 1 : 0;
+
+`define do_asl_var  `LOGIC_8 asl_var; asl_var = {var_ram_byte[6:0], 1'b0};
+`define do_asl_var_n  logic asl_var_n; asl_var_n = asl_var[7];
+`define do_asl_var_z  logic asl_var_z; asl_var_z = (asl_var == `ZERO_8) ? 1 : 0;
+`define do_asl_var_c  logic asl_var_c; asl_var_c = var_ram_byte[7];
+
+`define do_asl_evar  `LOGIC_32 asl_evar; asl_evar = {var_ram_word[30:0], 1'b0};
+`define do_asl_evar_n  logic asl_evar_n; asl_evar_n = asl_evar[31];
+`define do_asl_evar_z  logic asl_evar_z; asl_evar_z = (asl_evar == `ZERO_32) ? 1 : 0;
+`define do_asl_evar_c  logic asl_evar_c; asl_evar_c = var_ram_word[31];
+
+`define do_dec_var  `LOGIC_8 dec_var; dec_var = var_ram_byte - `ONE_8;
+`define do_dec_var_n  logic dec_var_n; dec_var_n = dec_var[7];
+`define do_dec_var_z  logic dec_var_z; dec_var_z = (dec_var == `ZERO_8) ? 1 : 0;
+
+`define do_dec_evar  `LOGIC_32 dec_evar; dec_evar = var_ram_word - `ONE_32;
+`define do_dec_evar_n  logic dec_evar_n; dec_evar_n = dec_evar[31];
+`define do_dec_evar_z  logic dec_evar_z; dec_evar_z = (dec_evar == `ZERO_32) ? 1 : 0;
+
+`define do_eor_a_var  `LOGIC_8 eor_a_var; eor_a_var = `A ^ var_ram_byte;
+`define do_eor_a_var_n  logic eor_a_var_n; eor_a_var_n = eor_a_var[7];
+`define do_eor_a_var_z  logic eor_a_var_z; eor_a_var_z = (eor_a_var == `ZERO_8) ? 1 : 0;
+
+`define do_eor_ea_var  `LOGIC_32 eor_ea_var; eor_ea_var = `eA ^ var_ram_word;
+`define do_eor_ea_var_n  logic eor_ea_var_n; eor_ea_var_n = eor_ea_var[31];
+`define do_eor_ea_var_z  logic eor_ea_var_z; eor_ea_var_z = (eor_ea_var == `ZERO_32) ? 1 : 0;
+
+`define do_inc_var  `LOGIC_8 inc_var; inc_var = var_ram_byte + `ONE_8;
+`define do_inc_var_n  logic inc_var_n; inc_var_n = inc_var[7];
+`define do_inc_var_z  logic inc_var_z; inc_var_z = (inc_var == `ZERO_8) ? 1 : 0;
+
+`define do_inc_evar  `LOGIC_32 inc_evar; inc_evar = var_ram_word + `ONE_32;
+`define do_inc_evar_n  logic inc_evar_n; inc_evar_n = inc_evar[31];
+`define do_inc_evar_z  logic inc_evar_z; inc_evar_z = (inc_evar == `ZERO_32) ? 1 : 0;
+
+`define do_lsr_var  `LOGIC_8 lsr_var; lsr_var = {1'b0, var_ram_byte[7:1]};
+`define do_lsr_var_n  logic lsr_var_n; lsr_var_n = lsr_var[7];
+`define do_lsr_var_z  logic lsr_var_z; lsr_var_z = (lsr_var == `ZERO_8) ? 1 : 0;
+`define do_lsr_var_c  logic lsr_var_c; lsr_var_c = var_ram_byte[0];
+
+`define do_neg_var  `LOGIC_8 neg_var; neg_var = `ZERO_8 - var_ram_byte;
+`define do_neg_var_n  logic neg_var_n; neg_var_n = neg_var[7];
+`define do_neg_var_z  logic neg_var_z; neg_var_z = (neg_var == `ZERO_8) ? 1 : 0;
+
+`define do_neg_evar  `LOGIC_32 neg_evar; neg_evar = `ZERO_32 - var_ram_word;
+`define do_neg_evar_n  logic neg_evar_n; neg_evar_n = neg_evar[31];
+`define do_neg_evar_z  logic neg_evar_z; neg_evar_z = (neg_evar == `ZERO_32) ? 1 : 0;
+
+`define do_not_var  `LOGIC_8 not_var; not_var = ~var_ram_byte;
+`define do_not_var_n  logic not_var_n; not_var_n = not_var[7];
+`define do_not_var_z  logic not_var_z; not_var_z = (not_var == `ZERO_8) ? 1 : 0;
+
+`define do_not_evar  `LOGIC_32 not_evar; not_evar = ~var_ram_word;
+`define do_not_evar_n  logic not_evar_n; not_evar_n = not_evar[31];
+`define do_not_evar_z  logic not_evar_z; not_evar_z = (not_evar == `ZERO_32) ? 1 : 0;
+
+`define do_or_a_var  `LOGIC_8 or_a_var; or_a_var = `A | var_ram_byte;
+`define do_or_a_var_n  logic or_a_var_n; or_a_var_n = or_a_var[7];
+`define do_or_a_var_z  logic or_a_var_z; or_a_var_z = (or_a_var == `ZERO_8) ? 1 : 0;
+
+`define do_or_ea_var  `LOGIC_32 or_ea_var; or_ea_var = `eA | var_ram_word;
+`define do_or_ea_var_n  logic or_ea_var_n; or_ea_var_n = or_ea_var[31];
+`define do_or_ea_var_z  logic or_ea_var_z; or_ea_var_z = (or_ea_var == `ZERO_32) ? 1 : 0;
+
+`define do_rol_var  `LOGIC_8 rol_var; rol_var = {var_ram_byte[6:0], `C};
+`define do_rol_var_n  logic rol_var_n; rol_var_n = rol_var[7];
+`define do_rol_var_z  logic rol_var_z; rol_var_z = (rol_var == `ZERO_8) ? 1 : 0;
+`define do_rol_var_c  logic rol_var_c; rol_var_c = var_ram_byte[7];
+
+`define do_rol_evar  `LOGIC_32 rol_evar; rol_evar = {var_ram_word[30:0], `eC};
+`define do_rol_evar_n  logic rol_evar_n; rol_evar_n = rol_evar[31];
+`define do_rol_evar_z  logic rol_evar_z; rol_evar_z = (rol_evar == `ZERO_32) ? 1 : 0;
+`define do_rol_evar_c  logic rol_evar_c; rol_evar_c = var_ram_word[31];
+
+`define do_ror_var  `LOGIC_8 ror_var; ror_var = {`C, var_ram_byte[7:1]};
+`define do_ror_var_n  logic ror_var_n; ror_var_n = ror_var[7];
+`define do_ror_var_z  logic ror_var_z; ror_var_z = (ror_var == `ZERO_8) ? 1 : 0;
+`define do_ror_var_c  logic ror_var_c; ror_var_c = var_ram_byte[0];
+
+`define do_ror_evar  `LOGIC_32 ror_evar; ror_evar = {`eC, var_ram_word[30:0]};
+`define do_ror_evar_n  logic ror_evar_n; ror_evar_n = ror_evar[31];
+`define do_ror_evar_z  logic ror_evar_z; ror_evar_z = (ror_evar == `ZERO_32) ? 1 : 0;
+`define do_ror_evar_c  logic ror_evar_c; ror_evar_c = var_ram_word[0];
+
+`define do_sbc_a_var  `LOGIC_9 sbc_a_var; sbc_a_var = uext_a_9 - uext_var_9 - uext_nc_9;
+`define do_sbc_a_var_n  logic sbc_a_var_n; sbc_a_var_n = sbc_a_var[7];
+`define do_sbc_a_var_v  logic sbc_a_var_v; sbc_a_var_v = sbc_a_var[8] ^ sbc_a_var[7];
+`define do_sbc_a_var_z  logic sbc_a_var_z; sbc_a_var_z = (sbc_a_var`VB == `ZERO_8) ? 1 : 0;
+`define do_sbc_a_var_c  logic sbc_a_var_c; sbc_a_var_c = sbc_a_var[8];
+
+`define do_sbc_ea_var  `LOGIC_33 sbc_ea_var; sbc_ea_var = uext_ea_33 - uext_evar_33 - uext_nc_33;
+`define do_sbc_ea_var_n  logic sbc_ea_var_n; sbc_ea_var_n = sbc_ea_var[31];
+`define do_sbc_ea_var_v  logic sbc_ea_var_v; sbc_ea_var_v = sbc_ea_var[32] ^ sbc_ea_var[31];
+`define do_sbc_ea_var_z  logic sbc_ea_var_z; sbc_ea_var_z = (sbc_ea_var`VW == `ZERO_32) ? 1 : 0;
+`define do_sbc_ea_var_c  logic sbc_ea_var_c; sbc_ea_var_c = sbc_ea_var[32];
+
+`define do_sub_a_var  `LOGIC_9 sub_a_var; sub_a_var = uext_a_9 - uext_var_9;
+`define do_sub_a_var_n  logic sub_a_var_n; sub_a_var_n = sub_a_var[7];
+`define do_sub_a_var_v  logic sub_a_var_v; sub_a_var_v = sub_a_var[8] ^ sub_a_var[7];
+`define do_sub_a_var_z  logic sub_a_var_z; sub_a_var_z = (sub_a_var`VB == `ZERO_8) ? 1 : 0;
+`define do_sub_a_var_c  logic sub_a_var_c; sub_a_var_c = sub_a_var[8];
+
+`define do_sub_ea_var  `LOGIC_33 sub_ea_var; sub_ea_var = uext_ea_33 - uext_evar_33;
+`define do_sub_ea_var_n  logic sub_ea_var_n; sub_ea_var_n = sub_ea_var[31];
+`define do_sub_ea_var_v  logic sub_ea_var_v; sub_ea_var_v = sub_ea_var[32] ^ sub_ea_var[31];
+`define do_sub_ea_var_z  logic sub_ea_var_z; sub_ea_var_z = (sub_ea_var`VW == `ZERO_32) ? 1 : 0;
+`define do_sub_ea_var_c  logic sub_ea_var_c; sub_ea_var_c = sub_ea_var[32];
+
+//-------------------------------------------------------------------------------
 
 logic [2:0] next_cycle; assign next_cycle = reg_cycle + 1;
 
