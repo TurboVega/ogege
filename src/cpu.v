@@ -1872,6 +1872,10 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `do_and_a_var_z; `Z = and_a_var_z;
                                 op_AND <= 0;
                             end else if (op_ROL) begin
+                                `do_rol_var; `DST = var_ram_byte;
+                                `do_rol_var_n; `N = rol_var_n;
+                                `do_rol_var_z; `Z = rol_var_z;
+                                `do_rol_var_c; `C = rol_var_c;
                             end else if (op_JMP) begin
                             end else if (op_EOR) begin
                                 `do_eor_a_var; `A = eor_a_var;
@@ -1879,8 +1883,16 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `do_eor_a_var_z; `Z = eor_a_var_z;
                                 op_EOR <= 0;
                             end else if (op_LSR) begin
+                                `do_lsr_var; `DST = var_ram_byte;
+                                `do_lsr_var_n; `N = lsr_var_n;
+                                `do_lsr_var_z; `Z = lsr_var_z;
+                                `do_lsr_var_c; `C = lsr_var_c;
                             end else if (op_ADC) begin
                             end else if (op_ROR) begin
+                                `do_ror_var; `DST = var_ram_byte;
+                                `do_ror_var_n; `N = ror_var_n;
+                                `do_ror_var_z; `Z = ror_var_z;
+                                `do_ror_var_c; `C = ror_var_c;
                             end else if (op_STY) begin
                             end else if (op_STA) begin
                             end else if (op_STX) begin
@@ -1891,6 +1903,9 @@ always @(posedge i_rst or posedge i_clk) begin
                             end else if (op_CPY) begin
                             end else if (op_CMP) begin
                             end else if (op_DEC) begin
+                                `do_dec_var; `DST = var_ram_byte;
+                                `do_dec_var_n; `N = dec_var_n;
+                                `do_dec_var_z; `Z = dec_var_z;
                             end else if (op_CPX) begin
                             end else if (op_SBC) begin
                                 `do_uext_var_9;
@@ -1900,6 +1915,9 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `do_sbc_a_var_z; `Z = sbc_a_var_z;
                                 op_SBC <= 0;
                             end else if (op_INC) begin
+                                `do_inc_var; `DST = var_ram_byte;
+                                `do_inc_var_n; `N = inc_var_n;
+                                `do_inc_var_z; `Z = inc_var_z;
                             end
                         end
                     end
