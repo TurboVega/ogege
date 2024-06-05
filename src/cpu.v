@@ -160,7 +160,7 @@ reg `VW reg_dst_data;
 
 `LOGIC_8 var_code_byte;
 `LOGIC_8 var_ram_byte;
-`LOGIC_8 var_val;
+`LOGIC_8 var_new_val;
 
 reg am_ABS_a;       // Absolute a (6502)
 reg am_ACC_A;       // Accumulator A (6502)
@@ -271,12 +271,6 @@ initial $readmemh("../ram/ram.bits", reg_ram);
 `LOGIC_33 sext_esrc_24_33; assign sext_esrc_24_33 = {reg_src_data[23] ? `ONES_9 : `ZERO_9, reg_src_data[23:0]};
 `LOGIC_33 sext_esrc_32_33; assign sext_esrc_24_33 = {reg_src_data[31], `eSRC};
 
-`LOGIC_9 sext_src_9; assign sext_src_9 = {reg_src_data[7], `SRC};
-`LOGIC_16 sext_src_16; assign sext_src_16 = {reg_src_data[7] ? `ONES_8 : `ZERO_8, `SRC};
-`LOGIC_32 sext_src_32; assign sext_src_32 = {reg_src_data[7] ? `ONES_24 : `ZERO_24, `SRC};
-`LOGIC_33 sext_src_33; assign sext_src_33 = {reg_src_data[7] ? `ONES_25 : `ZERO_25, `SRC};
-`LOGIC_33 sext_esrc_33; assign sext_esrc_33 = {reg_src_data[31], `eSRC};
-
 `LOGIC_9 sext_x_9; assign sext_x_9 = {`X[7], `X};
 `LOGIC_32 sext_x_32; assign sext_x_32 = {`X[7] ? `ONES_24 : `ZERO_24, `X};
 `LOGIC_33 sext_x_33; assign sext_x_33 = {`X[7] ? `ONES_25 : `ZERO_25, `X};
@@ -329,16 +323,16 @@ initial $readmemh("../ram/ram.bits", reg_ram);
 `LOGIC_33 uext_ey_33; assign uext_ey_33 = { 1'd0, `eY};
 
 `LOGIC_9 add_a_src; assign add_a_src = uext_a_9 + uext_src_9;
-logic add_8_n; assign add_8_n = add_a_src[7];
-logic add_8_v; assign add_8_v = add_a_src[8] ^ add_a_src[7];
-logic add_8_z; assign add_8_z = (add_a_src`VB == `ZERO_8) ? 1 : 0;
-logic add_8_c; assign add_8_c = add_a_src[8];
+logic add_a_src_n; assign add_a_src_n = add_a_src[7];
+logic add_a_src_v; assign add_a_src_v = add_a_src[8] ^ add_a_src[7];
+logic add_a_src_z; assign add_a_src_z = (add_a_src`VB == `ZERO_8) ? 1 : 0;
+logic add_a_src_c; assign add_a_src_c = add_a_src[8];
 
 `LOGIC_33 add_ea_src; assign add_ea_src = uext_ea_33 + uext_esrc_33;
-logic add_32_n; assign add_32_n = add_ea_src[31];
-logic add_32_v; assign add_32_v = add_ea_src[32] ^ add_ea_src[31];
-logic add_32_z; assign add_32_z = (add_ea_src`VW == `ZERO_32) ? 1 : 0;
-logic add_32_c; assign add_32_c = add_ea_src[32];
+logic add_ea_src_n; assign add_ea_src_n = add_ea_src[31];
+logic add_ea_src_v; assign add_ea_src_v = add_ea_src[32] ^ add_ea_src[31];
+logic add_ea_src_z; assign add_ea_src_z = (add_ea_src`VW == `ZERO_32) ? 1 : 0;
+logic add_ea_src_c; assign add_ea_src_c = add_ea_src[32];
 
 `LOGIC_16 add_pc_src; assign add_pc_src = `PC + sext_src_16;
 `LOGIC_16 add_pc_2; assign add_pc_2 = `PC + `TWO_16;
@@ -349,24 +343,24 @@ logic add_32_c; assign add_32_c = add_ea_src[32];
 `LOGIC_32 add_epc_src_24; assign add_epc_src_24 = `ePC + sext_esrc_24_32;
 
 `LOGIC_9 adc_a_src; assign adc_a_src = uext_a_9 + uext_src_9 + uext_c_9;
-logic adc_a_n; assign adc_a_n = adc_a_src[7];
-logic adc_a_v; assign adc_a_v = adc_a_src[8] ^ adc_a_src[7];
-logic adc_a_z; assign adc_a_z = (adc_a_src`VB == `ZERO_8) ? 1 : 0;
-logic adc_a_c; assign adc_a_c = adc_a_src[8];
+logic adc_a_src_n; assign adc_a_src_n = adc_a_src[7];
+logic adc_a_src_v; assign adc_a_src_v = adc_a_src[8] ^ adc_a_src[7];
+logic adc_a_src_z; assign adc_a_src_z = (adc_a_src`VB == `ZERO_8) ? 1 : 0;
+logic adc_a_src_c; assign adc_a_src_c = adc_a_src[8];
 
 `LOGIC_33 adc_ea_src; assign adc_ea_src = uext_ea_33 + uext_esrc_33 + uext_c_33;
-logic adc_ea_n; assign adc_ea_n = adc_ea_src[31];
-logic adc_ea_v; assign adc_ea_v = adc_ea_src[32] ^ adc_ea_src[31];
-logic adc_ea_z; assign adc_ea_z = (adc_ea_src`VW == `ZERO_32) ? 1 : 0;
-logic adc_ea_c; assign adc_ea_c = adc_ea_src[32];
+logic adc_ea_src_n; assign adc_ea_src_n = adc_ea_src[31];
+logic adc_ea_src_v; assign adc_ea_src_v = adc_ea_src[32] ^ adc_ea_src[31];
+logic adc_ea_src_z; assign adc_ea_src_z = (adc_ea_src`VW == `ZERO_32) ? 1 : 0;
+logic adc_ea_src_c; assign adc_ea_src_c = adc_ea_src[32];
 
 `LOGIC_8 and_a_src; assign and_a_src = `A & `SRC;
-logic and_a_n; assign and_a_n = and_a_src[7];
-logic and_a_z; assign and_a_z = (and_a_src == `ZERO_8) ? 1 : 0;
+logic and_a_src_n; assign and_a_src_n = and_a_src[7];
+logic and_a_src_z; assign and_a_src_z = (and_a_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 and_ea_src; assign and_ea_src = `eA & `eSRC;
-logic and_ea_n; assign and_ea_n = and_ea_src[31];
-logic and_ea_z; assign and_ea_z = (and_ea_src == `ZERO_32) ? 1 : 0;
+logic and_ea_src_n; assign and_ea_src_n = and_ea_src[31];
+logic and_ea_src_z; assign and_ea_src_z = (and_ea_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 asl_a; assign asl_a = {`A[6:0], 1'b0};
 logic asl_a_n; assign asl_a_n = asl_a[7];
@@ -411,12 +405,12 @@ logic dec_ey_n; assign dec_ey_n = dec_ey[31];
 logic dec_ey_z; assign dec_ey_z = (dec_ey == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 eor_a_src; assign eor_a_src = `A ^ `SRC;
-logic eor_a_n; assign eor_a_n = eor_a_src[7];
-logic eor_a_z; assign eor_a_z = (eor_a_src == `ZERO_8) ? 1 : 0;
+logic eor_a_src_n; assign eor_a_src_n = eor_a_src[7];
+logic eor_a_src_z; assign eor_a_src_z = (eor_a_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 eor_ea_src; assign eor_ea_src = `eA ^ `eSRC;
-logic eor_ea_n; assign eor_ea_n = eor_ea_src[31];
-logic eor_ea_z; assign eor_ea_z = (eor_ea_src == `ZERO_32) ? 1 : 0;
+logic eor_ea_src_n; assign eor_ea_src_n = eor_ea_src[31];
+logic eor_ea_src_z; assign eor_ea_src_z = (eor_ea_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 inc_a; assign inc_a = `A + `ONE_8;
 logic inc_a_n; assign inc_a_n = inc_a[7];
@@ -472,12 +466,12 @@ logic not_ea_n; assign not_ea_n = not_ea[31];
 logic not_ea_z; assign not_ea_z = (not_ea == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 or_a_src; assign or_a_src = `A | `SRC;
-logic or_a_n; assign or_a_n = or_a_src[7];
-logic or_a_z; assign or_a_z = (or_a_src == `ZERO_8) ? 1 : 0;
+logic or_a_src_n; assign or_a_src_n = or_a_src[7];
+logic or_a_src_z; assign or_a_src_z = (or_a_src == `ZERO_8) ? 1 : 0;
 
 `LOGIC_32 or_ea_src; assign or_ea_src = `eA | `eSRC;
-logic or_32_n; assign or_32_n = or_ea_src[31];
-logic or_32_z; assign or_32_z = (or_ea_src == `ZERO_32) ? 1 : 0;
+logic or_ea_src_n; assign or_ea_src_n = or_ea_src[31];
+logic or_ea_src_z; assign or_ea_src_z = (or_ea_src == `ZERO_32) ? 1 : 0;
 
 `LOGIC_8 rol_a; assign rol_a = {`A[6:0], `C};
 logic rol_a_n; assign rol_a_n = rol_a[7];
@@ -500,28 +494,28 @@ logic ror_ea_z; assign ror_ea_z = (ror_ea == `ZERO_32) ? 1 : 0;
 logic ror_ea_c; assign ror_ea_c = `eA[0];
 
 `LOGIC_9 sbc_a_src; assign sbc_a_src = uext_a_9 - uext_src_9 - uext_nc_9;
-logic sbc_a_n; assign sbc_a_n = sbc_a_src[7];
-logic sbc_a_v; assign sbc_a_v = sbc_a_src[8] ^ sbc_a_src[7];
-logic sbc_a_z; assign sbc_a_z = (sbc_a_src`VB == `ZERO_8) ? 1 : 0;
-logic sbc_a_c; assign sbc_a_c = sbc_a_src[8];
+logic sbc_a_src_n; assign sbc_a_src_n = sbc_a_src[7];
+logic sbc_a_src_v; assign sbc_a_src_v = sbc_a_src[8] ^ sbc_a_src[7];
+logic sbc_a_src_z; assign sbc_a_src_z = (sbc_a_src`VB == `ZERO_8) ? 1 : 0;
+logic sbc_a_src_c; assign sbc_a_src_c = sbc_a_src[8];
 
 `LOGIC_33 sbc_ea_src; assign sbc_ea_src = uext_ea_33 - uext_esrc_33 - uext_nc_33;
-logic sbc_ea_n; assign sbc_ea_n = sbc_ea_src[31];
-logic sbc_ea_v; assign sbc_ea_v = sbc_ea_src[32] ^ sbc_ea_src[31];
-logic sbc_ea_z; assign sbc_ea_z = (sbc_ea_src`VW == `ZERO_32) ? 1 : 0;
-logic sbc_ea_c; assign sbc_ea_c = sbc_ea_src[32];
+logic sbc_ea_src_n; assign sbc_ea_src_n = sbc_ea_src[31];
+logic sbc_ea_src_v; assign sbc_ea_src_v = sbc_ea_src[32] ^ sbc_ea_src[31];
+logic sbc_ea_src_z; assign sbc_ea_src_z = (sbc_ea_src`VW == `ZERO_32) ? 1 : 0;
+logic sbc_ea_src_c; assign sbc_ea_src_c = sbc_ea_src[32];
 
 `LOGIC_9 sub_a_src; assign sub_a_src = uext_a_9 - uext_src_9;
-logic sub_a_n; assign sub_a_n = sub_a_src[7];
-logic sub_a_v; assign sub_a_v = sub_a_src[8] ^ sub_a_src[7];
-logic sub_a_z; assign sub_a_z = (sub_a_src`VB == `ZERO_8) ? 1 : 0;
-logic sub_a_c; assign sub_a_c = sub_a_src[8];
+logic sub_a_src_n; assign sub_a_src_n = sub_a_src[7];
+logic sub_a_src_v; assign sub_a_src_v = sub_a_src[8] ^ sub_a_src[7];
+logic sub_a_src_z; assign sub_a_src_z = (sub_a_src`VB == `ZERO_8) ? 1 : 0;
+logic sub_a_src_c; assign sub_a_src_c = sub_a_src[8];
 
 `LOGIC_33 sub_ea_src; assign sub_ea_src = uext_ea_33 - uext_esrc_33;
-logic sub_ea_n; assign sub_ea_n = sub_ea_src[31];
-logic sub_ea_v; assign sub_ea_v = sub_ea_src[32] ^ sub_ea_src[31];
-logic sub_ea_z; assign sub_ea_z = (sub_ea_src`VW == `ZERO_32) ? 1 : 0;
-logic sub_ea_c; assign sub_ea_c = sub_ea_src[32];
+logic sub_ea_src_n; assign sub_ea_src_n = sub_ea_src[31];
+logic sub_ea_src_v; assign sub_ea_src_v = sub_ea_src[32] ^ sub_ea_src[31];
+logic sub_ea_src_z; assign sub_ea_src_z = (sub_ea_src`VW == `ZERO_32) ? 1 : 0;
+logic sub_ea_src_c; assign sub_ea_src_c = sub_ea_src[32];
 
 logic [2:0] next_cycle; assign next_cycle = reg_cycle + 1;
 
@@ -1656,7 +1650,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             am_PCR_r <= 0;
                             if (op_BRANCH) begin
                                 var_code_byte = `CODE_BYTE;
-                                `PC <= `PC + 1 + {var_code_byte[7] ? `ONES_8 : `ZERO_8, var_code_byte};
+                                `PC <= inc_pc + {var_code_byte[7] ? `ONES_8 : `ZERO_8, var_code_byte};
                                 op_BRANCH <= 0;
                                 reg_cycle <= 0;
                             end else begin
@@ -1676,21 +1670,20 @@ always @(posedge i_rst or posedge i_clk) begin
                             `ADDR1 <= `CODE_BYTE;
                             `PC <= inc_pc;
                         end else if (am_ZPG_zp) begin
-                            var_ram_byte = RAM_BYTE;
-                            ...
+                            var_ram_byte = `RAM_BYTE;
                         end
                     end
                 3: begin // 6502 cycle 3
                         if (am_ABS_a) begin
-                            var_ram_byte = RAM_BYTE;
+                            var_ram_byte = `RAM_BYTE;
                             reg_cycle <= 0;
                             am_ABS_a <= 0;
 
                             if (op_TSB) begin
                             end else if (op_ORA) begin
                                 `A <= or_a_src;
-                                `N <= or_a_n;
-                                `Z <= or_a_z;
+                                `N <= or_a_src_n;
+                                `Z <= or_a_src_z;
                                 op_ORA <= 0;
                             end else if (op_ASL) begin
                             end else if (op_TRB) begin
@@ -1698,15 +1691,15 @@ always @(posedge i_rst or posedge i_clk) begin
                             end else if (op_BIT) begin
                             end else if (op_AND) begin
                                 `A <= and_a_src;
-                                `N <= and_a_n;
-                                `Z <= and_a_z;
+                                `N <= and_a_src_n;
+                                `Z <= and_a_src_z;
                                 op_AND <= 0;
                             end else if (op_ROL) begin
                             end else if (op_JMP) begin
                             end else if (op_EOR) begin
                                 `A <= eor_a_src;
-                                `N <= eor_a_n;
-                                `Z <= eor_a_z;
+                                `N <= eor_a_src_n;
+                                `Z <= eor_a_src_z;
                                 op_EOR <= 0;
                             end else if (op_LSR) begin
                             end else if (op_ADC) begin
@@ -1724,9 +1717,9 @@ always @(posedge i_rst or posedge i_clk) begin
                             end else if (op_CPX) begin
                             end else if (op_SBC) begin
                                 `A <= sbc_a_src;
-                                `C <= sbc_a_c;
-                                `N <= sbc_a_n;
-                                `Z <= sbc_a_z;
+                                `C <= sbc_a_src_c;
+                                `N <= sbc_a_src_n;
+                                `Z <= sbc_a_src_z;
                                 op_SBC <= 0;
                             end else if (op_INC) begin
                             end
