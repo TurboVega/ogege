@@ -688,6 +688,30 @@ logic sub_ea_src_c; assign sub_ea_src_c = sub_ea_src[32];
 `define do_sub_ea_var_z  logic sub_ea_var_z; sub_ea_var_z = (sub_ea_var`VW == `ZERO_32) ? 1 : 0;
 `define do_sub_ea_var_c  logic sub_ea_var_c; sub_ea_var_c = sub_ea_var[32];
 
+`define do_sub_x_var  `LOGIC_9 sub_x_var; sub_x_var = uext_x_9 - uext_var_9;
+`define do_sub_x_var_n  logic sub_x_var_n; sub_x_var_n = sub_x_var[7];
+`define do_sub_x_var_v  logic sub_x_var_v; sub_x_var_v = sub_x_var[8] ^ sub_x_var[7];
+`define do_sub_x_var_z  logic sub_x_var_z; sub_x_var_z = (sub_x_var`VB == `ZERO_8) ? 1 : 0;
+`define do_sub_x_var_c  logic sub_x_var_c; sub_x_var_c = sub_x_var[8];
+
+`define do_sub_ex_var  `LOGIC_33 sub_ex_var; sub_ex_var = uext_ex_33 - uext_evar_33;
+`define do_sub_ex_var_n  logic sub_ex_var_n; sub_ex_var_n = sub_ex_var[31];
+`define do_sub_ex_var_v  logic sub_ex_var_v; sub_ex_var_v = sub_ex_var[32] ^ sub_ex_var[31];
+`define do_sub_ex_var_z  logic sub_ex_var_z; sub_ex_var_z = (sub_ex_var`VW == `ZERO_32) ? 1 : 0;
+`define do_sub_ex_var_c  logic sub_ex_var_c; sub_ex_var_c = sub_ex_var[32];
+
+`define do_sub_y_var  `LOGIC_9 sub_y_var; sub_y_var = uext_y_9 - uext_var_9;
+`define do_sub_y_var_n  logic sub_y_var_n; sub_y_var_n = sub_y_var[7];
+`define do_sub_y_var_v  logic sub_y_var_v; sub_y_var_v = sub_y_var[8] ^ sub_y_var[7];
+`define do_sub_y_var_z  logic sub_y_var_z; sub_y_var_z = (sub_y_var`VB == `ZERO_8) ? 1 : 0;
+`define do_sub_y_var_c  logic sub_y_var_c; sub_y_var_c = sub_y_var[8];
+
+`define do_sub_ey_var  `LOGIC_33 sub_ey_var; sub_ey_var = uext_ey_33 - uext_evar_33;
+`define do_sub_ey_var_n  logic sub_ey_var_n; sub_ey_var_n = sub_ey_var[31];
+`define do_sub_ey_var_v  logic sub_ey_var_v; sub_ey_var_v = sub_ey_var[32] ^ sub_ey_var[31];
+`define do_sub_ey_var_z  logic sub_ey_var_z; sub_ey_var_z = (sub_ey_var`VW == `ZERO_32) ? 1 : 0;
+`define do_sub_ey_var_c  logic sub_ey_var_c; sub_ey_var_c = sub_ey_var[32];
+
 //-------------------------------------------------------------------------------
 
 logic [2:0] next_cycle; assign next_cycle = reg_cycle + 1;
@@ -1903,6 +1927,13 @@ always @(posedge i_rst or posedge i_clk) begin
                             end else if (op_LDA) begin
                             end else if (op_LDX) begin
                             end else if (op_CPY) begin
+                                `do_uext_var_9;
+                                `do_sub_y_var;
+                                `do_sub_y_var_n; `N <= sub_y_var_n;
+                                `do_sub_y_var_v; `V <= sub_y_var_v;
+                                `do_sub_y_var_z; `Z <= sub_y_var_z;
+                                `do_sub_y_var_c; `C <= sub_y_var_c;
+                                op_CPY <= 0;
                             end else if (op_CMP) begin
                                 `do_uext_var_9;
                                 `do_sub_a_var;
@@ -1924,6 +1955,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `do_dec_var_n; `N <= dec_var_n;
                                 `do_dec_var_z; `Z <= dec_var_z;
                             end else if (op_CPX) begin
+                                `do_uext_var_9;
+                                `do_sub_x_var;
+                                `do_sub_x_var_n; `N <= sub_x_var_n;
+                                `do_sub_x_var_v; `V <= sub_x_var_v;
+                                `do_sub_x_var_z; `Z <= sub_x_var_z;
+                                `do_sub_x_var_c; `C <= sub_x_var_c;
+                                op_CPX <= 0;
                             end else if (op_SBC) begin
                                 `do_uext_var_9;
                                 `do_sbc_a_var; `A <= sbc_a_var;
