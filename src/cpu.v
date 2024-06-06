@@ -177,6 +177,9 @@ reg am_ZIX_zp_x;    // Zero Page Indexed with X zp,x (6502)
 reg am_ZIY_zp_y;    // Zero Page Indexed with Y zp,y (6502)
 reg am_ZPG_zp;      // Zero Page zp (6502)
 reg am_ZPI_ZP;      // Zero Page Indirect (zp) (6502)
+
+reg am_USE_ADDR;    // Use the computed address
+
 reg ame_ABS_a;      // Absolute a (65832)
 reg ame_ACC_A;      // Accumulator A (65832)
 reg ame_AIA_A;      // Absolute Indirect (a) (65832)
@@ -187,6 +190,7 @@ reg ame_AIY_a_y;    // Absolute Indexed with Y a,y (65832)
 reg ame_IMM_m;      // Immediate Addressing # (65832)
 reg ame_PCR_r;      // Program Counter Relative r (65832)
 reg ame_STK_s;      // Stack s (65832)
+
 reg op_ADC;
 reg op_ADD;
 reg op_AND;
@@ -322,11 +326,13 @@ initial $readmemh("../ram/ram.bits", reg_ram);
 `LOGIC_33 uext_esrc_33; assign uext_esrc_33 = { 1'd0, `eSRC};
 
 `LOGIC_9 uext_x_9; assign uext_x_9 = { 1'd0, `X};
+`LOGIC_16 uext_x_16; assign uext_x_16 = { `ZERO_8, `X};
 `LOGIC_32 uext_x_32; assign uext_x_32 = { `ZERO_24, `X};
 `LOGIC_33 uext_x_33; assign uext_x_33 = { `ZERO_25, `X};
 `LOGIC_33 uext_ex_33; assign uext_ex_33 = { 1'd0, `eX};
 
 `LOGIC_9 uext_y_9; assign uext_y_9 = { 1'd0, `Y};
+`LOGIC_16 uext_y_16; assign uext_y_16 = { `ZERO_8, `Y};
 `LOGIC_32 uext_y_32; assign uext_y_32 = { `ZERO_24, `Y};
 `LOGIC_33 uext_y_33; assign uext_y_33 = { `ZERO_25, `Y};
 `LOGIC_33 uext_ey_33; assign uext_ey_33 = { 1'd0, `eY};
@@ -771,6 +777,8 @@ always @(posedge i_rst or posedge i_clk) begin
         ame_AIX_a_x <= 0;
         ame_AIY_a_y <= 0;
         ame_STK_s <= 0;
+
+        am_USE_ADDR <= 0;
 
         op_ADC <= 0;
         op_ADD <= 0;
@@ -1870,7 +1878,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             end else begin
                                 `PC <= inc_pc;
                             end
-                        end else if (am_ABS_a) begin
+                        end else if (am_ABS_a | am_AIIX_A_X) begin
                             `ADDR0 <= `CODE_BYTE;
                             `PC <= inc_pc;
                         end else if (am_ZPG_zp) begin
@@ -1883,14 +1891,21 @@ always @(posedge i_rst or posedge i_clk) begin
                         if (am_ABS_a) begin
                             `ADDR1 <= `CODE_BYTE;
                             `PC <= inc_pc;
+                            am_ABS_a <= 0;
+                            am_USE_ADDR <= 1;
+                        end else if (am_AIIX_A_X) begin
+                            `ADDR1 <= `CODE_BYTE + uext_x_16;
+                            `PC <= inc_pc;
+                            am_AIIX_A_X <= 0;
+                            am_USE_ADDR <= 1;
                         end else if (am_ZPG_zp) begin
                             var_ram_byte = `RAM_BYTE;
                         end
                     end
                 3: begin // 6502 cycle 3
-                        if (am_ABS_a) begin
+                        if (am_USE_ADDR) begin
                             var_ram_byte = `RAM_BYTE;
-                            am_ABS_a <= 0;
+                            am_USE_ADDR <= 0;
 
                             if (op_TSB) begin
                             end else if (op_ORA) begin
