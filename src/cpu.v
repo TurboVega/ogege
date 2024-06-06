@@ -891,7 +891,7 @@ always @(posedge i_rst or posedge i_clk) begin
                     `do_eor_a_var; `A <= eor_a_var;
                     `do_eor_a_var_n; `N <= eor_a_var_n;
                     `do_eor_a_var_z; `Z <= eor_a_var_z;
-                    op_EOR <= 0;
+                    `END_OPER_INSTR(op_EOR) <= 0;
                 end else if (op_LSR) begin
                     `do_lsr_var; `DST <= var_ram_byte;
                     `do_lsr_var_n; `N <= lsr_var_n;
