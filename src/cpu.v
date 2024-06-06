@@ -718,7 +718,9 @@ logic sub_ea_src_c; assign sub_ea_src_c = sub_ea_src[32];
 
 //-------------------------------------------------------------------------------
 
-logic [2:0] next_cycle; assign next_cycle = reg_cycle + 1;
+`define END_INSTR           reg_cycle <= 0
+`define END_OPER(op)        op <= 0
+`define END_OPER_INSTR(op)  `END_OPER(op); `END_INSTR
 
 always @(posedge i_rst or posedge i_clk) begin
     integer i;
@@ -738,7 +740,7 @@ always @(posedge i_rst or posedge i_clk) begin
         `eX <= `ZERO_32;
         `eY <= `ZERO_32;
 
-        reg_cycle <= 0;
+
 
         reg_which <= 0;
         reg_address <= 0;
@@ -824,7 +826,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
     end else begin
 
-        reg_cycle <= next_cycle;
+        reg_cycle <= reg_cycle + 1; // Assume micro-instructions will continue.
 
         if (reg_6502) begin
             case (reg_cycle)
@@ -919,7 +921,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         am_PCR_r <= 1;
                                     end else begin
                                         `PC <= add_pc_2;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -939,7 +941,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `C <= neg_a_c;
                                     `N <= neg_a_n;
                                     `Z <= neg_a_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h14: begin
@@ -947,7 +949,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `A <= not_a;
                                     `N <= not_a_n;
                                     `Z <= not_a_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h14: begin
@@ -967,7 +969,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'h18: begin
                                     `C <= 0; // CLC
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h19: begin
@@ -980,7 +982,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `A <= inc_a;
                                     `N <= inc_a_n;
                                     `Z <= inc_a_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h1C: begin
@@ -1059,7 +1061,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         am_PCR_r <= 1;
                                     end else begin
                                         `PC <= add_pc_2;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -1090,7 +1092,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'h38: begin
                                     `C <= 1; // SEC
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h39: begin
@@ -1103,7 +1105,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `A <= dec_a;
                                     `N <= dec_a_n;
                                     `Z <= dec_a_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h3C: begin
@@ -1177,7 +1179,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         op_BRANCH <= 1;
                                     end else begin
                                         `PC <= add_pc_2;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -1291,7 +1293,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         op_BRANCH <= 1;
                                     end else begin
                                         `PC <= add_pc_2;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -1322,7 +1324,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'h78: begin
                                     `I <= 1; // SEI
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h79: begin
@@ -1388,7 +1390,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `Y <= dec_y;
                                     `N <= dec_y_n;
                                     `Z <= dec_y_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h89: begin
@@ -1399,7 +1401,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             8'h8A: begin
                                     // TXA
                                     `A <= `X;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h8C: begin
@@ -1431,7 +1433,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         op_BRANCH <= 1;
                                     end else begin
                                         `PC <= add_pc_2;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -1463,7 +1465,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             8'h98: begin
                                     // TYA
                                     `A <= `Y;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h99: begin
@@ -1474,7 +1476,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             8'h9A: begin
                                     // TXS
                                     `SP <= `X;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h9C: begin
@@ -1525,7 +1527,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             8'hA8: begin
                                     // TAY
                                     `Y <= `A;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hA9: begin
@@ -1536,7 +1538,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             8'hAA: begin
                                     // TAX
                                     `X <= `A;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hAC: begin
@@ -1560,7 +1562,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         op_BRANCH <= 1;
                                     end else begin
                                         `PC <= add_pc_2;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -1591,7 +1593,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'hB8: begin
                                     `V <= 0; // CLV
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hB9: begin
@@ -1602,7 +1604,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             8'hBA: begin
                                     // TSX
                                     `X <= `SP;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hBC: begin
@@ -1650,7 +1652,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `Y <= inc_y;
                                     `N <= inc_y_n;
                                     `Z <= inc_y_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hC9: begin
@@ -1663,7 +1665,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `X <= dec_x;
                                     `N <= dec_x_n;
                                     `Z <= dec_x_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hCB: begin
@@ -1691,7 +1693,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         op_BRANCH <= 1;
                                     end else begin
                                         `PC <= add_pc_2;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -1717,7 +1719,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'hD8: begin
                                     `D <= 0; // CLD
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hD9: begin
@@ -1774,7 +1776,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `X <= inc_x;
                                     `N <= inc_x_n;
                                     `Z <= inc_x_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hE9: begin
@@ -1784,7 +1786,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'hEA: begin
                                     // NOP
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hEC: begin
@@ -1808,7 +1810,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         op_BRANCH <= 1;
                                     end else begin
                                         `PC <= add_pc_2;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -1834,7 +1836,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'hF8: begin
                                     `D <= 1; // SED
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hF9: begin
@@ -1864,8 +1866,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             if (op_BRANCH) begin
                                 var_code_byte = `CODE_BYTE;
                                 `PC <= inc_pc + {var_code_byte[7] ? `ONES_8 : `ZERO_8, var_code_byte};
-                                op_BRANCH <= 0;
-                                reg_cycle <= 0;
+                                `END_OPER_INSTR(op_BRANCH);
                             end else begin
                                 `PC <= inc_pc;
                             end
@@ -1889,7 +1890,6 @@ always @(posedge i_rst or posedge i_clk) begin
                 3: begin // 6502 cycle 3
                         if (am_ABS_a) begin
                             var_ram_byte = `RAM_BYTE;
-                            reg_cycle <= 0;
                             am_ABS_a <= 0;
 
                             if (op_TSB) begin
@@ -1897,7 +1897,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `do_or_a_var; `A <= or_a_var;
                                 `do_or_a_var_n; `N <= or_a_var_n;
                                 `do_or_a_var_z; `Z <= or_a_var_z;
-                                op_ORA <= 0;
+                                `END_OPER_INSTR(op_ORA);
                             end else if (op_ASL) begin
                                 `do_asl_var; `DST <= var_ram_byte;
                                 `do_asl_var_n; `N <= asl_var_n;
@@ -1910,7 +1910,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `do_and_a_var; `A <= and_a_var;
                                 `do_and_a_var_n; `N <= and_a_var_n;
                                 `do_and_a_var_z; `Z <= and_a_var_z;
-                                op_AND <= 0;
+                                `END_OPER_INSTR(op_AND);
                             end else if (op_ROL) begin
                                 `do_rol_var; `DST <= var_ram_byte;
                                 `do_rol_var_n; `N <= rol_var_n;
@@ -1934,7 +1934,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `do_adc_a_var_v; `V <= adc_a_var_v;
                                 `do_adc_a_var_z; `Z <= adc_a_var_z;
                                 `do_adc_a_var_c; `C <= adc_a_var_c;
-                                op_ADC <= 0;
+                                `END_OPER_INSTR(op_ADC);
                             end else if (op_ROR) begin
                                 `do_ror_var; `DST <= var_ram_byte;
                                 `do_ror_var_n; `N <= ror_var_n;
@@ -1954,7 +1954,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `do_sub_y_var_v; `V <= sub_y_var_v;
                                 `do_sub_y_var_z; `Z <= sub_y_var_z;
                                 `do_sub_y_var_c; `C <= sub_y_var_c;
-                                op_CPY <= 0;
+                                `END_OPER_INSTR(op_CPY);
                             end else if (op_CMP) begin
                                 `do_uext_var_9;
                                 `do_sub_a_var;
@@ -1962,7 +1962,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `do_sub_a_var_v; `V <= sub_a_var_v;
                                 `do_sub_a_var_z; `Z <= sub_a_var_z;
                                 `do_sub_a_var_c; `C <= sub_a_var_c;
-                                op_CMP <= 0;
+                                `END_OPER_INSTR(op_CMP);
                             end else if (op_SUB) begin
                                 `do_uext_var_9;
                                 `do_sub_a_var; `A <= sub_a_var;
@@ -1970,7 +1970,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `do_sub_a_var_v; `V <= sub_a_var_v;
                                 `do_sub_a_var_z; `Z <= sub_a_var_z;
                                 `do_sub_a_var_c; `C <= sub_a_var_c;
-                                op_SUB <= 0;
+                                `END_OPER_INSTR(op_SUB);
                             end else if (op_DEC) begin
                                 `do_dec_var; `DST <= var_ram_byte;
                                 `do_dec_var_n; `N <= dec_var_n;
@@ -1982,14 +1982,14 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `do_sub_x_var_v; `V <= sub_x_var_v;
                                 `do_sub_x_var_z; `Z <= sub_x_var_z;
                                 `do_sub_x_var_c; `C <= sub_x_var_c;
-                                op_CPX <= 0;
+                                `END_OPER_INSTR(op_CPX);
                             end else if (op_SBC) begin
                                 `do_uext_var_9;
                                 `do_sbc_a_var; `A <= sbc_a_var;
                                 `do_sbc_a_var_c; `C <= sbc_a_var_c;
                                 `do_sbc_a_var_n; `N <= sbc_a_var_n;
                                 `do_sbc_a_var_z; `Z <= sbc_a_var_z;
-                                op_SBC <= 0;
+                                `END_OPER_INSTR(op_SBC);
                             end else if (op_INC) begin
                                 `do_inc_var; `DST <= var_ram_byte;
                                 `do_inc_var_n; `N <= inc_var_n;
@@ -2002,8 +2002,6 @@ always @(posedge i_rst or posedge i_clk) begin
                 5: begin // 6502 cycle 5
                     end
             endcase
-            if (reg_cycle == 0) begin
-            end
         end else begin // 65832
             case (reg_cycle)
                 0: begin // 65832 cycle 0
@@ -2056,7 +2054,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         ame_PCR_r <= 1;
                                     end else begin
                                         `ePC <= add_epc_4;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -2077,7 +2075,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'h18: begin
                                     `C <= 0; // CLC
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h19: begin
@@ -2090,7 +2088,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `eA <= inc_ea;
                                     `eN <= inc_ea_n;
                                     `eZ <= inc_ea_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h1C: begin
@@ -2159,7 +2157,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         ame_PCR_r <= 1;
                                     end else begin
                                         `ePC <= add_epc_4;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -2180,7 +2178,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'h38: begin
                                     `C <= 1; // SEC
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h39: begin
@@ -2193,7 +2191,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `eA <= dec_ea;
                                     `eN <= dec_ea_n;
                                     `eZ <= dec_ea_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h3C: begin
@@ -2252,7 +2250,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         ame_PCR_r <= 1;
                                     end else begin
                                         `ePC <= add_epc_4;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -2273,7 +2271,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'h58: begin
                                     `I <= 0; // CLI
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h59: begin
@@ -2342,7 +2340,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         ame_PCR_r <= 1;
                                     end else begin
                                         `ePC <= add_epc_4;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -2363,7 +2361,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'h78: begin
                                     `I <= 1; // SEI
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h79: begin
@@ -2407,7 +2405,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `eY <= dec_ey;
                                     `eN <= dec_ey_n;
                                     `eZ <= dec_ey_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h89: begin
@@ -2418,7 +2416,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             8'h8A: begin
                                     // TXA
                                     reg_a <= reg_x;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h8C: begin
@@ -2442,7 +2440,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         ame_PCR_r <= 1;
                                     end else begin
                                         `ePC <= add_epc_4;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -2464,7 +2462,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             8'h98: begin
                                     // TYA
                                     reg_a <= reg_y;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h99: begin
@@ -2475,7 +2473,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             8'h9A: begin
                                     // TXS
                                     `eSP <= `eX;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'h9C: begin
@@ -2511,7 +2509,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             8'hA8: begin
                                     // TAY
                                     `eY <= `eA;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hA9: begin
@@ -2522,7 +2520,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             8'hAA: begin
                                     // TAX
                                     `eX <= `eA;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hAC: begin
@@ -2546,7 +2544,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         ame_PCR_r <= 1;
                                     end else begin
                                         `ePC <= add_epc_4;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -2562,7 +2560,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'hB8: begin
                                     `V <= 0; // CLV
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hB9: begin
@@ -2573,7 +2571,7 @@ always @(posedge i_rst or posedge i_clk) begin
                             8'hBA: begin
                                     // TSX
                                     `eX <= `eSP;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hBC: begin
@@ -2611,7 +2609,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `eY <= inc_ey;
                                     `eN <= inc_ey_n;
                                     `eZ <= inc_ey_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hC9: begin
@@ -2624,7 +2622,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `eX <= dec_ex;
                                     `eN <= dec_ex_n;
                                     `eZ <= dec_ex_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hCC: begin
@@ -2643,7 +2641,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         ame_PCR_r <= 1;
                                     end else begin
                                         `ePC <= add_epc_4;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -2664,7 +2662,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'hD8: begin
                                     `D <= 0; // CLD
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hD9: begin
@@ -2702,7 +2700,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `eX <= inc_ex;
                                     `eN <= inc_ex_n;
                                     `eZ <= inc_ex_z;
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hE9: begin
@@ -2712,7 +2710,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'hEA: begin
                                     // NOP
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hEC: begin
@@ -2731,7 +2729,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         ame_PCR_r <= 1;
                                     end else begin
                                         `ePC <= add_epc_4;
-                                        reg_cycle <= 0;
+                                        `END_INSTR;
                                     end
                                 end
 
@@ -2752,7 +2750,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
                             8'hF8: begin
                                     `D <= 1; // SED
-                                    reg_cycle <= 0;
+                                    `END_INSTR;
                                 end
 
                             8'hF9: begin
@@ -2794,7 +2792,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         if (op_BRANCH) begin
                             `ePC <= add_epc_src_24;
                             op_BRANCH <= 0;
-                            reg_cycle <= 0;
+                            `END_INSTR;
                         end
                     end
                 5: begin // 65832 cycle 5
