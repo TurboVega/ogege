@@ -2015,6 +2015,20 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `ADDR1 <= `ZERO_8;
                                 `PC <= inc_pc;
                                 am_USE_ADDR <= 1;
+                            end else if (am_ZIX_zp_x) begin
+                                `ADDR0 <= `CODE_BYTE + `X;
+                                `ADDR1 <= `ZERO_8;
+                                `PC <= inc_pc;
+                                am_USE_ADDR <= 1;
+                            end else if (am_ZIY_zp_y) begin
+                                `ADDR0 <= `CODE_BYTE + `Y;
+                                `ADDR1 <= `ZERO_8;
+                                `PC <= inc_pc;
+                                am_USE_ADDR <= 1;
+                            end else if (am_ZIIX_ZP_X) begin
+                                `ADDR0 <= `CODE_BYTE + `X;
+                                `ADDR1 <= `ZERO_8;
+                                `PC <= inc_pc;
                             end
                         end
                     2: begin // 6502 cycle 2
@@ -2044,12 +2058,20 @@ always @(posedge i_rst or posedge i_clk) begin
                                 am_USE_ADDR <= 1;
                             end else if (am_ZPG_zp) begin
                                 var_ram_byte = `RAM_BYTE;
+                            end else if (am_ZIIX_ZP_X | am_ZIIY_ZP_y) begin
+                                `IADDR0 <= `RAM_BYTE;
+                                `ADDR <= inc_addr;
                             end
                         end
                     3: begin // 6502 cycle 3
                             if (am_AIIX_A_X | am_AIA_A) begin
                                 `IADDR0 <= `RAM_BYTE;
                                 `ADDR <= inc_addr;
+                            end else if (am_ZIIX_ZP_X | am_ZIIY_ZP_y) begin
+                                `IADDR1 <= `RAM_BYTE;
+                                am_ZIIX_ZP_X <= 0;
+                                am_ZIIY_ZP_y <= 0;
+                                am_USE_ADDR <= 1;
                             end
                         end
                     4: begin // 6502 cycle 4
@@ -2057,11 +2079,11 @@ always @(posedge i_rst or posedge i_clk) begin
                                 var_ram_byte = `RAM_BYTE;
                                 am_AIIX_A_X <= 0;
                                 am_AIA_A <= 0;
+                                `END_INSTR;
                                 if (op_JMP) begin
                                     `PC <= {var_ram_byte, `IADDR0};
                                     `END_OPER(op_JMP);
                                 end
-                                `END_INSTR;
                             end
                         end
                     5: begin // 6502 cycle 5
