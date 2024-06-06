@@ -197,7 +197,8 @@ reg am_ZIY_zp_y;    // Zero Page Indexed with Y zp,y (6502)
 reg am_ZPG_zp;      // Zero Page zp (6502)
 reg am_ZPI_ZP;      // Zero Page Indirect (zp) (6502)
 
-reg am_USE_ADDR;    // Use the computed address
+reg am_USE_ADDR;    // Load from or use the computed address
+reg am_STORE_TO_ADDR; // Store computed value at address
 
 reg ame_ABS_a;      // Absolute a (65832)
 reg ame_ACC_A;      // Accumulator A (65832)
@@ -748,6 +749,7 @@ logic sub_ea_src_c; assign sub_ea_src_c = sub_ea_src[32];
 `define END_INSTR           reg_cycle <= 0
 `define END_OPER(op)        op <= 0
 `define END_OPER_INSTR(op)  `END_OPER(op); `END_INSTR
+`define STORE_AFTER_OP(op)  `END_OPER(op); am_STORE_TO_ADDR <= 1
 
 always @(posedge i_rst or posedge i_clk) begin
     integer i;
@@ -800,6 +802,7 @@ always @(posedge i_rst or posedge i_clk) begin
         ame_STK_s <= 0;
 
         am_USE_ADDR <= 0;
+        am_STORE_TO_ADDR <= 0;
 
         op_ADC <= 0;
         op_ADD <= 0;
@@ -873,6 +876,7 @@ always @(posedge i_rst or posedge i_clk) begin
                     `do_asl_var_n; `N <= asl_var_n;
                     `do_asl_var_z; `Z <= asl_var_z;
                     `do_asl_var_c; `C <= asl_var_c;
+                    `STORE_AFTER_OP(op_ASL);
                 end else if (op_TRB) begin
                 end else if (op_JSR) begin
                 end else if (op_BIT) begin
@@ -886,6 +890,7 @@ always @(posedge i_rst or posedge i_clk) begin
                     `do_rol_var_n; `N <= rol_var_n;
                     `do_rol_var_z; `Z <= rol_var_z;
                     `do_rol_var_c; `C <= rol_var_c;
+                    `STORE_AFTER_OP(op_ROL);
                 end else if (op_JMP) begin
                 end else if (op_EOR) begin
                     `do_eor_a_var; `A <= eor_a_var;
@@ -897,6 +902,7 @@ always @(posedge i_rst or posedge i_clk) begin
                     `do_lsr_var_n; `N <= lsr_var_n;
                     `do_lsr_var_z; `Z <= lsr_var_z;
                     `do_lsr_var_c; `C <= lsr_var_c;
+                    `STORE_AFTER_OP(op_LSR);
                 end else if (op_ADC) begin
                     `do_uext_var_9;
                     `do_adc_a_var; `A <= adc_a_var;
@@ -910,6 +916,7 @@ always @(posedge i_rst or posedge i_clk) begin
                     `do_ror_var_n; `N <= ror_var_n;
                     `do_ror_var_z; `Z <= ror_var_z;
                     `do_ror_var_c; `C <= ror_var_c;
+                    `STORE_AFTER_OP(op_ROR);
                 end else if (op_STY) begin
                 end else if (op_STA) begin
                 end else if (op_STX) begin
@@ -964,7 +971,12 @@ always @(posedge i_rst or posedge i_clk) begin
                     `do_inc_var; `DST <= var_ram_byte;
                     `do_inc_var_n; `N <= inc_var_n;
                     `do_inc_var_z; `Z <= inc_var_z;
+                    `STORE_AFTER_OP(op_INC);
                 end
+            end else if (am_STORE_TO_ADDR) begin
+                am_STORE_TO_ADDR <= 0;
+                `RAM_BYTE <= `DST; ??
+                `END_INSTR;
             end else begin
                 case (reg_cycle)
                     0: begin // 6502 cycle 0
@@ -2093,7 +2105,7 @@ always @(posedge i_rst or posedge i_clk) begin
         end else begin // 65832
             case (reg_cycle)
                 0: begin // 65832 cycle 0
-                        var_code_byte = reg_ram[`ePC];
+                        var_code_byte = reg_ram[`ePC`VHW];
                         `ePC <= inc_epc;
                         case (var_code_byte)
                             8'h00: begin
