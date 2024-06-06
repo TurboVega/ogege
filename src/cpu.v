@@ -864,7 +864,7 @@ always @(posedge i_rst or posedge i_clk) begin
         o_bus_addr <= 0;
         o_bus_data <= 0;
 
-    end else begin
+    end else if (~am_STORE_TO_ADDR) begin
 
         reg_cycle <= reg_cycle + 1; // Assume micro-instructions will continue.
 
