@@ -113,7 +113,22 @@ reg `VB reg_estatus;        // Processor status
 `define ADDR    reg_address`VHW
 `define ADDR0   reg_address[7:0]
 `define ADDR1   reg_address[15:8]
+
+`define IADDR   reg_ind_address`VHW
+`define IADDR0  reg_ind_address[7:0]
+`define IADDR1  reg_ind_address[15:8]
+
 `define EADDR   reg_address`VW
+`define EADDR0  reg_address[7:0]
+`define EADDR1  reg_address[15:8]
+`define EADDR2  reg_address[23:16]
+`define EADDR3  reg_address[31:24]
+
+`define EIADDR   reg_ind_address`VW
+`define EIADDR0  reg_ind_address[7:0]
+`define EIADDR1  reg_ind_address[15:8]
+`define EIADDR2  reg_ind_address[23:16]
+`define EIADDR3  reg_ind_address[31:24]
 
 `define ZERO_7 7'd0
 `define ZERO_8 8'd0
@@ -128,6 +143,7 @@ reg `VB reg_estatus;        // Processor status
 
 `define ONE_8 8'd1
 `define ONE_9 9'd1
+`define ONE_16 16'd1
 `define ONE_32 32'd1
 `define ONE_33 33'd1
 
@@ -155,6 +171,7 @@ reg reg_6502;
 reg reg_65832;
 reg [2:0] reg_which;
 reg `VW reg_address;
+reg `VW reg_ind_address;
 reg `VW reg_src_data;
 reg `VW reg_dst_data;
 
@@ -434,6 +451,8 @@ logic inc_a_z; assign inc_a_z = (inc_a == `ZERO_8) ? 1 : 0;
 `LOGIC_32 inc_ea; assign inc_ea = `eA + `ONE_32;
 logic inc_ea_n; assign inc_ea_n = inc_ea[31];
 logic inc_ea_z; assign inc_ea_z = (inc_ea == `ZERO_32) ? 1 : 0;
+
+`LOGIC_16 inc_addr; assign inc_addr = `ADDR + `ONE_16;
 
 `LOGIC_8 inc_pc; assign inc_pc = `PC + `ONE_8;
 
@@ -837,1186 +856,1202 @@ always @(posedge i_rst or posedge i_clk) begin
         reg_cycle <= reg_cycle + 1; // Assume micro-instructions will continue.
 
         if (reg_6502) begin
-            case (reg_cycle)
-                0: begin // 6502 cycle 0
-                        var_code_byte = `CODE_BYTE;
-                        `PC <= inc_pc;
-                        case (var_code_byte)
-                            8'h00: begin
-                                    op_BRK <= 1;
-                                    am_STK_s <= 1;
-                                end
+            if (am_USE_ADDR) begin
+                var_ram_byte = `RAM_BYTE;
+                am_USE_ADDR <= 0;
 
-                            8'h01: begin
-                                    op_ORA <= 1;
-                                    am_ZIIX_ZP_X <= 1;
-                                end
+                if (op_TSB) begin
+                end else if (op_ORA) begin
+                    `do_or_a_var; `A <= or_a_var;
+                    `do_or_a_var_n; `N <= or_a_var_n;
+                    `do_or_a_var_z; `Z <= or_a_var_z;
+                    `END_OPER_INSTR(op_ORA);
+                end else if (op_ASL) begin
+                    `do_asl_var; `DST <= var_ram_byte;
+                    `do_asl_var_n; `N <= asl_var_n;
+                    `do_asl_var_z; `Z <= asl_var_z;
+                    `do_asl_var_c; `C <= asl_var_c;
+                end else if (op_TRB) begin
+                end else if (op_JSR) begin
+                end else if (op_BIT) begin
+                end else if (op_AND) begin
+                    `do_and_a_var; `A <= and_a_var;
+                    `do_and_a_var_n; `N <= and_a_var_n;
+                    `do_and_a_var_z; `Z <= and_a_var_z;
+                    `END_OPER_INSTR(op_AND);
+                end else if (op_ROL) begin
+                    `do_rol_var; `DST <= var_ram_byte;
+                    `do_rol_var_n; `N <= rol_var_n;
+                    `do_rol_var_z; `Z <= rol_var_z;
+                    `do_rol_var_c; `C <= rol_var_c;
+                end else if (op_JMP) begin
+                end else if (op_EOR) begin
+                    `do_eor_a_var; `A <= eor_a_var;
+                    `do_eor_a_var_n; `N <= eor_a_var_n;
+                    `do_eor_a_var_z; `Z <= eor_a_var_z;
+                    op_EOR <= 0;
+                end else if (op_LSR) begin
+                    `do_lsr_var; `DST <= var_ram_byte;
+                    `do_lsr_var_n; `N <= lsr_var_n;
+                    `do_lsr_var_z; `Z <= lsr_var_z;
+                    `do_lsr_var_c; `C <= lsr_var_c;
+                end else if (op_ADC) begin
+                    `do_uext_var_9;
+                    `do_adc_a_var; `A <= adc_a_var;
+                    `do_adc_a_var_n; `N <= adc_a_var_n;
+                    `do_adc_a_var_v; `V <= adc_a_var_v;
+                    `do_adc_a_var_z; `Z <= adc_a_var_z;
+                    `do_adc_a_var_c; `C <= adc_a_var_c;
+                    `END_OPER_INSTR(op_ADC);
+                end else if (op_ROR) begin
+                    `do_ror_var; `DST <= var_ram_byte;
+                    `do_ror_var_n; `N <= ror_var_n;
+                    `do_ror_var_z; `Z <= ror_var_z;
+                    `do_ror_var_c; `C <= ror_var_c;
+                end else if (op_STY) begin
+                end else if (op_STA) begin
+                end else if (op_STX) begin
+                end else if (op_STZ) begin
+                end else if (op_LDY) begin
+                end else if (op_LDA) begin
+                end else if (op_LDX) begin
+                end else if (op_CPY) begin
+                    `do_uext_var_9;
+                    `do_sub_y_var;
+                    `do_sub_y_var_n; `N <= sub_y_var_n;
+                    `do_sub_y_var_v; `V <= sub_y_var_v;
+                    `do_sub_y_var_z; `Z <= sub_y_var_z;
+                    `do_sub_y_var_c; `C <= sub_y_var_c;
+                    `END_OPER_INSTR(op_CPY);
+                end else if (op_CMP) begin
+                    `do_uext_var_9;
+                    `do_sub_a_var;
+                    `do_sub_a_var_n; `N <= sub_a_var_n;
+                    `do_sub_a_var_v; `V <= sub_a_var_v;
+                    `do_sub_a_var_z; `Z <= sub_a_var_z;
+                    `do_sub_a_var_c; `C <= sub_a_var_c;
+                    `END_OPER_INSTR(op_CMP);
+                end else if (op_SUB) begin
+                    `do_uext_var_9;
+                    `do_sub_a_var; `A <= sub_a_var;
+                    `do_sub_a_var_n; `N <= sub_a_var_n;
+                    `do_sub_a_var_v; `V <= sub_a_var_v;
+                    `do_sub_a_var_z; `Z <= sub_a_var_z;
+                    `do_sub_a_var_c; `C <= sub_a_var_c;
+                    `END_OPER_INSTR(op_SUB);
+                end else if (op_DEC) begin
+                    `do_dec_var; `DST <= var_ram_byte;
+                    `do_dec_var_n; `N <= dec_var_n;
+                    `do_dec_var_z; `Z <= dec_var_z;
+                end else if (op_CPX) begin
+                    `do_uext_var_9;
+                    `do_sub_x_var;
+                    `do_sub_x_var_n; `N <= sub_x_var_n;
+                    `do_sub_x_var_v; `V <= sub_x_var_v;
+                    `do_sub_x_var_z; `Z <= sub_x_var_z;
+                    `do_sub_x_var_c; `C <= sub_x_var_c;
+                    `END_OPER_INSTR(op_CPX);
+                end else if (op_SBC) begin
+                    `do_uext_var_9;
+                    `do_sbc_a_var; `A <= sbc_a_var;
+                    `do_sbc_a_var_c; `C <= sbc_a_var_c;
+                    `do_sbc_a_var_n; `N <= sbc_a_var_n;
+                    `do_sbc_a_var_z; `Z <= sbc_a_var_z;
+                    `END_OPER_INSTR(op_SBC);
+                end else if (op_INC) begin
+                    `do_inc_var; `DST <= var_ram_byte;
+                    `do_inc_var_n; `N <= inc_var_n;
+                    `do_inc_var_z; `Z <= inc_var_z;
+                end
+            end else begin
+                case (reg_cycle)
+                    0: begin // 6502 cycle 0
+                            var_code_byte = `CODE_BYTE;
+                            `PC <= inc_pc;
+                            case (var_code_byte)
+                                8'h00: begin
+                                        op_BRK <= 1;
+                                        am_STK_s <= 1;
+                                    end
 
-                            8'h02: begin
-                                    op_ADD <= 1;
-                                    am_ZIIX_ZP_X <= 1;
-                                end
+                                8'h01: begin
+                                        op_ORA <= 1;
+                                        am_ZIIX_ZP_X <= 1;
+                                    end
 
-                            8'h03: begin
-                                    op_SUB <= 1;
-                                    am_IMM_m <= 1;
-                                end
+                                8'h02: begin
+                                        op_ADD <= 1;
+                                        am_ZIIX_ZP_X <= 1;
+                                    end
 
-                            8'h04: begin
-                                    op_TSB <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
+                                8'h03: begin
+                                        op_SUB <= 1;
+                                        am_IMM_m <= 1;
+                                    end
 
-                            8'h05: begin
-                                    op_ORA <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
+                                8'h04: begin
+                                        op_TSB <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
 
-                            8'h06: begin
-                                    op_ASL <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
+                                8'h05: begin
+                                        op_ORA <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
 
-                            8'h07, 8'h17, 8'h27, 8'h37,
-                            8'h47, 8'h57, 8'h67, 8'h77:
-                                begin
-                                    op_RMB <= 1;
-                                    am_ZPG_zp <= 1;
-                                    reg_which <= var_code_byte[6:4];
-                                end
+                                8'h06: begin
+                                        op_ASL <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
 
-                            8'h08: begin
-                                    op_PHP <= 1;
-                                    am_STK_s <= 1;
-                                end
+                                8'h07, 8'h17, 8'h27, 8'h37,
+                                8'h47, 8'h57, 8'h67, 8'h77:
+                                    begin
+                                        op_RMB <= 1;
+                                        am_ZPG_zp <= 1;
+                                        reg_which <= var_code_byte[6:4];
+                                    end
 
-                            8'h09: begin
-                                    op_ORA <= 1;
-                                    am_IMM_m <= 1;
-                                end
+                                8'h08: begin
+                                        op_PHP <= 1;
+                                        am_STK_s <= 1;
+                                    end
 
-                            8'h0A: begin
-                                    op_ASL <= 1;
-                                    am_ACC_A <= 1;
-                                end
+                                8'h09: begin
+                                        op_ORA <= 1;
+                                        am_IMM_m <= 1;
+                                    end
 
-                            8'h0C: begin
-                                    op_TSB <= 1;
-                                    am_ABS_a <= 1;
-                                end
+                                8'h0A: begin
+                                        op_ASL <= 1;
+                                        am_ACC_A <= 1;
+                                    end
 
-                            8'h0D: begin
-                                    op_ORA <= 1;
-                                    am_ABS_a <= 1;
-                                end
+                                8'h0C: begin
+                                        op_TSB <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'h0E: begin
-                                    op_ASL <= 1;
-                                    am_ABS_a <= 1;
-                                end
+                                8'h0D: begin
+                                        op_ORA <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'h0F, 8'h1F, 8'h2F, 8'h3F,
-                            8'h4F, 8'h5F, 8'h6F, 8'h7F:
-                                begin
-                                    op_BBR <= 1;
-                                    am_PCR_r <= 1;
-                                    reg_which <= var_code_byte[6:4];
-                                end
+                                8'h0E: begin
+                                        op_ASL <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'h10: begin
-                                    if (`NN) begin // BPL
-                                        op_BRANCH <= 1;
+                                8'h0F, 8'h1F, 8'h2F, 8'h3F,
+                                8'h4F, 8'h5F, 8'h6F, 8'h7F:
+                                    begin
+                                        op_BBR <= 1;
                                         am_PCR_r <= 1;
-                                    end else begin
-                                        `PC <= add_pc_2;
+                                        reg_which <= var_code_byte[6:4];
+                                    end
+
+                                8'h10: begin
+                                        if (`NN) begin // BPL
+                                            op_BRANCH <= 1;
+                                            am_PCR_r <= 1;
+                                        end else begin
+                                            `PC <= add_pc_2;
+                                            `END_INSTR;
+                                        end
+                                    end
+
+                                8'h11: begin
+                                        op_ORA <= 1;
+                                        am_ZIIY_ZP_y <= 1;
+                                    end
+
+                                8'h12: begin
+                                        op_ORA <= 1;
+                                        am_ZPI_ZP <= 1;
+                                    end
+
+                                8'h13: begin
+                                        // NEG
+                                        `A <= neg_a;
+                                        `C <= neg_a_c;
+                                        `N <= neg_a_n;
+                                        `Z <= neg_a_z;
                                         `END_INSTR;
                                     end
-                                end
 
-                            8'h11: begin
-                                    op_ORA <= 1;
-                                    am_ZIIY_ZP_y <= 1;
-                                end
-
-                            8'h12: begin
-                                    op_ORA <= 1;
-                                    am_ZPI_ZP <= 1;
-                                end
-
-                            8'h13: begin
-                                    // NEG
-                                    `A <= neg_a;
-                                    `C <= neg_a_c;
-                                    `N <= neg_a_n;
-                                    `Z <= neg_a_z;
-                                    `END_INSTR;
-                                end
-
-                            8'h14: begin
-                                    // NOT
-                                    `A <= not_a;
-                                    `N <= not_a_n;
-                                    `Z <= not_a_z;
-                                    `END_INSTR;
-                                end
-
-                            8'h14: begin
-                                    op_TRB <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'h15: begin
-                                    op_ORA <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
-
-                            8'h16: begin
-                                    op_ASL <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
-
-                            8'h18: begin
-                                    `C <= 0; // CLC
-                                    `END_INSTR;
-                                end
-
-                            8'h19: begin
-                                    op_ORA <= 1;
-                                    am_AIY_a_y <= 1;
-                                end
-
-                            8'h1A: begin
-                                    // INC
-                                    `A <= inc_a;
-                                    `N <= inc_a_n;
-                                    `Z <= inc_a_z;
-                                    `END_INSTR;
-                                end
-
-                            8'h1C: begin
-                                    op_TRB <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h1D: begin
-                                    op_ORA <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
-
-                            8'h1E: begin
-                                    op_ASL <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
-
-                            8'h20: begin
-                                    op_JSR <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h21: begin
-                                    op_AND <= 1;
-                                    am_ZIIX_ZP_X <= 1;
-                                end
-
-                            8'h24: begin
-                                    op_BIT <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'h25: begin
-                                    op_AND <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'h26: begin
-                                    op_ROL <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'h28: begin
-                                    op_PLP <= 1;
-                                    am_STK_s <= 1;
-                                end
-
-                            8'h29: begin
-                                    op_AND <= 1;
-                                    am_IMM_m <= 1;
-                                end
-
-                            8'h2A: begin
-                                    op_ROL <= 1;
-                                    am_ACC_A <= 1;
-                                end
-
-                            8'h2C: begin
-                                    op_BIT <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h2D: begin
-                                    op_AND <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h2E: begin
-                                    op_ROL <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h30: begin
-                                    if (`N) begin // BMI
-                                        op_BRANCH <= 1;
-                                        am_PCR_r <= 1;
-                                    end else begin
-                                        `PC <= add_pc_2;
+                                8'h14: begin
+                                        // NOT
+                                        `A <= not_a;
+                                        `N <= not_a_n;
+                                        `Z <= not_a_z;
                                         `END_INSTR;
                                     end
-                                end
 
-                            8'h31: begin
-                                    op_AND <= 1;
-                                    am_ZIIY_ZP_y <= 1;
-                                end
+                                8'h14: begin
+                                        op_TRB <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
 
-                            8'h32: begin
-                                    op_AND <= 1;
-                                    am_ZPI_ZP <= 1;
-                                end
+                                8'h15: begin
+                                        op_ORA <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
 
-                            8'h34: begin
-                                    op_BIT <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
+                                8'h16: begin
+                                        op_ASL <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
 
-                            8'h35: begin
-                                    op_AND <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
-
-                            8'h36: begin
-                                    op_ROL <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
-
-                            8'h38: begin
-                                    `C <= 1; // SEC
-                                    `END_INSTR;
-                                end
-
-                            8'h39: begin
-                                    op_AND <= 1;
-                                    am_AIY_a_y <= 1;
-                                end
-
-                            8'h3A: begin
-                                    // DEC
-                                    `A <= dec_a;
-                                    `N <= dec_a_n;
-                                    `Z <= dec_a_z;
-                                    `END_INSTR;
-                                end
-
-                            8'h3C: begin
-                                    op_BIT <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
-
-                            8'h3D: begin
-                                    op_AND <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
-
-                            8'h3E: begin
-                                    op_ROL <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
-
-                            8'h40: begin
-                                    op_RTI <= 1;
-                                    am_STK_s <= 1;
-                                end
-
-                            8'h41: begin
-                                    op_EOR <= 1;
-                                    am_ZIIX_ZP_X <= 1;
-                                end
-
-                            8'h45: begin
-                                    op_EOR <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'h46: begin
-                                    op_LSR <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'h48: begin
-                                    op_PHA <= 1;
-                                    am_STK_s <= 1;
-                                end
-
-                            8'h49: begin
-                                    op_EOR <= 1;
-                                    am_IMM_m <= 1;
-                                end
-
-                            8'h4A: begin
-                                    op_LSR <= 1;
-                                    am_ACC_A <= 1;
-                                end
-
-                            8'h4C: begin
-                                    op_JMP <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h4D: begin
-                                    op_EOR <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h4E: begin
-                                    op_LSR <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h50: begin
-                                    if (`NV) begin // BVC
-                                        am_PCR_r <= 1;
-                                        op_BRANCH <= 1;
-                                    end else begin
-                                        `PC <= add_pc_2;
+                                8'h18: begin
+                                        `C <= 0; // CLC
                                         `END_INSTR;
                                     end
-                                end
 
-                            8'h51: begin
-                                    op_EOR <= 1;
-                                    am_ZIIY_ZP_y <= 1;
-                                end
+                                8'h19: begin
+                                        op_ORA <= 1;
+                                        am_AIY_a_y <= 1;
+                                    end
 
-                            8'h52: begin
-                                    op_EOR <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'h55: begin
-                                    op_EOR <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
-
-                            8'h56: begin
-                                    op_LSR <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
-
-                            8'h58: begin
-                                    `I <= 0; // CLI
-                                end
-
-                            8'h59: begin
-                                    op_EOR <= 1;
-                                    am_AIY_a_y <= 1;
-                                end
-
-                            8'h5A: begin
-                                    op_PHY <= 1;
-                                    am_STK_s <= 1;
-                                end
-
-                            8'h5C: begin
-                                    op_JSR <= 1;
-                                    am_AIIX_A_X <= 1;
-                                end
-
-                            8'h5D: begin
-                                    op_EOR <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
-
-                            8'h5E: begin
-                                    op_LSR <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
-
-                            8'h60: begin
-                                    op_RTS <= 1;
-                                    am_STK_s <= 1;
-                                end
-
-                            8'h61: begin
-                                    op_ADC <= 1;
-                                    am_ZIIX_ZP_X <= 1;
-                                end
-
-                            8'h64: begin
-                                    op_STZ <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'h65: begin
-                                    op_ADC <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'h66: begin
-                                    op_ROR <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'h68: begin
-                                    op_PLA <= 1;
-                                    am_STK_s <= 1;
-                                end
-
-                            8'h69: begin
-                                    op_ADC <= 1;
-                                    am_IMM_m <= 1;
-                                end
-
-                            8'h6A: begin
-                                    op_ROR <= 1;
-                                    am_ACC_A <= 1;
-                                end
-
-                            8'h6C: begin
-                                    op_JMP <= 1;
-                                    am_AIA_A <= 1;
-                                end
-
-                            8'h6D: begin
-                                    op_ADC <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h6E: begin
-                                    op_ROR <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h70: begin
-                                    if (`V) begin // BVS
-                                        am_PCR_r <= 1;
-                                        op_BRANCH <= 1;
-                                    end else begin
-                                        `PC <= add_pc_2;
+                                8'h1A: begin
+                                        // INC
+                                        `A <= inc_a;
+                                        `N <= inc_a_n;
+                                        `Z <= inc_a_z;
                                         `END_INSTR;
                                     end
-                                end
 
-                            8'h71: begin
-                                    op_ADC <= 1;
-                                    am_ZIIY_ZP_y <= 1;
-                                end
+                                8'h1C: begin
+                                        op_TRB <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'h72: begin
-                                    op_ADC <= 1;
-                                    am_ZPI_ZP <= 1;
-                                end
+                                8'h1D: begin
+                                        op_ORA <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
 
-                            8'h74: begin
-                                    op_STZ <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
+                                8'h1E: begin
+                                        op_ASL <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
 
-                            8'h75: begin
-                                    op_ADC <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
+                                8'h20: begin
+                                        op_JSR <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'h76: begin
-                                    op_ROR <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
+                                8'h21: begin
+                                        op_AND <= 1;
+                                        am_ZIIX_ZP_X <= 1;
+                                    end
 
-                            8'h78: begin
-                                    `I <= 1; // SEI
-                                    `END_INSTR;
-                                end
+                                8'h24: begin
+                                        op_BIT <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
 
-                            8'h79: begin
-                                    op_ADC <= 1;
-                                    am_AIY_a_y <= 1;
-                                end
+                                8'h25: begin
+                                        op_AND <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
 
-                            8'h7A: begin
-                                    op_PLY <= 1;
-                                    am_STK_s <= 1;
-                                end
+                                8'h26: begin
+                                        op_ROL <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
 
-                            8'h7C: begin
-                                    op_JMP <= 1;
-                                    am_AIIX_A_X <= 1;
-                                end
+                                8'h28: begin
+                                        op_PLP <= 1;
+                                        am_STK_s <= 1;
+                                    end
 
-                            8'h7D: begin
-                                    op_ADC <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
+                                8'h29: begin
+                                        op_AND <= 1;
+                                        am_IMM_m <= 1;
+                                    end
 
-                            8'h7E: begin
-                                    op_ROR <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
+                                8'h2A: begin
+                                        op_ROL <= 1;
+                                        am_ACC_A <= 1;
+                                    end
 
-                            8'h80: begin
-                                    op_BRANCH <= 1; // BRA
-                                    am_PCR_r <= 1;
-                                end
+                                8'h2C: begin
+                                        op_BIT <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'h81: begin
-                                    op_STA <= 1;
-                                    am_ZIIX_ZP_X <= 1;
-                                end
+                                8'h2D: begin
+                                        op_AND <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'h84: begin
-                                    op_STY <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
+                                8'h2E: begin
+                                        op_ROL <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'h85: begin
-                                    op_STA <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
+                                8'h30: begin
+                                        if (`N) begin // BMI
+                                            op_BRANCH <= 1;
+                                            am_PCR_r <= 1;
+                                        end else begin
+                                            `PC <= add_pc_2;
+                                            `END_INSTR;
+                                        end
+                                    end
 
-                            8'h86: begin
-                                    op_STX <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
+                                8'h31: begin
+                                        op_AND <= 1;
+                                        am_ZIIY_ZP_y <= 1;
+                                    end
 
-                            8'h87, 8'h97, 8'hA7, 8'hB7,
-                            8'hC7, 8'hD7, 8'hE7, 8'hF7:
-                                begin
-                                    op_SMB <= 1;
-                                    am_ZPG_zp <= 1;
-                                    reg_which <= var_code_byte[6:4];
-                                end
+                                8'h32: begin
+                                        op_AND <= 1;
+                                        am_ZPI_ZP <= 1;
+                                    end
 
-                            8'h88: begin
-                                    // DEY
-                                    `Y <= dec_y;
-                                    `N <= dec_y_n;
-                                    `Z <= dec_y_z;
-                                    `END_INSTR;
-                                end
+                                8'h34: begin
+                                        op_BIT <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
 
-                            8'h89: begin
-                                    op_BIT <= 1;
-                                    am_IMM_m <= 1;
-                                end
+                                8'h35: begin
+                                        op_AND <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
 
-                            8'h8A: begin
-                                    // TXA
-                                    `A <= `X;
-                                    `END_INSTR;
-                                end
+                                8'h36: begin
+                                        op_ROL <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
 
-                            8'h8C: begin
-                                    op_STY <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h8D: begin
-                                    op_STA <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h8E: begin
-                                    op_STX <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h8F, 8'h9F, 8'hAF, 8'hBF,
-                            8'hCF, 8'hDF, 8'hEF, 8'hFF:
-                                begin
-                                    op_BBS <= 1;
-                                    am_PCR_r <= 1;
-                                    reg_which <= var_code_byte[6:4];
-                                end
-
-                            8'h90: begin
-                                    if (`NC) begin // BCC
-                                        am_PCR_r <= 1;
-                                        op_BRANCH <= 1;
-                                    end else begin
-                                        `PC <= add_pc_2;
+                                8'h38: begin
+                                        `C <= 1; // SEC
                                         `END_INSTR;
                                     end
-                                end
 
-                            8'h91: begin
-                                    op_STA <= 1;
-                                    am_ZIIY_ZP_y <= 1;
-                                end
+                                8'h39: begin
+                                        op_AND <= 1;
+                                        am_AIY_a_y <= 1;
+                                    end
 
-                            8'h92: begin
-                                    op_STA <= 1;
-                                    am_ZIY_zp_y <= 1;
-                                end
-
-                            8'h94: begin
-                                    op_STY <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
-
-                            8'h95: begin
-                                    op_STA <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
-
-                            8'h96: begin
-                                    op_STX <= 1;
-                                    am_ZIY_zp_y <= 1;
-                                end
-
-                            8'h98: begin
-                                    // TYA
-                                    `A <= `Y;
-                                    `END_INSTR;
-                                end
-
-                            8'h99: begin
-                                    op_STA <= 1;
-                                    am_AIY_a_y <= 1;
-                                end
-
-                            8'h9A: begin
-                                    // TXS
-                                    `SP <= `X;
-                                    `END_INSTR;
-                                end
-
-                            8'h9C: begin
-                                    op_STZ <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'h9D: begin
-                                    op_STA <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
-
-                            8'h9E: begin
-                                    op_STZ <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
-
-                            8'hA0: begin
-                                    op_LDY <= 1;
-                                    am_IMM_m <= 1;
-                                end
-
-                            8'hA1: begin
-                                    op_LDA <= 1;
-                                    am_ZIIX_ZP_X <= 1;
-                                end
-
-                            8'hA2: begin
-                                    op_LDX <= 1;
-                                    am_IMM_m <= 1;
-                                end
-
-                            8'hA4: begin
-                                    op_LDY <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'hA5: begin
-                                    op_LDA <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'hA6: begin
-                                    op_LDX <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'hA8: begin
-                                    // TAY
-                                    `Y <= `A;
-                                    `END_INSTR;
-                                end
-
-                            8'hA9: begin
-                                    op_LDA <= 1;
-                                    am_IMM_m <= 1;
-                                end
-
-                            8'hAA: begin
-                                    // TAX
-                                    `X <= `A;
-                                    `END_INSTR;
-                                end
-
-                            8'hAC: begin
-                                    op_LDY <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'hAD: begin
-                                    op_LDA <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'hAE: begin
-                                    op_LDX <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'hB0: begin
-                                    if (`C) begin // BCS
-                                        am_PCR_r <= 1;
-                                        op_BRANCH <= 1;
-                                    end else begin
-                                        `PC <= add_pc_2;
+                                8'h3A: begin
+                                        // DEC
+                                        `A <= dec_a;
+                                        `N <= dec_a_n;
+                                        `Z <= dec_a_z;
                                         `END_INSTR;
                                     end
-                                end
 
-                            8'hB1: begin
-                                    op_LDA <= 1;
-                                    am_ZIIY_ZP_y <= 1;
-                                end
+                                8'h3C: begin
+                                        op_BIT <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
 
-                            8'hB2: begin
-                                    op_LDA <= 1;
-                                    am_ZPI_ZP <= 1;
-                                end
+                                8'h3D: begin
+                                        op_AND <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
 
-                            8'hB4: begin
-                                    op_LDY <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
+                                8'h3E: begin
+                                        op_ROL <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
 
-                            8'hB5: begin
-                                    op_LDA <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
+                                8'h40: begin
+                                        op_RTI <= 1;
+                                        am_STK_s <= 1;
+                                    end
 
-                            8'hB6: begin
-                                    op_LDX <= 1;
-                                    am_ZIY_zp_y <= 1;
-                                end
+                                8'h41: begin
+                                        op_EOR <= 1;
+                                        am_ZIIX_ZP_X <= 1;
+                                    end
 
-                            8'hB8: begin
-                                    `V <= 0; // CLV
-                                    `END_INSTR;
-                                end
+                                8'h45: begin
+                                        op_EOR <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
 
-                            8'hB9: begin
-                                    op_LDA <= 1;
-                                    am_AIY_a_y <= 1;
-                                end
+                                8'h46: begin
+                                        op_LSR <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
 
-                            8'hBA: begin
-                                    // TSX
-                                    `X <= `SP;
-                                    `END_INSTR;
-                                end
+                                8'h48: begin
+                                        op_PHA <= 1;
+                                        am_STK_s <= 1;
+                                    end
 
-                            8'hBC: begin
-                                    op_LDY <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
+                                8'h49: begin
+                                        op_EOR <= 1;
+                                        am_IMM_m <= 1;
+                                    end
 
-                            8'hBD: begin
-                                    op_LDA <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
+                                8'h4A: begin
+                                        op_LSR <= 1;
+                                        am_ACC_A <= 1;
+                                    end
 
-                            8'hBE: begin
-                                    op_LDX <= 1;
-                                    am_AIY_a_y <= 1;
-                                end
+                                8'h4C: begin
+                                        op_JMP <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'hC0: begin
-                                    op_CPY <= 1;
-                                    am_IMM_m <= 1;
-                                end
+                                8'h4D: begin
+                                        op_EOR <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'hC1: begin
-                                    op_CMP <= 1;
-                                    am_ZIIX_ZP_X <= 1;
-                                end
+                                8'h4E: begin
+                                        op_LSR <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'hC4: begin
-                                    op_CPY <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
+                                8'h50: begin
+                                        if (`NV) begin // BVC
+                                            am_PCR_r <= 1;
+                                            op_BRANCH <= 1;
+                                        end else begin
+                                            `PC <= add_pc_2;
+                                            `END_INSTR;
+                                        end
+                                    end
 
-                            8'hC5: begin
-                                    op_CMP <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
+                                8'h51: begin
+                                        op_EOR <= 1;
+                                        am_ZIIY_ZP_y <= 1;
+                                    end
 
-                            8'hC6: begin
-                                    op_DEC <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
+                                8'h52: begin
+                                        op_EOR <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
 
-                            8'hC8: begin
-                                    // INY
-                                    `Y <= inc_y;
-                                    `N <= inc_y_n;
-                                    `Z <= inc_y_z;
-                                    `END_INSTR;
-                                end
+                                8'h55: begin
+                                        op_EOR <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
 
-                            8'hC9: begin
-                                    op_CMP <= 1;
-                                    am_IMM_m <= 1;
-                                end
+                                8'h56: begin
+                                        op_LSR <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
 
-                            8'hCA: begin
-                                    // DEX
-                                    `X <= dec_x;
-                                    `N <= dec_x_n;
-                                    `Z <= dec_x_z;
-                                    `END_INSTR;
-                                end
+                                8'h58: begin
+                                        `I <= 0; // CLI
+                                    end
 
-                            8'hCB: begin
-                                    op_WAI <= 1;
-                                end
+                                8'h59: begin
+                                        op_EOR <= 1;
+                                        am_AIY_a_y <= 1;
+                                    end
 
-                            8'hCC: begin
-                                    op_CPY <= 1;
-                                    am_ABS_a <= 1;
-                                end
+                                8'h5A: begin
+                                        op_PHY <= 1;
+                                        am_STK_s <= 1;
+                                    end
 
-                            8'hCD: begin
-                                    op_CMP <= 1;
-                                    am_ABS_a <= 1;
-                                end
+                                8'h5C: begin
+                                        op_JSR <= 1;
+                                        am_AIIX_A_X <= 1;
+                                    end
 
-                            8'hCE: begin
-                                    op_DEC <= 1;
-                                    am_ABS_a <= 1;
-                                end
+                                8'h5D: begin
+                                        op_EOR <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
 
-                            8'hD0: begin
-                                    if (`NZ) begin // BNE
-                                        am_PCR_r <= 1;
-                                        op_BRANCH <= 1;
-                                    end else begin
-                                        `PC <= add_pc_2;
+                                8'h5E: begin
+                                        op_LSR <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
+
+                                8'h60: begin
+                                        op_RTS <= 1;
+                                        am_STK_s <= 1;
+                                    end
+
+                                8'h61: begin
+                                        op_ADC <= 1;
+                                        am_ZIIX_ZP_X <= 1;
+                                    end
+
+                                8'h64: begin
+                                        op_STZ <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'h65: begin
+                                        op_ADC <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'h66: begin
+                                        op_ROR <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'h68: begin
+                                        op_PLA <= 1;
+                                        am_STK_s <= 1;
+                                    end
+
+                                8'h69: begin
+                                        op_ADC <= 1;
+                                        am_IMM_m <= 1;
+                                    end
+
+                                8'h6A: begin
+                                        op_ROR <= 1;
+                                        am_ACC_A <= 1;
+                                    end
+
+                                8'h6C: begin
+                                        op_JMP <= 1;
+                                        am_AIA_A <= 1;
+                                    end
+
+                                8'h6D: begin
+                                        op_ADC <= 1;
+                                        am_ABS_a <= 1;
+                                    end
+
+                                8'h6E: begin
+                                        op_ROR <= 1;
+                                        am_ABS_a <= 1;
+                                    end
+
+                                8'h70: begin
+                                        if (`V) begin // BVS
+                                            am_PCR_r <= 1;
+                                            op_BRANCH <= 1;
+                                        end else begin
+                                            `PC <= add_pc_2;
+                                            `END_INSTR;
+                                        end
+                                    end
+
+                                8'h71: begin
+                                        op_ADC <= 1;
+                                        am_ZIIY_ZP_y <= 1;
+                                    end
+
+                                8'h72: begin
+                                        op_ADC <= 1;
+                                        am_ZPI_ZP <= 1;
+                                    end
+
+                                8'h74: begin
+                                        op_STZ <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
+
+                                8'h75: begin
+                                        op_ADC <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
+
+                                8'h76: begin
+                                        op_ROR <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
+
+                                8'h78: begin
+                                        `I <= 1; // SEI
                                         `END_INSTR;
                                     end
-                                end
 
-                            8'hD1: begin
-                                    op_CMP <= 1;
-                                    am_ZIIY_ZP_y <= 1;
-                                end
+                                8'h79: begin
+                                        op_ADC <= 1;
+                                        am_AIY_a_y <= 1;
+                                    end
 
-                            8'hD2: begin
-                                    op_CMP <= 1;
-                                    am_ZPI_ZP <= 1;
-                                end
+                                8'h7A: begin
+                                        op_PLY <= 1;
+                                        am_STK_s <= 1;
+                                    end
 
-                            8'hD5: begin
-                                    op_CMP <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
+                                8'h7C: begin
+                                        op_JMP <= 1;
+                                        am_AIIX_A_X <= 1;
+                                    end
 
-                            8'hD6: begin
-                                    op_DEC <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
+                                8'h7D: begin
+                                        op_ADC <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
 
-                            8'hD8: begin
-                                    `D <= 0; // CLD
-                                    `END_INSTR;
-                                end
+                                8'h7E: begin
+                                        op_ROR <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
 
-                            8'hD9: begin
-                                    op_CMP <= 1;
-                                    am_AIY_a_y <= 1;
-                                end
-
-                            8'hDA: begin
-                                    op_PHX <= 1;
-                                    am_STK_s <= 1;
-                                end
-
-                            8'hDB: begin
-                                    op_STP <= 1;
-                                end
-
-                            8'hDD: begin
-                                    op_CMP <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
-
-                            8'hDE: begin
-                                    op_DEC <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
-
-                            8'hE0: begin
-                                    op_CPX <= 1;
-                                    am_IMM_m <= 1;
-                                end
-
-                            8'hE1: begin
-                                    op_SBC <= 1;
-                                    am_ZIIX_ZP_X <= 1;
-                                end
-
-                            8'hE4: begin
-                                    op_CPX <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'hE5: begin
-                                    op_SBC <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'hE6: begin
-                                    op_INC <= 1;
-                                    am_ZPG_zp <= 1;
-                                end
-
-                            8'hE8: begin
-                                    // INX
-                                    `X <= inc_x;
-                                    `N <= inc_x_n;
-                                    `Z <= inc_x_z;
-                                    `END_INSTR;
-                                end
-
-                            8'hE9: begin
-                                    op_SBC <= 1;
-                                    am_IMM_m <= 1;
-                                end
-
-                            8'hEA: begin
-                                    // NOP
-                                    `END_INSTR;
-                                end
-
-                            8'hEC: begin
-                                    op_CPX <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'hED: begin
-                                    op_SBC <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'hEE: begin
-                                    op_INC <= 1;
-                                    am_ABS_a <= 1;
-                                end
-
-                            8'hF0: begin
-                                    if (`Z) begin // BEQ
+                                8'h80: begin
+                                        op_BRANCH <= 1; // BRA
                                         am_PCR_r <= 1;
-                                        op_BRANCH <= 1;
-                                    end else begin
-                                        `PC <= add_pc_2;
+                                    end
+
+                                8'h81: begin
+                                        op_STA <= 1;
+                                        am_ZIIX_ZP_X <= 1;
+                                    end
+
+                                8'h84: begin
+                                        op_STY <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'h85: begin
+                                        op_STA <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'h86: begin
+                                        op_STX <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'h87, 8'h97, 8'hA7, 8'hB7,
+                                8'hC7, 8'hD7, 8'hE7, 8'hF7:
+                                    begin
+                                        op_SMB <= 1;
+                                        am_ZPG_zp <= 1;
+                                        reg_which <= var_code_byte[6:4];
+                                    end
+
+                                8'h88: begin
+                                        // DEY
+                                        `Y <= dec_y;
+                                        `N <= dec_y_n;
+                                        `Z <= dec_y_z;
                                         `END_INSTR;
                                     end
-                                end
 
-                            8'hF1: begin
-                                    op_SBC <= 1;
-                                    am_ZIIY_ZP_y <= 1;
-                                end
+                                8'h89: begin
+                                        op_BIT <= 1;
+                                        am_IMM_m <= 1;
+                                    end
 
-                            8'hF2: begin
-                                    op_SBC <= 1;
-                                    am_ZPI_ZP <= 1;
-                                end
+                                8'h8A: begin
+                                        // TXA
+                                        `A <= `X;
+                                        `END_INSTR;
+                                    end
 
-                            8'hF5: begin
-                                    op_SBC <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
+                                8'h8C: begin
+                                        op_STY <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'hF6: begin
-                                    op_INC <= 1;
-                                    am_ZIX_zp_x <= 1;
-                                end
+                                8'h8D: begin
+                                        op_STA <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'hF8: begin
-                                    `D <= 1; // SED
-                                    `END_INSTR;
-                                end
+                                8'h8E: begin
+                                        op_STX <= 1;
+                                        am_ABS_a <= 1;
+                                    end
 
-                            8'hF9: begin
-                                    op_SBC <= 1;
-                                    am_AIY_a_y <= 1;
-                                end
+                                8'h8F, 8'h9F, 8'hAF, 8'hBF,
+                                8'hCF, 8'hDF, 8'hEF, 8'hFF:
+                                    begin
+                                        op_BBS <= 1;
+                                        am_PCR_r <= 1;
+                                        reg_which <= var_code_byte[6:4];
+                                    end
 
-                            8'hFA: begin
-                                    op_PLX <= 1;
-                                    am_STK_s <= 1;
-                                end
+                                8'h90: begin
+                                        if (`NC) begin // BCC
+                                            am_PCR_r <= 1;
+                                            op_BRANCH <= 1;
+                                        end else begin
+                                            `PC <= add_pc_2;
+                                            `END_INSTR;
+                                        end
+                                    end
 
-                            8'hFD: begin
-                                    op_SBC <= 1;
-                                    am_AIX_a_x <= 1;
-                                end
+                                8'h91: begin
+                                        op_STA <= 1;
+                                        am_ZIIY_ZP_y <= 1;
+                                    end
 
-                            8'hFE: begin
-                                    op_INC <= 1;
-                                    am_AIX_a_x <= 1;
+                                8'h92: begin
+                                        op_STA <= 1;
+                                        am_ZIY_zp_y <= 1;
+                                    end
+
+                                8'h94: begin
+                                        op_STY <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
+
+                                8'h95: begin
+                                        op_STA <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
+
+                                8'h96: begin
+                                        op_STX <= 1;
+                                        am_ZIY_zp_y <= 1;
+                                    end
+
+                                8'h98: begin
+                                        // TYA
+                                        `A <= `Y;
+                                        `END_INSTR;
+                                    end
+
+                                8'h99: begin
+                                        op_STA <= 1;
+                                        am_AIY_a_y <= 1;
+                                    end
+
+                                8'h9A: begin
+                                        // TXS
+                                        `SP <= `X;
+                                        `END_INSTR;
+                                    end
+
+                                8'h9C: begin
+                                        op_STZ <= 1;
+                                        am_ABS_a <= 1;
+                                    end
+
+                                8'h9D: begin
+                                        op_STA <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
+
+                                8'h9E: begin
+                                        op_STZ <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
+
+                                8'hA0: begin
+                                        op_LDY <= 1;
+                                        am_IMM_m <= 1;
+                                    end
+
+                                8'hA1: begin
+                                        op_LDA <= 1;
+                                        am_ZIIX_ZP_X <= 1;
+                                    end
+
+                                8'hA2: begin
+                                        op_LDX <= 1;
+                                        am_IMM_m <= 1;
+                                    end
+
+                                8'hA4: begin
+                                        op_LDY <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'hA5: begin
+                                        op_LDA <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'hA6: begin
+                                        op_LDX <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'hA8: begin
+                                        // TAY
+                                        `Y <= `A;
+                                        `END_INSTR;
+                                    end
+
+                                8'hA9: begin
+                                        op_LDA <= 1;
+                                        am_IMM_m <= 1;
+                                    end
+
+                                8'hAA: begin
+                                        // TAX
+                                        `X <= `A;
+                                        `END_INSTR;
+                                    end
+
+                                8'hAC: begin
+                                        op_LDY <= 1;
+                                        am_ABS_a <= 1;
+                                    end
+
+                                8'hAD: begin
+                                        op_LDA <= 1;
+                                        am_ABS_a <= 1;
+                                    end
+
+                                8'hAE: begin
+                                        op_LDX <= 1;
+                                        am_ABS_a <= 1;
+                                    end
+
+                                8'hB0: begin
+                                        if (`C) begin // BCS
+                                            am_PCR_r <= 1;
+                                            op_BRANCH <= 1;
+                                        end else begin
+                                            `PC <= add_pc_2;
+                                            `END_INSTR;
+                                        end
+                                    end
+
+                                8'hB1: begin
+                                        op_LDA <= 1;
+                                        am_ZIIY_ZP_y <= 1;
+                                    end
+
+                                8'hB2: begin
+                                        op_LDA <= 1;
+                                        am_ZPI_ZP <= 1;
+                                    end
+
+                                8'hB4: begin
+                                        op_LDY <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
+
+                                8'hB5: begin
+                                        op_LDA <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
+
+                                8'hB6: begin
+                                        op_LDX <= 1;
+                                        am_ZIY_zp_y <= 1;
+                                    end
+
+                                8'hB8: begin
+                                        `V <= 0; // CLV
+                                        `END_INSTR;
+                                    end
+
+                                8'hB9: begin
+                                        op_LDA <= 1;
+                                        am_AIY_a_y <= 1;
+                                    end
+
+                                8'hBA: begin
+                                        // TSX
+                                        `X <= `SP;
+                                        `END_INSTR;
+                                    end
+
+                                8'hBC: begin
+                                        op_LDY <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
+
+                                8'hBD: begin
+                                        op_LDA <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
+
+                                8'hBE: begin
+                                        op_LDX <= 1;
+                                        am_AIY_a_y <= 1;
+                                    end
+
+                                8'hC0: begin
+                                        op_CPY <= 1;
+                                        am_IMM_m <= 1;
+                                    end
+
+                                8'hC1: begin
+                                        op_CMP <= 1;
+                                        am_ZIIX_ZP_X <= 1;
+                                    end
+
+                                8'hC4: begin
+                                        op_CPY <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'hC5: begin
+                                        op_CMP <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'hC6: begin
+                                        op_DEC <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'hC8: begin
+                                        // INY
+                                        `Y <= inc_y;
+                                        `N <= inc_y_n;
+                                        `Z <= inc_y_z;
+                                        `END_INSTR;
+                                    end
+
+                                8'hC9: begin
+                                        op_CMP <= 1;
+                                        am_IMM_m <= 1;
+                                    end
+
+                                8'hCA: begin
+                                        // DEX
+                                        `X <= dec_x;
+                                        `N <= dec_x_n;
+                                        `Z <= dec_x_z;
+                                        `END_INSTR;
+                                    end
+
+                                8'hCB: begin
+                                        op_WAI <= 1;
+                                    end
+
+                                8'hCC: begin
+                                        op_CPY <= 1;
+                                        am_ABS_a <= 1;
+                                    end
+
+                                8'hCD: begin
+                                        op_CMP <= 1;
+                                        am_ABS_a <= 1;
+                                    end
+
+                                8'hCE: begin
+                                        op_DEC <= 1;
+                                        am_ABS_a <= 1;
+                                    end
+
+                                8'hD0: begin
+                                        if (`NZ) begin // BNE
+                                            am_PCR_r <= 1;
+                                            op_BRANCH <= 1;
+                                        end else begin
+                                            `PC <= add_pc_2;
+                                            `END_INSTR;
+                                        end
+                                    end
+
+                                8'hD1: begin
+                                        op_CMP <= 1;
+                                        am_ZIIY_ZP_y <= 1;
+                                    end
+
+                                8'hD2: begin
+                                        op_CMP <= 1;
+                                        am_ZPI_ZP <= 1;
+                                    end
+
+                                8'hD5: begin
+                                        op_CMP <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
+
+                                8'hD6: begin
+                                        op_DEC <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
+
+                                8'hD8: begin
+                                        `D <= 0; // CLD
+                                        `END_INSTR;
+                                    end
+
+                                8'hD9: begin
+                                        op_CMP <= 1;
+                                        am_AIY_a_y <= 1;
+                                    end
+
+                                8'hDA: begin
+                                        op_PHX <= 1;
+                                        am_STK_s <= 1;
+                                    end
+
+                                8'hDB: begin
+                                        op_STP <= 1;
+                                    end
+
+                                8'hDD: begin
+                                        op_CMP <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
+
+                                8'hDE: begin
+                                        op_DEC <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
+
+                                8'hE0: begin
+                                        op_CPX <= 1;
+                                        am_IMM_m <= 1;
+                                    end
+
+                                8'hE1: begin
+                                        op_SBC <= 1;
+                                        am_ZIIX_ZP_X <= 1;
+                                    end
+
+                                8'hE4: begin
+                                        op_CPX <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'hE5: begin
+                                        op_SBC <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'hE6: begin
+                                        op_INC <= 1;
+                                        am_ZPG_zp <= 1;
+                                    end
+
+                                8'hE8: begin
+                                        // INX
+                                        `X <= inc_x;
+                                        `N <= inc_x_n;
+                                        `Z <= inc_x_z;
+                                        `END_INSTR;
+                                    end
+
+                                8'hE9: begin
+                                        op_SBC <= 1;
+                                        am_IMM_m <= 1;
+                                    end
+
+                                8'hEA: begin
+                                        // NOP
+                                        `END_INSTR;
+                                    end
+
+                                8'hEC: begin
+                                        op_CPX <= 1;
+                                        am_ABS_a <= 1;
+                                    end
+
+                                8'hED: begin
+                                        op_SBC <= 1;
+                                        am_ABS_a <= 1;
+                                    end
+
+                                8'hEE: begin
+                                        op_INC <= 1;
+                                        am_ABS_a <= 1;
+                                    end
+
+                                8'hF0: begin
+                                        if (`Z) begin // BEQ
+                                            am_PCR_r <= 1;
+                                            op_BRANCH <= 1;
+                                        end else begin
+                                            `PC <= add_pc_2;
+                                            `END_INSTR;
+                                        end
+                                    end
+
+                                8'hF1: begin
+                                        op_SBC <= 1;
+                                        am_ZIIY_ZP_y <= 1;
+                                    end
+
+                                8'hF2: begin
+                                        op_SBC <= 1;
+                                        am_ZPI_ZP <= 1;
+                                    end
+
+                                8'hF5: begin
+                                        op_SBC <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
+
+                                8'hF6: begin
+                                        op_INC <= 1;
+                                        am_ZIX_zp_x <= 1;
+                                    end
+
+                                8'hF8: begin
+                                        `D <= 1; // SED
+                                        `END_INSTR;
+                                    end
+
+                                8'hF9: begin
+                                        op_SBC <= 1;
+                                        am_AIY_a_y <= 1;
+                                    end
+
+                                8'hFA: begin
+                                        op_PLX <= 1;
+                                        am_STK_s <= 1;
+                                    end
+
+                                8'hFD: begin
+                                        op_SBC <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
+
+                                8'hFE: begin
+                                        op_INC <= 1;
+                                        am_AIX_a_x <= 1;
+                                    end
+                            endcase;
+                        end
+                    1: begin // 6502 cycle 1
+                            if (am_PCR_r) begin
+                                am_PCR_r <= 0;
+                                if (op_BRANCH) begin
+                                    var_code_byte = `CODE_BYTE;
+                                    `PC <= inc_pc + {var_code_byte[7] ? `ONES_8 : `ZERO_8, var_code_byte};
+                                    `END_OPER_INSTR(op_BRANCH);
+                                end else begin
+                                    `PC <= inc_pc;
                                 end
-                        endcase;
-                    end
-                1: begin // 6502 cycle 1
-                        if (am_PCR_r) begin
-                            am_PCR_r <= 0;
-                            if (op_BRANCH) begin
-                                var_code_byte = `CODE_BYTE;
-                                `PC <= inc_pc + {var_code_byte[7] ? `ONES_8 : `ZERO_8, var_code_byte};
-                                `END_OPER_INSTR(op_BRANCH);
-                            end else begin
+                            end else if (am_ABS_a | am_AIIX_A_X | am_AIX_a_x) begin
+                                `ADDR0 <= `CODE_BYTE;
                                 `PC <= inc_pc;
-                            end
-                        end else if (am_ABS_a | am_AIIX_A_X) begin
-                            `ADDR0 <= `CODE_BYTE;
-                            `PC <= inc_pc;
-                        end else if (am_ZPG_zp) begin
-                            `ADDR0 <= `CODE_BYTE;
-                            `ADDR1 <= `ZERO_8;
-                            `PC <= inc_pc;
-                        end
-                    end
-                2: begin // 6502 cycle 2
-                        if (am_ABS_a) begin
-                            `ADDR1 <= `CODE_BYTE;
-                            `PC <= inc_pc;
-                            am_ABS_a <= 0;
-                            am_USE_ADDR <= 1;
-                        end else if (am_AIIX_A_X) begin
-                            `ADDR1 <= `CODE_BYTE + uext_x_16;
-                            `PC <= inc_pc;
-                            am_AIIX_A_X <= 0;
-                            am_USE_ADDR <= 1;
-                        end else if (am_ZPG_zp) begin
-                            var_ram_byte = `RAM_BYTE;
-                        end
-                    end
-                3: begin // 6502 cycle 3
-                        if (am_USE_ADDR) begin
-                            var_ram_byte = `RAM_BYTE;
-                            am_USE_ADDR <= 0;
-
-                            if (op_TSB) begin
-                            end else if (op_ORA) begin
-                                `do_or_a_var; `A <= or_a_var;
-                                `do_or_a_var_n; `N <= or_a_var_n;
-                                `do_or_a_var_z; `Z <= or_a_var_z;
-                                `END_OPER_INSTR(op_ORA);
-                            end else if (op_ASL) begin
-                                `do_asl_var; `DST <= var_ram_byte;
-                                `do_asl_var_n; `N <= asl_var_n;
-                                `do_asl_var_z; `Z <= asl_var_z;
-                                `do_asl_var_c; `C <= asl_var_c;
-                            end else if (op_TRB) begin
-                            end else if (op_JSR) begin
-                            end else if (op_BIT) begin
-                            end else if (op_AND) begin
-                                `do_and_a_var; `A <= and_a_var;
-                                `do_and_a_var_n; `N <= and_a_var_n;
-                                `do_and_a_var_z; `Z <= and_a_var_z;
-                                `END_OPER_INSTR(op_AND);
-                            end else if (op_ROL) begin
-                                `do_rol_var; `DST <= var_ram_byte;
-                                `do_rol_var_n; `N <= rol_var_n;
-                                `do_rol_var_z; `Z <= rol_var_z;
-                                `do_rol_var_c; `C <= rol_var_c;
-                            end else if (op_JMP) begin
-                            end else if (op_EOR) begin
-                                `do_eor_a_var; `A <= eor_a_var;
-                                `do_eor_a_var_n; `N <= eor_a_var_n;
-                                `do_eor_a_var_z; `Z <= eor_a_var_z;
-                                op_EOR <= 0;
-                            end else if (op_LSR) begin
-                                `do_lsr_var; `DST <= var_ram_byte;
-                                `do_lsr_var_n; `N <= lsr_var_n;
-                                `do_lsr_var_z; `Z <= lsr_var_z;
-                                `do_lsr_var_c; `C <= lsr_var_c;
-                            end else if (op_ADC) begin
-                                `do_uext_var_9;
-                                `do_adc_a_var; `A <= adc_a_var;
-                                `do_adc_a_var_n; `N <= adc_a_var_n;
-                                `do_adc_a_var_v; `V <= adc_a_var_v;
-                                `do_adc_a_var_z; `Z <= adc_a_var_z;
-                                `do_adc_a_var_c; `C <= adc_a_var_c;
-                                `END_OPER_INSTR(op_ADC);
-                            end else if (op_ROR) begin
-                                `do_ror_var; `DST <= var_ram_byte;
-                                `do_ror_var_n; `N <= ror_var_n;
-                                `do_ror_var_z; `Z <= ror_var_z;
-                                `do_ror_var_c; `C <= ror_var_c;
-                            end else if (op_STY) begin
-                            end else if (op_STA) begin
-                            end else if (op_STX) begin
-                            end else if (op_STZ) begin
-                            end else if (op_LDY) begin
-                            end else if (op_LDA) begin
-                            end else if (op_LDX) begin
-                            end else if (op_CPY) begin
-                                `do_uext_var_9;
-                                `do_sub_y_var;
-                                `do_sub_y_var_n; `N <= sub_y_var_n;
-                                `do_sub_y_var_v; `V <= sub_y_var_v;
-                                `do_sub_y_var_z; `Z <= sub_y_var_z;
-                                `do_sub_y_var_c; `C <= sub_y_var_c;
-                                `END_OPER_INSTR(op_CPY);
-                            end else if (op_CMP) begin
-                                `do_uext_var_9;
-                                `do_sub_a_var;
-                                `do_sub_a_var_n; `N <= sub_a_var_n;
-                                `do_sub_a_var_v; `V <= sub_a_var_v;
-                                `do_sub_a_var_z; `Z <= sub_a_var_z;
-                                `do_sub_a_var_c; `C <= sub_a_var_c;
-                                `END_OPER_INSTR(op_CMP);
-                            end else if (op_SUB) begin
-                                `do_uext_var_9;
-                                `do_sub_a_var; `A <= sub_a_var;
-                                `do_sub_a_var_n; `N <= sub_a_var_n;
-                                `do_sub_a_var_v; `V <= sub_a_var_v;
-                                `do_sub_a_var_z; `Z <= sub_a_var_z;
-                                `do_sub_a_var_c; `C <= sub_a_var_c;
-                                `END_OPER_INSTR(op_SUB);
-                            end else if (op_DEC) begin
-                                `do_dec_var; `DST <= var_ram_byte;
-                                `do_dec_var_n; `N <= dec_var_n;
-                                `do_dec_var_z; `Z <= dec_var_z;
-                            end else if (op_CPX) begin
-                                `do_uext_var_9;
-                                `do_sub_x_var;
-                                `do_sub_x_var_n; `N <= sub_x_var_n;
-                                `do_sub_x_var_v; `V <= sub_x_var_v;
-                                `do_sub_x_var_z; `Z <= sub_x_var_z;
-                                `do_sub_x_var_c; `C <= sub_x_var_c;
-                                `END_OPER_INSTR(op_CPX);
-                            end else if (op_SBC) begin
-                                `do_uext_var_9;
-                                `do_sbc_a_var; `A <= sbc_a_var;
-                                `do_sbc_a_var_c; `C <= sbc_a_var_c;
-                                `do_sbc_a_var_n; `N <= sbc_a_var_n;
-                                `do_sbc_a_var_z; `Z <= sbc_a_var_z;
-                                `END_OPER_INSTR(op_SBC);
-                            end else if (op_INC) begin
-                                `do_inc_var; `DST <= var_ram_byte;
-                                `do_inc_var_n; `N <= inc_var_n;
-                                `do_inc_var_z; `Z <= inc_var_z;
+                            end else if (am_ZPG_zp) begin
+                                `ADDR0 <= `CODE_BYTE;
+                                `ADDR1 <= `ZERO_8;
+                                `PC <= inc_pc;
+                                am_USE_ADDR <= 1;
                             end
                         end
-                    end
-                4: begin // 6502 cycle 4
-                    end
-                5: begin // 6502 cycle 5
-                    end
-            endcase
+                    2: begin // 6502 cycle 2
+                            if (am_ABS_a) begin
+                                `ADDR1 <= `CODE_BYTE;
+                                `PC <= inc_pc;
+                                am_ABS_a <= 0;
+                                am_USE_ADDR <= 1;
+                            end else if (am_AIIX_A_X) begin
+                                `ADDR1 <= `CODE_BYTE + uext_x_16;
+                                `PC <= inc_pc;
+                            end else if (am_AIX_a_x) begin
+                                `ADDR1 <= `CODE_BYTE + uext_x_16;
+                                `PC <= inc_pc;
+                                am_AIX_a_x <= 0;
+                                am_USE_ADDR <= 1;
+                            end else if (am_ZPG_zp) begin
+                                var_ram_byte = `RAM_BYTE;
+                            end
+                        end
+                    3: begin // 6502 cycle 3
+                            if (am_AIIX_A_X) begin
+                                `IADDR0 <= `RAM_BYTE;
+                                `ADDR <= inc_addr;
+                            end
+                        end
+                    4: begin // 6502 cycle 4
+                            if (am_AIIX_A_X) begin
+                                var_ram_byte = `RAM_BYTE;
+                                am_AIIX_A_X <= 0;
+                                if (op_JMP) begin
+                                end else if (op_JSR) begin
+                                end
+                            end
+                        end
+                    5: begin // 6502 cycle 5
+                        end
+                endcase
+            end
         end else begin // 65832
             case (reg_cycle)
                 0: begin // 65832 cycle 0
