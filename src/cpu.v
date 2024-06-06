@@ -1312,8 +1312,8 @@ always @(posedge i_rst or posedge i_clk) begin
 
                                 8'h50: begin
                                         if (`NV) begin // BVC
-                                            am_PCR_r <= 1;
                                             op_BRANCH <= 1;
+                                            am_PCR_r <= 1;
                                         end else begin
                                             `PC <= add_pc_2;
                                             `END_INSTR;
@@ -1426,8 +1426,8 @@ always @(posedge i_rst or posedge i_clk) begin
 
                                 8'h70: begin
                                         if (`V) begin // BVS
-                                            am_PCR_r <= 1;
                                             op_BRANCH <= 1;
+                                            am_PCR_r <= 1;
                                         end else begin
                                             `PC <= add_pc_2;
                                             `END_INSTR;
@@ -1566,8 +1566,8 @@ always @(posedge i_rst or posedge i_clk) begin
 
                                 8'h90: begin
                                         if (`NC) begin // BCC
-                                            am_PCR_r <= 1;
                                             op_BRANCH <= 1;
+                                            am_PCR_r <= 1;
                                         end else begin
                                             `PC <= add_pc_2;
                                             `END_INSTR;
@@ -1695,8 +1695,8 @@ always @(posedge i_rst or posedge i_clk) begin
 
                                 8'hB0: begin
                                         if (`C) begin // BCS
-                                            am_PCR_r <= 1;
                                             op_BRANCH <= 1;
+                                            am_PCR_r <= 1;
                                         end else begin
                                             `PC <= add_pc_2;
                                             `END_INSTR;
@@ -1826,8 +1826,8 @@ always @(posedge i_rst or posedge i_clk) begin
 
                                 8'hD0: begin
                                         if (`NZ) begin // BNE
-                                            am_PCR_r <= 1;
                                             op_BRANCH <= 1;
+                                            am_PCR_r <= 1;
                                         end else begin
                                             `PC <= add_pc_2;
                                             `END_INSTR;
@@ -1943,8 +1943,8 @@ always @(posedge i_rst or posedge i_clk) begin
 
                                 8'hF0: begin
                                         if (`Z) begin // BEQ
-                                            am_PCR_r <= 1;
                                             op_BRANCH <= 1;
+                                            am_PCR_r <= 1;
                                         end else begin
                                             `PC <= add_pc_2;
                                             `END_INSTR;
