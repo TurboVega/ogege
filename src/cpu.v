@@ -197,7 +197,7 @@ reg am_ZIY_zp_y;    // Zero Page Indexed with Y zp,y (6502)
 reg am_ZPG_zp;      // Zero Page zp (6502)
 reg am_ZPI_ZP;      // Zero Page Indirect (zp) (6502)
 
-reg am_USE_ADDR;    // Load from or use the computed address
+reg am_LOAD_FROM_ADDR;    // Load from or use the computed address
 reg am_STORE_TO_ADDR; // Store computed value at address
 
 reg ame_ABS_a;      // Absolute a (65832)
@@ -777,8 +777,6 @@ always @(posedge i_rst or posedge i_clk) begin
         `eX <= `ZERO_32;
         `eY <= `ZERO_32;
 
-
-
         reg_which <= 0;
         reg_address <= 0;
         reg_src_data <= 0;
@@ -801,7 +799,7 @@ always @(posedge i_rst or posedge i_clk) begin
         am_ZPG_zp <= 0;
         am_ZPI_ZP <= 0;
 
-        ame_ABS_a <= 0;
+        ame_ABS_a <= 1; // Force JMP via Reset vector
         ame_AIA_A <= 0;
         ame_AIIX_A_X <= 0;
         ame_AIIY_A_y <= 0;
@@ -809,7 +807,7 @@ always @(posedge i_rst or posedge i_clk) begin
         ame_AIY_a_y <= 0;
         ame_STK_s <= 0;
 
-        am_USE_ADDR <= 0;
+        am_LOAD_FROM_ADDR <= 0;
         am_STORE_TO_ADDR <= 0;
 
         op_ADC <= 0;
@@ -827,7 +825,7 @@ always @(posedge i_rst or posedge i_clk) begin
         op_DEC <= 0;
         op_EOR <= 0;
         op_INC <= 0;
-        op_JMP <= 0;
+        op_JMP <= 1; // Force JMP via Reset vector
         op_JSR <= 0;
         op_LDA <= 0;
         op_LDX <= 0;
@@ -869,9 +867,9 @@ always @(posedge i_rst or posedge i_clk) begin
         reg_cycle <= reg_cycle + 1; // Assume micro-instructions will continue.
 
         if (reg_6502) begin
-            if (am_USE_ADDR) begin
+            if (am_LOAD_FROM_ADDR) begin
                 var_ram_byte = `RAM_BYTE;
-                am_USE_ADDR <= 0;
+                am_LOAD_FROM_ADDR <= 0;
 
                 if (op_TSB) begin
                 end else if (op_ORA) begin
@@ -924,13 +922,15 @@ always @(posedge i_rst or posedge i_clk) begin
                     `do_ror_var_z; `Z <= ror_var_z;
                     `do_ror_var_c; `C <= ror_var_c;
                     `STORE_AFTER_OP(op_ROR);
-                end else if (op_STY) begin
-                end else if (op_STA) begin
-                end else if (op_STX) begin
-                end else if (op_STZ) begin
                 end else if (op_LDY) begin
+                    `Y <= var_ram_byte;
+                    `END_OPER_INSTR(op_LDY);
                 end else if (op_LDA) begin
+                    `A <= var_ram_byte;
+                    `END_OPER_INSTR(op_LDY);
                 end else if (op_LDX) begin
+                    `X <= var_ram_byte;
+                    `END_OPER_INSTR(op_LDY);
                 end else if (op_CPY) begin
                     `do_uext_var_9;
                     `do_sub_y_var;
@@ -2027,13 +2027,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `ADDR0 <= var_code_byte;
                             end else if (am_ZPG_zp) begin
                                 `ADDR0 <= var_code_byte;
-                                am_USE_ADDR <= 1;
+                                am_LOAD_FROM_ADDR <= 1;
                             end else if (am_ZIX_zp_x) begin
                                 `ADDR0 <= var_code_byte + `X;
-                                am_USE_ADDR <= 1;
+                                am_LOAD_FROM_ADDR <= 1;
                             end else if (am_ZIY_zp_y) begin
                                 `ADDR0 <= var_code_byte + `Y;
-                                am_USE_ADDR <= 1;
+                                am_LOAD_FROM_ADDR <= 1;
                             end else if (am_ZIIX_ZP_X) begin
                                 `ADDR0 <= var_code_byte + `X;
                             end else if (am_ZIIY_ZP_y) begin
@@ -2048,7 +2048,19 @@ always @(posedge i_rst or posedge i_clk) begin
                                 var_code_byte = `CODE_BYTE;
                                 `PC <= inc_pc;
                                 if (am_ABS_a) begin
-                                    if (op_JMP) begin
+                                    if (op_STA) begin
+                                        `DST <= `A;
+                                        `STORE_AFTER_OP(op_STA);
+                                    end else if (op_STX) begin
+                                        `DST <= `X;
+                                        `STORE_AFTER_OP(op_STX);
+                                    end else if (op_STY) begin
+                                        `DST <= `Y;
+                                        `STORE_AFTER_OP(op_STY);
+                                    end else if (op_STZ) begin
+                                        `DST <= `ZERO_8;
+                                        `STORE_AFTER_OP(op_STZ);
+                                    end else if (op_JMP) begin
                                         `PC <= {var_code_byte, `ADDR0};
                                         `END_OPER_INSTR(op_JMP);
                                     end else if (op_JSR) begin
@@ -2059,20 +2071,20 @@ always @(posedge i_rst or posedge i_clk) begin
                                     end else begin
                                         `ADDR1 <= var_code_byte;
                                         am_ABS_a <= 0;
-                                        am_USE_ADDR <= 1;
+                                        am_LOAD_FROM_ADDR <= 1;
                                     end
                                 end else if (am_AIIX_A_X) begin
                                     `ADDR <= {`ZERO_8, var_code_byte} + uext_x_16;
                                 end else if (am_AIA_A) begin
                                     `ADDR1 <= var_code_byte;
                                 end else if (am_AIX_a_x) begin
-                                    `ADDR <= {`ZERO_8, `var_code_byte`} + uext_x_16;
+                                    `ADDR <= {`ZERO_8, var_code_byte} + uext_x_16;
                                     am_AIX_a_x <= 0;
-                                    am_USE_ADDR <= 1;
+                                    am_LOAD_FROM_ADDR <= 1;
                                 end else if (am_AIY_a_y) begin
                                     `ADDR <= {`ZERO_8, var_code_byte} + uext_y_16;
                                     am_AIY_a_y <= 0;
-                                    am_USE_ADDR <= 1;
+                                    am_LOAD_FROM_ADDR <= 1;
                                 end
                             end
                         end
@@ -2083,11 +2095,11 @@ always @(posedge i_rst or posedge i_clk) begin
                             end else if (am_ZIIX_ZP_X) begin
                                 `IADDR1 <= `RAM_BYTE;
                                 am_ZIIX_ZP_X <= 0;
-                                am_USE_ADDR <= 1;
+                                am_LOAD_FROM_ADDR <= 1;
                             end else if (am_ZIIY_ZP_y) begin
                                 `IADDR1 <= `RAM_BYTE + `Y;
                                 am_ZIIY_ZP_y <= 0;
-                                am_USE_ADDR <= 1;
+                                am_LOAD_FROM_ADDR <= 1;
                             end
                         end
                     4: begin // 6502 cycle 4
