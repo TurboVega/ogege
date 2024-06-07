@@ -116,13 +116,15 @@ logic bus_we;
 logic `VW bus_addr;
 logic `VW bus_wr_data;
 logic `VW bus_rd_data;
+logic bus_rd_ready;
 
 // Connection to text area peripheral
 logic periph_text_clk; assign periph_text_clk = bus_clk;
 logic periph_text_we; assign periph_text_we = bus_we;
 logic [6:0] periph_text_addr; assign periph_text_addr = bus_addr[6:0];
 logic [7:0] periph_text_i_data; assign periph_text_i_data = bus_wr_data[7:0];
-logic [7:0] periph_text_o_data; assign periph_text_o_data = bus_rd_data[7:0];
+logic [7:0] periph_text_o_data; assign bus_rd_data[7:0] = periph_text_o_data;
+logic periph_text_o_data_ready; assign bus_rd_ready = periph_text_o_data_ready;
 
 // Text area peripheral
 text_area8x8 text_area8x8_inst (
@@ -137,6 +139,7 @@ text_area8x8 text_area8x8_inst (
 	.i_scan_column(h_count_s),
 	.i_bg_color(reg_bg_color),
     .o_data(periph_text_o_data),
+    .o_data_ready(periph_text_o_data_ready),
 	.o_color(new_color)
 );
 
@@ -147,7 +150,8 @@ cpu cpu_inst (
     .o_bus_we(bus_we),
     .o_bus_addr(bus_addr),
     .o_bus_data(bus_wr_data),
-    .i_bus_data(bus_rd_data)
+    .i_bus_data(bus_rd_data),
+    .i_bus_data_ready(bus_rd_ready)
 );
 
 assign rst_s = ~rstn_i;

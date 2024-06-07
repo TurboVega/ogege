@@ -26,6 +26,7 @@ module text_area8x8 (
     input  wire [9:0] i_scan_column,
     input  wire [11:0] i_bg_color,
     output reg [7:0] o_data,
+    output reg o_data_ready,
     output wire [11:0] o_color
 );
 
@@ -68,7 +69,6 @@ module text_area8x8 (
     // Character code: 8 bits
     //
 
-    reg reg_read_cell;
     reg reg_wea;
     reg reg_web;
     reg reg_clka;
@@ -193,7 +193,6 @@ module text_area8x8 (
         if (i_rst) begin
             reg_scroll_x_offset <= 0;
             reg_scroll_y_offset <= 0;
-            reg_read_cell <= 0;
             reg_wea <= 0;
             reg_web <= 0;
             reg_clka <= 0;
@@ -205,12 +204,17 @@ module text_area8x8 (
             reg_text_area_alpha <= 3'b110; // 100%
             reg_cursor_row <= 0;
             reg_cursor_column <= 0;
+            o_data_ready <= 0;
+        end else if (~i_cmd_clk) begin
+            if (reg_clka) begin
+                reg_clka <= 0;
+                reg_put_cell <= reg_get_cell;
+                o_data <= reg_get_cell;
+                o_data_ready <= 1;
+            end
         end else begin
             reg_clka <= 0;
-            if (reg_read_cell) begin
-                reg_read_cell <= 0;
-                reg_put_cell <= reg_get_cell;
-            end
+            o_data_ready <= ~i_we;
 
             case (i_addr)
                 7'h00: begin
@@ -804,6 +808,7 @@ module text_area8x8 (
                     end
 
                 7'h4A: begin // read/write entire character cell
+                      o_data_ready <= 0;
                       if (i_we) begin
                         reg_addra = {reg_cursor_column, reg_cursor_row};
                         reg_wea <= 1;
@@ -812,7 +817,6 @@ module text_area8x8 (
                         reg_addra = {reg_cursor_column, reg_cursor_row};
                         reg_wea <= 0;
                         reg_clka <= 1;
-                        reg_read_cell <= 1;
                       end
                     end
 

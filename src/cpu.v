@@ -17,7 +17,9 @@
 `define NMI_ADDRESS                 16'hFFFA // Non-maskable interrupt handler
 `define RESET_SP_ADDRESS            16'h0100 // Initial stack pointer
 `define RESET_STATUS_BITS           8'b00110100 // initial program status flags
+
 `define TEXT_PERIPH_BASE_ADDRESS    16'hFF80 // location of text area peripheral
+`define TEXT_PERIPH_BASE_HIGH_PART  9'h1FF   // highest 9 bits of address
 
 `define VB  [7:0]
 `define VHW [15:0]
@@ -30,7 +32,8 @@ module cpu (
     output  reg   o_bus_we,
     output  reg `VW o_bus_addr,
     output  reg `VW o_bus_data,
-    input   logic `VW i_bus_data
+    input   logic `VW i_bus_data,
+    input   logic i_bus_data_ready
 );
 
 // 6502 CPU registers
@@ -751,11 +754,41 @@ logic sub_ea_src_c; assign sub_ea_src_c = sub_ea_src[32];
 `define END_OPER_INSTR(op)  `END_OPER(op); `END_INSTR
 `define STORE_AFTER_OP(op)  `END_OPER(op); am_STORE_TO_ADDR <= 1
 
+logic address_text_peripheral;
+assign address_text_peripheral = (reg_address[15:7] == `TEXT_PERIPH_BASE_HIGH_PART);
+
+logic initiate_read_text;
+assign initiate_read_text = am_LOAD_FROM_ADDR & ~o_bus_clk & address_text_peripheral & ~i_bus_data_ready;
+
+logic reading_text;
+assign reading_text = am_LOAD_FROM_ADDR & o_bus_clk & address_text_peripheral & ~i_bus_data_ready;
+
+logic initiate_write_text;
+assign initiate_write_text = am_STORE_TO_ADDR & ~o_bus_clk & address_text_peripheral;
+
+logic writing_text;
+assign writing_text = am_STORE_TO_ADDR & o_bus_clk & address_text_peripheral;
+
 always @(posedge i_clk) begin
-    if (!i_rst & am_STORE_TO_ADDR) begin
-        am_STORE_TO_ADDR <= 0;
-        `RAM_BYTE <= `DST;
-        `END_INSTR;
+    if (~i_rst) begin
+        if (am_LOAD_FROM_ADDR) begin
+            if (initiate_read_text) begin
+                o_bus_clk <= 1;
+                o_bus_we <= 0;
+                o_bus_addr <= reg_address[6:0];
+            end else if (o_bus_clk && i_bus_data_ready) begin
+                o_bus_clk <= 0;
+            end
+        end else if (am_STORE_TO_ADDR) begin
+            if (initiate_write_text) begin
+                o_bus_clk <= 1;
+                o_bus_we <= 1;
+                o_bus_addr <= reg_address[6:0];
+                o_bus_data <= `DST;
+            end else if (o_bus_clk) begin
+                o_bus_clk <= 0;
+            end
+        end
     end
 end
 
@@ -867,9 +900,15 @@ always @(posedge i_rst or posedge i_clk) begin
         reg_cycle <= reg_cycle + 1; // Assume micro-instructions will continue.
 
         if (reg_6502) begin
-            if (am_LOAD_FROM_ADDR) begin
-                var_ram_byte = `RAM_BYTE;
+            if (initiate_read_text | reading_text) begin
+            end else if (am_LOAD_FROM_ADDR) begin
                 am_LOAD_FROM_ADDR <= 0;
+
+                if (i_bus_data_ready) begin
+                    var_ram_byte = i_bus_data;
+                end else begin
+                    var_ram_byte = `RAM_BYTE;
+                end
 
                 if (op_TSB) begin
                 end else if (op_ORA) begin
