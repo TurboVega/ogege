@@ -119,7 +119,7 @@ logic `VW bus_rd_data;
 logic bus_rd_ready;
 
 // Connection to text area peripheral
-logic periph_text_clk; assign periph_text_clk = bus_clk;
+logic periph_text_stb; assign periph_text_stb = bus_clk;
 logic periph_text_we; assign periph_text_we = bus_we;
 logic [6:0] periph_text_addr; assign periph_text_addr = bus_addr[6:0];
 logic [7:0] periph_text_i_data; assign periph_text_i_data = bus_wr_data[7:0];
@@ -131,7 +131,8 @@ text_area8x8 text_area8x8_inst (
 	.i_rst(rst_s),
 	.i_pix_clk(pix_clk),
 	.i_blank(blank_s),
-    .i_cmd_clk(periph_text_clk),
+    .i_cpu_clk(clk_100mhz),
+    .i_stb(periph_text_stb),
     .i_we(periph_text_we),
     .i_addr(periph_text_addr),
     .i_data(periph_text_i_data),

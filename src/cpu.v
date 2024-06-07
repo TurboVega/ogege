@@ -305,7 +305,7 @@ initial $readmemh("../ram/ram.bits", reg_bram);
 
 `LOGIC_32 sext_esrc_24_32; assign sext_esrc_24_32 = {reg_src_data[23] ? `ONES_8 : `ZERO_8, reg_src_data[23:0]};
 `LOGIC_33 sext_esrc_24_33; assign sext_esrc_24_33 = {reg_src_data[23] ? `ONES_9 : `ZERO_9, reg_src_data[23:0]};
-`LOGIC_33 sext_esrc_32_33; assign sext_esrc_24_33 = {reg_src_data[31], `eSRC};
+`LOGIC_33 sext_esrc_32_33; assign sext_esrc_32_33 = {reg_src_data[31], `eSRC};
 
 `LOGIC_9 sext_x_9; assign sext_x_9 = {`X[7], `X};
 `LOGIC_32 sext_x_32; assign sext_x_32 = {`X[7] ? `ONES_24 : `ZERO_24, `X};
@@ -770,7 +770,12 @@ logic writing_text;
 assign writing_text = am_STORE_TO_ADDR & o_bus_clk & address_text_peripheral;
 
 always @(posedge i_clk) begin
-    if (~i_rst) begin
+    if (i_rst) begin
+        o_bus_clk <= 0;
+        o_bus_we <= 0;
+        o_bus_addr <= 0;
+        o_bus_data <= 0;
+    end else begin
         if (am_LOAD_FROM_ADDR) begin
             if (initiate_read_text) begin
                 o_bus_clk <= 1;
@@ -889,11 +894,6 @@ always @(posedge i_rst or posedge i_clk) begin
         op_TRB <= 0;
         op_TSB <= 0;
         op_WAI <= 0;
-
-        o_bus_clk <= 0;
-        o_bus_we <= 0;
-        o_bus_addr <= 0;
-        o_bus_data <= 0;
 
     end else if (~am_STORE_TO_ADDR) begin
 
