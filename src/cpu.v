@@ -457,7 +457,7 @@ logic inc_ea_z; assign inc_ea_z = (inc_ea == `ZERO_32) ? 1 : 0;
 
 `LOGIC_16 inc_addr; assign inc_addr = `ADDR + `ONE_16;
 
-`LOGIC_8 inc_pc; assign inc_pc = `PC + `ONE_8;
+`LOGIC_16 inc_pc; assign inc_pc = `PC + `ONE_16;
 
 `LOGIC_32 inc_epc; assign inc_epc = `ePC + `ONE_32;
 
@@ -899,7 +899,6 @@ always @(posedge i_rst or posedge i_clk) begin
                     `do_rol_var_z; `Z <= rol_var_z;
                     `do_rol_var_c; `C <= rol_var_c;
                     `STORE_AFTER_OP(op_ROL);
-                end else if (op_JMP) begin
                 end else if (op_EOR) begin
                     `do_eor_a_var; `A <= eor_a_var;
                     `do_eor_a_var_n; `N <= eor_a_var_n;
@@ -2047,24 +2046,30 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `ADDR <= inc_addr;
                             end else begin
                                 var_code_byte = `CODE_BYTE;
+                                `PC <= inc_pc;
                                 if (am_ABS_a) begin
-                                    `ADDR1 <= var_code_byte;
-                                    `PC <= inc_pc;
-                                    am_ABS_a <= 0;
-                                    am_USE_ADDR <= 1;
+                                    if (op_JMP) begin
+                                        `PC <= {var_code_byte, `ADDR0};
+                                        `END_OPER_INSTR(op_JMP);
+                                    end else if (op_JSR) begin
+                                        `PC <= {var_code_byte, `ADDR0};
+                                        `END_OPER(op_JSR);
+                                        `eDST0 <= inc_pc[7:0];
+                                        `eDST1 <= inc_pc[15:8];
+                                    end else begin
+                                        `ADDR1 <= var_code_byte;
+                                        am_ABS_a <= 0;
+                                        am_USE_ADDR <= 1;
+                                    end
                                 end else if (am_AIIX_A_X) begin
-                                    `PC <= inc_pc;
                                     `ADDR <= {`ZERO_8, var_code_byte} + uext_x_16;
                                 end else if (am_AIA_A) begin
                                     `ADDR1 <= var_code_byte;
-                                    `PC <= inc_pc;
                                 end else if (am_AIX_a_x) begin
-                                    `PC <= inc_pc;
-                                    `ADDR <= {`ZERO_8, var_code_byte} + uext_x_16;
+                                    `ADDR <= {`ZERO_8, `var_code_byte`} + uext_x_16;
                                     am_AIX_a_x <= 0;
                                     am_USE_ADDR <= 1;
                                 end else if (am_AIY_a_y) begin
-                                    `PC <= inc_pc;
                                     `ADDR <= {`ZERO_8, var_code_byte} + uext_y_16;
                                     am_AIY_a_y <= 0;
                                     am_USE_ADDR <= 1;
