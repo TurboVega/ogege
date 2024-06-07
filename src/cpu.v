@@ -2037,6 +2037,8 @@ always @(posedge i_rst or posedge i_clk) begin
                                 am_USE_ADDR <= 1;
                             end else if (am_ZIIX_ZP_X) begin
                                 `ADDR0 <= var_code_byte + `X;
+                            end else if (am_ZIIY_ZP_y) begin
+                                `ADDR0 <= var_code_byte;
                             end
                         end
                     2: begin // 6502 cycle 2
@@ -2073,9 +2075,12 @@ always @(posedge i_rst or posedge i_clk) begin
                             if (am_AIIX_A_X | am_AIA_A) begin
                                 `IADDR0 <= `RAM_BYTE;
                                 `ADDR <= inc_addr;
-                            end else if (am_ZIIX_ZP_X | am_ZIIY_ZP_y) begin
+                            end else if (am_ZIIX_ZP_X) begin
                                 `IADDR1 <= `RAM_BYTE;
                                 am_ZIIX_ZP_X <= 0;
+                                am_USE_ADDR <= 1;
+                            end else if (am_ZIIY_ZP_y) begin
+                                `IADDR1 <= `RAM_BYTE + `Y;
                                 am_ZIIY_ZP_y <= 0;
                                 am_USE_ADDR <= 1;
                             end
