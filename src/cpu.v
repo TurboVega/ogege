@@ -18,8 +18,8 @@
 `define RESET_SP_ADDRESS            16'h0100 // Initial stack pointer
 `define RESET_STATUS_BITS           8'b00110100 // initial program status flags
 
-`define TEXT_PERIPH_BASE_ADDRESS    16'hFF80 // location of text area peripheral
-`define TEXT_PERIPH_BASE_HIGH_PART  9'h1FF   // highest 9 bits of address
+`define TEXT_PERIPH_BASE_ADDRESS    16'hFF00 // location of text area peripheral
+`define TEXT_PERIPH_BASE_HIGH_PART  9'h1FE   // highest 9 bits of address
 
 `define VB  [7:0]
 `define VHW [15:0]
@@ -33,7 +33,8 @@ module cpu (
     output  reg `VW o_bus_addr,
     output  reg `VW o_bus_data,
     input   logic `VW i_bus_data,
-    input   logic i_bus_data_ready
+    input   logic i_bus_data_ready,
+    output  logic [15:0] o_pc
 );
 
 // 6502 CPU registers
@@ -769,6 +770,8 @@ assign initiate_write_text = am_STORE_TO_ADDR & ~o_bus_clk & address_text_periph
 logic writing_text;
 assign writing_text = am_STORE_TO_ADDR & o_bus_clk & address_text_peripheral;
 
+assign o_pc = reg_pc;
+
 always @(posedge i_clk) begin
     if (i_rst) begin
         o_bus_clk <= 0;
@@ -780,7 +783,7 @@ always @(posedge i_clk) begin
             if (initiate_read_text) begin
                 o_bus_clk <= 1;
                 o_bus_we <= 0;
-                o_bus_addr <= reg_address[6:0];
+                o_bus_addr <= reg_address;
             end else if (o_bus_clk && i_bus_data_ready) begin
                 o_bus_clk <= 0;
             end
@@ -788,8 +791,8 @@ always @(posedge i_clk) begin
             if (initiate_write_text) begin
                 o_bus_clk <= 1;
                 o_bus_we <= 1;
-                o_bus_addr <= reg_address[6:0];
-                o_bus_data <= `DST;
+                o_bus_addr <= reg_address;
+                o_bus_data <= {`ZERO_24, `DST};
             end else if (o_bus_clk) begin
                 o_bus_clk <= 0;
             end
@@ -905,7 +908,7 @@ always @(posedge i_rst or posedge i_clk) begin
                 am_LOAD_FROM_ADDR <= 0;
 
                 if (i_bus_data_ready) begin
-                    var_ram_byte = i_bus_data;
+                    var_ram_byte = i_bus_data`VB;
                 end else begin
                     var_ram_byte = `RAM_BYTE;
                 end
@@ -966,10 +969,10 @@ always @(posedge i_rst or posedge i_clk) begin
                     `END_OPER_INSTR(op_LDY);
                 end else if (op_LDA) begin
                     `A <= var_ram_byte;
-                    `END_OPER_INSTR(op_LDY);
+                    `END_OPER_INSTR(op_LDA);
                 end else if (op_LDX) begin
                     `X <= var_ram_byte;
-                    `END_OPER_INSTR(op_LDY);
+                    `END_OPER_INSTR(op_LDX);
                 end else if (op_CPY) begin
                     `do_uext_var_9;
                     `do_sub_y_var;

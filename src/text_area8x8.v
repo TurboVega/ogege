@@ -28,7 +28,8 @@ module text_area8x8 (
     input  wire [11:0] i_bg_color,
     output reg [7:0] o_data,
     output reg o_data_ready,
-    output wire [11:0] o_color
+    output wire [11:0] o_color,
+    input  wire [15:0] i_pc
 );
 
     // The color palettes each hold 16 colors at 12 bits each (4 bits per
@@ -135,7 +136,20 @@ module text_area8x8 (
     assign cell_value = reg_scan_cell;
     assign cell_fg_color_index = cell_value[15:12];
     assign cell_bg_color_index = cell_value[11:8];
-    assign cell_char_code = cell_value[7:0];
+
+    logic [7:0] char0; assign char0 = (i_pc[15:12]<10 ? i_pc[15:12]+8'h30 : i_pc[15:12]+8'h41-8'd10);
+    logic [7:0] char1; assign char1 = (i_pc[11:8]<10 ? i_pc[11:8]+8'h30 : i_pc[11:8]+8'h41-8'd10);
+    logic [7:0] char2; assign char2 = (i_pc[7:4]<10 ? i_pc[7:4]+8'h30 : i_pc[7:4]+8'h41-8'd10);
+    logic [7:0] char3; assign char3 = (i_pc[3:0]<10 ? i_pc[3:0]+8'h30 : i_pc[3:0]+8'h41-8'd10);
+
+    assign cell_char_code = (text_cell_row == 10) ?
+                                (text_cell_column == 0 ? char0 :
+                                 text_cell_column == 1 ? char1 :
+                                 text_cell_column == 2 ? char2 :
+                                 text_cell_column == 3 ? char3 :
+                                 8'h2E)
+                                : cell_value[7:0];
+
     assign char_fg_color = reg_fg_palette_color[cell_fg_color_index];
     assign char_bg_color = reg_bg_palette_color[cell_bg_color_index];
 
