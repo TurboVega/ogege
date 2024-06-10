@@ -34,7 +34,10 @@ module cpu (
     output  reg `VW o_bus_data,
     input   logic `VW i_bus_data,
     input   logic i_bus_data_ready,
-    output  logic [15:0] o_pc
+    output  logic [15:0] o_pc,
+    output  logic [15:0] o_a,
+    output  logic [7:0] o_cb,
+    output  logic [7:0] o_rb
 );
 
 // 6502 CPU registers
@@ -771,6 +774,9 @@ logic writing_text;
 assign writing_text = am_STORE_TO_ADDR & o_bus_clk & address_text_peripheral;
 
 assign o_pc = reg_pc;
+assign o_a = reg_address;
+assign o_cb = var_code_byte;
+assign o_rb = var_ram_byte;
 
 always @(posedge i_clk) begin
     if (i_rst) begin
@@ -800,10 +806,14 @@ always @(posedge i_clk) begin
     end
 end
 
+`LOGIC_32 delay;
+
 always @(posedge i_rst or posedge i_clk) begin
     integer i;
 
     if (i_rst) begin
+        delay <= 0;
+
         reg_6502 <= 1;
         `PC <= `RESET_PC_ADDRESS;
         `SP <= `RESET_SP_ADDRESS;
@@ -899,8 +909,10 @@ always @(posedge i_rst or posedge i_clk) begin
         op_TSB <= 0;
         op_WAI <= 0;
 
+    end else if (delay < 100000000) begin
+        delay <= delay + 1;
     end else if (~am_STORE_TO_ADDR) begin
-
+        delay <= 0;
         reg_cycle <= reg_cycle + 1; // Assume micro-instructions will continue.
 
         if (reg_6502) begin
