@@ -818,12 +818,13 @@ always @(posedge i_rst or posedge i_clk) begin
         `eX <= `ZERO_32;
         `eY <= `ZERO_32;
 
+        reg_cycle <= 1; // Force JMP via Reset vector
         reg_which <= 0;
         reg_address <= 0;
         reg_src_data <= 0;
         reg_dst_data <= 0;
 
-        am_ABS_a <= 0;
+        am_ABS_a <= 1; // Force JMP via Reset vector
         am_ACC_A <= 0;
         am_AIA_A <= 0;
         am_AIIX_A_X <= 0;
@@ -840,7 +841,7 @@ always @(posedge i_rst or posedge i_clk) begin
         am_ZPG_zp <= 0;
         am_ZPI_ZP <= 0;
 
-        ame_ABS_a <= 1; // Force JMP via Reset vector
+        ame_ABS_a <= 0;
         ame_AIA_A <= 0;
         ame_AIIX_A_X <= 0;
         ame_AIIY_A_y <= 0;
