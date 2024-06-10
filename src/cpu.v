@@ -137,6 +137,8 @@ reg `VB reg_estatus;        // Processor status
 `define EIADDR2  reg_ind_address[23:16]
 `define EIADDR3  reg_ind_address[31:24]
 
+`define OFFSET   reg_offset
+
 `define ZERO_7 7'd0
 `define ZERO_8 8'd0
 `define ZERO_9 9'd0
@@ -173,7 +175,7 @@ reg `VB reg_estatus;        // Processor status
 `define LOGIC_33    logic [32:0]
 
 // Processing registers
-reg [2:0] reg_cycle;
+reg [3:0] reg_cycle;
 reg reg_6502;
 reg reg_65832;
 reg [2:0] reg_which;
@@ -181,6 +183,9 @@ reg `VW reg_address;
 reg `VW reg_ind_address;
 reg `VW reg_src_data;
 reg `VW reg_dst_data;
+reg `VB reg_code_byte;
+reg `VB reg_ram_byte;
+reg 'VW reg_offset;
 
 `LOGIC_8 var_code_byte;
 `LOGIC_8 var_ram_byte;
@@ -565,6 +570,8 @@ logic sub_ea_src_v; assign sub_ea_src_v = sub_ea_src[32] ^ sub_ea_src[31];
 logic sub_ea_src_z; assign sub_ea_src_z = (sub_ea_src`VW == `ZERO_32) ? 1 : 0;
 logic sub_ea_src_c; assign sub_ea_src_c = sub_ea_src[32];
 
+`LOGIC_16 offset_address; assign offset_address = `ADDR + `OFFSET;
+
 //-------------------------------------------------------------------------------
 
 `define do_sext_var_9  `LOGIC_9 sext_var_9; sext_var_9 = {var_ram_byte[7], var_ram_byte};
@@ -828,7 +835,7 @@ always @(posedge i_rst or posedge i_clk) begin
         `eX <= `ZERO_32;
         `eY <= `ZERO_32;
 
-        reg_cycle <= 1; // Force JMP via Reset vector
+        reg_cycle <= 2; // Force JMP via Reset vector
         reg_which <= 0;
         reg_address <= 0;
         reg_src_data <= 0;
@@ -1038,9 +1045,11 @@ always @(posedge i_rst or posedge i_clk) begin
             end else begin
                 case (reg_cycle)
                     0: begin // 6502 cycle 0
-                            var_code_byte = `CODE_BYTE;
+                            reg_code_byte <= `CODE_BYTE;
                             `PC <= inc_pc;
-                            case (var_code_byte)
+                        end
+                    1: begin // 6502 cycle 1
+                            case (reg_code_byte)
                                 8'h00: begin
                                         op_BRK <= 1;
                                         am_STK_s <= 1;
@@ -1081,7 +1090,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     begin
                                         op_RMB <= 1;
                                         am_ZPG_zp <= 1;
-                                        reg_which <= var_code_byte[6:4];
+                                        reg_which <= reg_code_byte[6:4];
                                     end
 
                                 8'h08: begin
@@ -1119,7 +1128,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     begin
                                         op_BBR <= 1;
                                         am_PCR_r <= 1;
-                                        reg_which <= var_code_byte[6:4];
+                                        reg_which <= reg_code_byte[6:4];
                                     end
 
                                 8'h10: begin
@@ -1589,7 +1598,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     begin
                                         op_SMB <= 1;
                                         am_ZPG_zp <= 1;
-                                        reg_which <= var_code_byte[6:4];
+                                        reg_which <= reg_code_byte[6:4];
                                     end
 
                                 8'h88: begin
@@ -1631,7 +1640,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     begin
                                         op_BBS <= 1;
                                         am_PCR_r <= 1;
-                                        reg_which <= var_code_byte[6:4];
+                                        reg_which <= reg_code_byte[6:4];
                                     end
 
                                 8'h90: begin
@@ -2066,41 +2075,33 @@ always @(posedge i_rst or posedge i_clk) begin
                                         am_AIX_a_x <= 1;
                                     end
                             endcase;
-                        end
-                    1: begin // 6502 cycle 1
-                            var_code_byte = `CODE_BYTE;
+                    end
+                    2: begin // 6502 cycle 2
+                            `ADDR0 = `CODE_BYTE;
+                            `ADDR1 <= 0;
+                            `OFFSET <= 0;
                             `PC <= inc_pc;
-                            `ADDR1 <= `ZERO_8;
-
-                            if (am_PCR_r) begin
-                                am_PCR_r <= 0;
-                                if (op_BRANCH) begin
-                                    `PC <= inc_pc + {var_code_byte[7] ? `ONES_8 : `ZERO_8, var_code_byte};
-                                    `END_OPER_INSTR(op_BRANCH);
-                                end
-                            end else if (am_ABS_a | am_AIIX_A_X | am_AIX_a_x | am_AIY_a_y | am_AIA_A) begin
-                                `ADDR0 <= var_code_byte;
-                            end else if (am_ZPG_zp) begin
-                                `ADDR0 <= var_code_byte;
+                            if (am_ZPG_zp) begin
                                 am_LOAD_FROM_ADDR <= 1;
                             end else if (am_ZIX_zp_x) begin
-                                `ADDR0 <= var_code_byte + `X;
+                                `OFFSET <= {`ZERO_8, `X};
                                 am_LOAD_FROM_ADDR <= 1;
                             end else if (am_ZIY_zp_y) begin
-                                `ADDR0 <= var_code_byte + `Y;
+                                `OFFSET <= {`ZERO_8, `Y};
                                 am_LOAD_FROM_ADDR <= 1;
                             end else if (am_ZIIX_ZP_X) begin
-                                `ADDR0 <= var_code_byte + `X;
-                            end else if (am_ZIIY_ZP_y) begin
-                                `ADDR0 <= var_code_byte;
+                                `OFFSET <= {`ZERO_8, `X};
                             end
                         end
-                    2: begin // 6502 cycle 2
+                    3: begin // 6502 cycle 3
+                            `ADDR1 = `CODE_BYTE;
+                        end
+                    4: begin // 6502 cycle 4
                             if (am_ZIIX_ZP_X | am_ZIIY_ZP_y) begin
                                 `IADDR0 <= `RAM_BYTE;
                                 `ADDR <= inc_addr;
                             end else begin
-                                var_code_byte = `CODE_BYTE;
+                                ADDR1 = `CODE_BYTE;
                                 `PC <= inc_pc;
                                 if (am_ABS_a) begin
                                     if (op_STA) begin
@@ -2116,33 +2117,82 @@ always @(posedge i_rst or posedge i_clk) begin
                                         `DST <= `ZERO_8;
                                         `STORE_AFTER_OP(op_STZ);
                                     end else if (op_JMP) begin
-                                        `PC <= {var_code_byte, `ADDR0};
+                                            `PC <= {var_code_byte, `ADDR0};
                                         `END_OPER_INSTR(op_JMP);
                                     end else if (op_JSR) begin
-                                        `PC <= {var_code_byte, `ADDR0};
+                                            `PC <= {var_code_byte, `ADDR0};
                                         `END_OPER(op_JSR);
                                         `eDST0 <= inc_pc[7:0];
                                         `eDST1 <= inc_pc[15:8];
                                     end else begin
-                                        `ADDR1 <= var_code_byte;
+                                            `ADDR1 <= var_code_byte;
                                         am_ABS_a <= 0;
                                         am_LOAD_FROM_ADDR <= 1;
                                     end
                                 end else if (am_AIIX_A_X) begin
-                                    `ADDR <= {`ZERO_8, var_code_byte} + uext_x_16;
+                                        `ADDR <= {`ZERO_8, var_code_byte} + uext_x_16;
                                 end else if (am_AIA_A) begin
-                                    `ADDR1 <= var_code_byte;
+                                        `ADDR1 <= var_code_byte;
                                 end else if (am_AIX_a_x) begin
-                                    `ADDR <= {`ZERO_8, var_code_byte} + uext_x_16;
+                                        `ADDR <= {`ZERO_8, var_code_byte} + uext_x_16;
                                     am_AIX_a_x <= 0;
                                     am_LOAD_FROM_ADDR <= 1;
                                 end else if (am_AIY_a_y) begin
-                                    `ADDR <= {`ZERO_8, var_code_byte} + uext_y_16;
+                                        `ADDR <= {`ZERO_8, var_code_byte} + uext_y_16;
                                     am_AIY_a_y <= 0;
                                     am_LOAD_FROM_ADDR <= 1;
                                 end
                             end
                         end
+                    4: begin // 6502 cycle 4
+                            if (am_ZIIX_ZP_X | am_ZIIY_ZP_y) begin
+                                `IADDR0 <= `RAM_BYTE;
+                                `ADDR <= inc_addr;
+                            end else begin
+                                reg_code_byte = `CODE_BYTE;
+                                `PC <= inc_pc;
+                                if (am_ABS_a) begin
+                                    if (op_STA) begin
+                                        `DST <= `A;
+                                        `STORE_AFTER_OP(op_STA);
+                                    end else if (op_STX) begin
+                                        `DST <= `X;
+                                        `STORE_AFTER_OP(op_STX);
+                                    end else if (op_STY) begin
+                                        `DST <= `Y;
+                                        `STORE_AFTER_OP(op_STY);
+                                    end else if (op_STZ) begin
+                                        `DST <= `ZERO_8;
+                                        `STORE_AFTER_OP(op_STZ);
+                                    end else if (op_JMP) begin
+                                            `PC <= {var_code_byte, `ADDR0};
+                                        `END_OPER_INSTR(op_JMP);
+                                    end else if (op_JSR) begin
+                                            `PC <= {var_code_byte, `ADDR0};
+                                        `END_OPER(op_JSR);
+                                        `eDST0 <= inc_pc[7:0];
+                                        `eDST1 <= inc_pc[15:8];
+                                    end else begin
+                                            `ADDR1 <= var_code_byte;
+                                        am_ABS_a <= 0;
+                                        am_LOAD_FROM_ADDR <= 1;
+                                    end
+                                end else if (am_AIIX_A_X) begin
+                                        `ADDR <= {`ZERO_8, var_code_byte} + uext_x_16;
+                                end else if (am_AIA_A) begin
+                                        `ADDR1 <= var_code_byte;
+                                end else if (am_AIX_a_x) begin
+                                        `ADDR <= {`ZERO_8, var_code_byte} + uext_x_16;
+                                    am_AIX_a_x <= 0;
+                                    am_LOAD_FROM_ADDR <= 1;
+                                end else if (am_AIY_a_y) begin
+                                        `ADDR <= {`ZERO_8, var_code_byte} + uext_y_16;
+                                    am_AIY_a_y <= 0;
+                                    am_LOAD_FROM_ADDR <= 1;
+                                end
+                            end
+                        end
+--
                     3: begin // 6502 cycle 3
                             if (am_AIIX_A_X | am_AIA_A) begin
                                 `IADDR0 <= `RAM_BYTE;
