@@ -959,7 +959,7 @@ always @(posedge i_rst or posedge i_clk) begin
             transfer_in_progress <= 0;
             `END_INSTR;
         end
-    end else if (delay < 100000000) begin
+    end else if (delay < 25000000) begin
         delay <= delay + 1;
     end else begin
         delay <= 0;
@@ -2150,6 +2150,10 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `Y <= `ADDR0; // Immediate data
                                     `END_OPER_INSTR(op_LDY);
                                 end
+                            end else if (am_PCR_r) begin
+                                am_PCR_r <= 0;
+                                `PC <= `PC + {(reg_address[7] ? `ONES_8 : `ZERO_8), `ADDR0};
+                                `END_INSTR;
                             end else begin
                                 `ADDR1 = `CODE_BYTE;
                                 `PC <= inc_pc;
