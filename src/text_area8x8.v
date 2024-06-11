@@ -151,10 +151,10 @@ module text_area8x8 (
     logic [7:0] char2; assign char2 = (i_pc[7:4]<10 ? i_pc[7:4]+8'h30 : i_pc[7:4]+8'h41-8'd10);
     logic [7:0] char3; assign char3 = (i_pc[3:0]<10 ? i_pc[3:0]+8'h30 : i_pc[3:0]+8'h41-8'd10);
 
-    logic [7:0] achar0; assign achar0 = (i_ad[15:12]<10 ? i_ad[15:12]+8'h30 : i_ad[15:12]+8'h41-8'd10);
-    logic [7:0] achar1; assign achar1 = (i_ad[11:8]<10 ? i_ad[11:8]+8'h30 : i_ad[11:8]+8'h41-8'd10);
-    logic [7:0] achar2; assign achar2 = (i_ad[7:4]<10 ? i_ad[7:4]+8'h30 : i_ad[7:4]+8'h41-8'd10);
-    logic [7:0] achar3; assign achar3 = (i_ad[3:0]<10 ? i_ad[3:0]+8'h30 : i_ad[3:0]+8'h41-8'd10);
+    logic [7:0] adchar0; assign adchar0 = (i_ad[15:12]<10 ? i_ad[15:12]+8'h30 : i_ad[15:12]+8'h41-8'd10);
+    logic [7:0] adchar1; assign adchar1 = (i_ad[11:8]<10 ? i_ad[11:8]+8'h30 : i_ad[11:8]+8'h41-8'd10);
+    logic [7:0] adchar2; assign adchar2 = (i_ad[7:4]<10 ? i_ad[7:4]+8'h30 : i_ad[7:4]+8'h41-8'd10);
+    logic [7:0] adchar3; assign adchar3 = (i_ad[3:0]<10 ? i_ad[3:0]+8'h30 : i_ad[3:0]+8'h41-8'd10);
 
     logic [7:0] cchar2; assign cchar2 = (i_cb[7:4]<10 ? i_cb[7:4]+8'h30 : i_cb[7:4]+8'h41-8'd10);
     logic [7:0] cchar3; assign cchar3 = (i_cb[3:0]<10 ? i_cb[3:0]+8'h30 : i_cb[3:0]+8'h41-8'd10);
@@ -184,10 +184,10 @@ module text_area8x8 (
                                  8'h2E)
                             : (text_cell_row == 11) ?
                                 (text_cell_column == 5 ? 8'h40 : // @
-                                 text_cell_column == 0 ? achar0 :
-                                 text_cell_column == 1 ? achar1 :
-                                 text_cell_column == 2 ? achar2 :
-                                 text_cell_column == 3 ? achar3 :
+                                 text_cell_column == 0 ? adchar0 :
+                                 text_cell_column == 1 ? adchar1 :
+                                 text_cell_column == 2 ? adchar2 :
+                                 text_cell_column == 3 ? adchar3 :
                                  8'h2E)
                             : (text_cell_row == 12) ?
                                 (text_cell_column == 5 ? 8'h49 : // I

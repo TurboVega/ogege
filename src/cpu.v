@@ -192,7 +192,7 @@ reg `VW reg_ind_address;
 reg `VW reg_src_data;
 reg `VW reg_dst_data;
 reg `VB reg_code_byte;
-reg `VB reg_ram_byte;
+reg `VB reg_data_byte;
 reg `VW reg_offset;
 
 `LOGIC_8 var_code_byte;
@@ -302,7 +302,7 @@ initial $readmemh("../ram/ram.bits", reg_bram);
 //-------------------------------------------------------------------------------
 
 `define CODE_BYTE reg_bram[`PC]
-`define RAM_BYTE reg_bram[`ADDR]
+`define DATA_BYTE reg_bram[`ADDR]
 
 `LOGIC_9 sext_a_9; assign sext_a_9 = {`A[7], `A};
 `LOGIC_32 sext_a_32; assign sext_a_32 = {`A[7] ? `ONES_24 : `ZERO_24, `A};
@@ -792,7 +792,7 @@ assign o_cycle = reg_cycle;
 assign o_pc = reg_pc;
 assign o_ad = reg_address;
 assign o_cb = reg_code_byte;
-assign o_rb = reg_ram_byte;
+assign o_rb = reg_data_byte;
 assign o_a = `A;
 assign o_x = `X;
 assign o_y = `Y;
@@ -852,6 +852,8 @@ always @(posedge i_rst or posedge i_clk) begin
         reg_address <= 0;
         reg_src_data <= 0;
         reg_dst_data <= 0;
+        reg_code_byte <= 8'hCC;
+        reg_data_byte <= 8'hDD;
 
         am_ABS_a <= 1; // Force JMP via Reset vector
         am_ACC_A <= 0;
@@ -942,7 +944,7 @@ always @(posedge i_rst or posedge i_clk) begin
                 if (i_bus_data_ready) begin
                     var_ram_byte = i_bus_data`VB;
                 end else begin
-                    var_ram_byte = `RAM_BYTE;
+                    var_ram_byte = `DATA_BYTE;
                 end
 
                 if (op_TSB) begin
@@ -2110,13 +2112,13 @@ always @(posedge i_rst or posedge i_clk) begin
                     3: begin // 6502 cycle 3
                             if (am_IMM_m) begin
                                 if (op_LDA) begin
-                                    `A <= reg_code_byte;
+                                    `A <= `ADDR0; // Immediate data
                                     `END_OPER_INSTR(op_LDA);
                                 end else if (op_LDX) begin
-                                    `X <= reg_code_byte;
+                                    `X <= `ADDR0; // Immediate data
                                     `END_OPER_INSTR(op_LDX);
                                 end else if (op_LDY) begin
-                                    `Y <= reg_code_byte;
+                                    `Y <= `ADDR0; // Immediate data
                                     `END_OPER_INSTR(op_LDY);
                                 end
                             end else begin
@@ -2125,7 +2127,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
                     4: begin // 6502 cycle 4
                             if (am_ZIIX_ZP_X | am_ZIIY_ZP_y) begin
-                                `IADDR0 <= `RAM_BYTE;
+                                `IADDR0 <= `DATA_BYTE;
                                 `ADDR <= inc_addr;
                             end else begin
                                 if (am_ABS_a) begin
@@ -2169,21 +2171,21 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
                     5: begin // 6502 cycle 5
                             if (am_AIIX_A_X | am_AIA_A) begin
-                                `IADDR0 <= `RAM_BYTE;
+                                `IADDR0 <= `DATA_BYTE;
                                 `ADDR <= inc_addr;
                             end else if (am_ZIIX_ZP_X) begin
-                                `IADDR1 <= `RAM_BYTE;
+                                `IADDR1 <= `DATA_BYTE;
                                 am_ZIIX_ZP_X <= 0;
                                 am_LOAD_FROM_ADDR <= 1;
                             end else if (am_ZIIY_ZP_y) begin
-                                `IADDR1 <= `RAM_BYTE + `Y;
+                                `IADDR1 <= `DATA_BYTE + `Y;
                                 am_ZIIY_ZP_y <= 0;
                                 am_LOAD_FROM_ADDR <= 1;
                             end
                         end
                     6: begin // 6502 cycle 6
                             if (am_AIIX_A_X | am_AIA_A) begin
-                                var_ram_byte = `RAM_BYTE;
+                                var_ram_byte = `DATA_BYTE;
                                 am_AIIX_A_X <= 0;
                                 am_AIA_A <= 0;
                                 `END_INSTR;
