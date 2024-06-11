@@ -29,6 +29,7 @@ module text_area8x8 (
     output reg [7:0] o_data,
     output reg o_data_ready,
     output wire [11:0] o_color,
+    input  wire [3:0] i_cycle,
     input  wire [15:0] i_pc,
     input  wire [15:0] i_ad,
     input  wire [7:0] i_cb,
@@ -143,6 +144,8 @@ module text_area8x8 (
     assign cell_fg_color_index = cell_value[15:12];
     assign cell_bg_color_index = cell_value[11:8];
 
+    logic [7:0] cychar; assign cychar = (i_cycle<10 ? i_cycle+8'h30 : i_cycle+8'h41-8'd10);
+
     logic [7:0] char0; assign char0 = (i_pc[15:12]<10 ? i_pc[15:12]+8'h30 : i_pc[15:12]+8'h41-8'd10);
     logic [7:0] char1; assign char1 = (i_pc[11:8]<10 ? i_pc[11:8]+8'h30 : i_pc[11:8]+8'h41-8'd10);
     logic [7:0] char2; assign char2 = (i_pc[7:4]<10 ? i_pc[7:4]+8'h30 : i_pc[7:4]+8'h41-8'd10);
@@ -168,36 +171,47 @@ module text_area8x8 (
     logic [7:0] ychar2; assign ychar2 = (i_y[7:4]<10 ? i_y[7:4]+8'h30 : i_y[7:4]+8'h41-8'd10);
     logic [7:0] ychar3; assign ychar3 = (i_y[3:0]<10 ? i_y[3:0]+8'h30 : i_y[3:0]+8'h41-8'd10);
 
-    assign cell_char_code = (text_cell_row == 10) ?
-                                (text_cell_column == 0 ? char0 :
+    assign cell_char_code = (text_cell_row == 9) ?
+                                (text_cell_column == 5 ? 8'h23 : // #
+                                 text_cell_column == 3 ? cychar :
+                                 8'h2E)
+                            : (text_cell_row == 10) ?
+                                (text_cell_column == 5 ? 8'h50 : // P
+                                 text_cell_column == 0 ? char0 :
                                  text_cell_column == 1 ? char1 :
                                  text_cell_column == 2 ? char2 :
                                  text_cell_column == 3 ? char3 :
                                  8'h2E)
                             : (text_cell_row == 11) ?
-                                (text_cell_column == 0 ? achar0 :
+                                (text_cell_column == 5 ? 8'h40 : // @
+                                 text_cell_column == 0 ? achar0 :
                                  text_cell_column == 1 ? achar1 :
                                  text_cell_column == 2 ? achar2 :
                                  text_cell_column == 3 ? achar3 :
                                  8'h2E)
                             : (text_cell_row == 12) ?
-                                (text_cell_column == 2 ? cchar2 :
+                                (text_cell_column == 5 ? 8'h49 : // I
+                                 text_cell_column == 2 ? cchar2 :
                                  text_cell_column == 3 ? cchar3 :
                                  8'h2E)
                             : (text_cell_row == 13) ?
-                                (text_cell_column == 2 ? rchar2 :
+                                (text_cell_column == 5 ? 8'h44 : // D
+                                 text_cell_column == 2 ? rchar2 :
                                  text_cell_column == 3 ? rchar3 :
                                  8'h2E)
                             : (text_cell_row == 14) ?
-                                (text_cell_column == 2 ? achar2 :
+                                (text_cell_column == 5 ? 8'h41 : // A
+                                 text_cell_column == 2 ? achar2 :
                                  text_cell_column == 3 ? achar3 :
                                  8'h2E)
                             : (text_cell_row == 15) ?
-                                (text_cell_column == 2 ? xchar2 :
+                                (text_cell_column == 5 ? 8'h58 : // X
+                                 text_cell_column == 2 ? xchar2 :
                                  text_cell_column == 3 ? xchar3 :
                                  8'h2E)
                             : (text_cell_row == 16) ?
-                                (text_cell_column == 2 ? ychar2 :
+                                (text_cell_column == 5 ? 8'h59 : // Y
+                                 text_cell_column == 2 ? ychar2 :
                                  text_cell_column == 3 ? ychar3 :
                                  8'h2E)
                             : cell_value[7:0];

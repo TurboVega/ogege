@@ -34,6 +34,7 @@ module cpu (
     output  reg `VW o_bus_data,
     input   logic `VW i_bus_data,
     input   logic i_bus_data_ready,
+    output  logic [3:0] o_cycle,
     output  logic [15:0] o_pc,
     output  logic [15:0] o_ad,
     output  logic [7:0] o_cb,
@@ -787,6 +788,7 @@ assign initiate_write_text = am_STORE_TO_ADDR & ~o_bus_clk & address_text_periph
 logic writing_text;
 assign writing_text = am_STORE_TO_ADDR & o_bus_clk & address_text_peripheral;
 
+assign o_cycle = reg_cycle;
 assign o_pc = reg_pc;
 assign o_ad = reg_address;
 assign o_cb = reg_code_byte;

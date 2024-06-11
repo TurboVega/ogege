@@ -126,6 +126,7 @@ logic [7:0] periph_text_i_data; assign periph_text_i_data = bus_wr_data[7:0];
 logic [7:0] periph_text_o_data; assign bus_rd_data[7:0] = periph_text_o_data;
 logic periph_text_o_data_ready; assign bus_rd_ready = periph_text_o_data_ready;
 
+logic [3:0] cur_cycle;
 logic [15:0] cur_pc;
 logic [15:0] cur_ad;
 logic [7:0] cur_cb;
@@ -150,6 +151,7 @@ text_area8x8 text_area8x8_inst (
     .o_data(periph_text_o_data),
     .o_data_ready(periph_text_o_data_ready),
 	.o_color(new_color),
+    .i_cycle(cur_cycle),
     .i_pc(cur_pc),
     .i_ad(cur_ad),
     .i_cb(cur_cb),
@@ -168,6 +170,7 @@ cpu cpu_inst (
     .o_bus_data(bus_wr_data),
     .i_bus_data(bus_rd_data),
     .i_bus_data_ready(bus_rd_ready),
+    .o_cycle(cur_cycle),
     .o_pc(cur_pc),
     .o_ad(cur_ad),
     .o_cb(cur_cb),
