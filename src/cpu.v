@@ -959,7 +959,7 @@ always @(posedge i_rst or posedge i_clk) begin
             transfer_in_progress <= 0;
             `END_INSTR;
         end
-    end else if (delay < 25000000) begin
+    end else if (delay < 5000000) begin
         delay <= delay + 1;
     end else begin
         delay <= 0;
