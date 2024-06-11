@@ -35,9 +35,12 @@ module cpu (
     input   logic `VW i_bus_data,
     input   logic i_bus_data_ready,
     output  logic [15:0] o_pc,
-    output  logic [15:0] o_a,
+    output  logic [15:0] o_ad,
     output  logic [7:0] o_cb,
-    output  logic [7:0] o_rb
+    output  logic [7:0] o_rb,
+    output  logic [7:0] o_a,
+    output  logic [7:0] o_x,
+    output  logic [7:0] o_y
 );
 
 // 6502 CPU registers
@@ -120,10 +123,14 @@ reg `VB reg_estatus;        // Processor status
 `define ADDR    reg_address`VHW
 `define ADDR0   reg_address[7:0]
 `define ADDR1   reg_address[15:8]
+`define ADDR2   reg_address[23:16]
+`define ADDR3   reg_address[31:24]
 
 `define IADDR   reg_ind_address`VHW
 `define IADDR0  reg_ind_address[7:0]
 `define IADDR1  reg_ind_address[15:8]
+`define IADDR2  reg_ind_address[23:16]
+`define IADDR3  reg_ind_address[31:24]
 
 `define EADDR   reg_address`VW
 `define EADDR0  reg_address[7:0]
@@ -570,7 +577,7 @@ logic sub_ea_src_v; assign sub_ea_src_v = sub_ea_src[32] ^ sub_ea_src[31];
 logic sub_ea_src_z; assign sub_ea_src_z = (sub_ea_src`VW == `ZERO_32) ? 1 : 0;
 logic sub_ea_src_c; assign sub_ea_src_c = sub_ea_src[32];
 
-`LOGIC_16 offset_address; assign offset_address = `ADDR + `OFFSET;
+`LOGIC_32 offset_address; assign offset_address = reg_address + reg_offset;
 
 //-------------------------------------------------------------------------------
 
@@ -781,9 +788,12 @@ logic writing_text;
 assign writing_text = am_STORE_TO_ADDR & o_bus_clk & address_text_peripheral;
 
 assign o_pc = reg_pc;
-assign o_a = reg_address;
-assign o_cb = var_code_byte;
-assign o_rb = var_ram_byte;
+assign o_ad = reg_address;
+assign o_cb = reg_code_byte;
+assign o_rb = reg_ram_byte;
+assign o_a = `A;
+assign o_x = `X;
+assign o_y = `Y;
 
 always @(posedge i_clk) begin
     if (i_rst) begin
@@ -796,7 +806,7 @@ always @(posedge i_clk) begin
             if (initiate_read_text) begin
                 o_bus_clk <= 1;
                 o_bus_we <= 0;
-                o_bus_addr <= reg_address;
+                o_bus_addr <= offset_address;
             end else if (o_bus_clk && i_bus_data_ready) begin
                 o_bus_clk <= 0;
             end
@@ -804,7 +814,7 @@ always @(posedge i_clk) begin
             if (initiate_write_text) begin
                 o_bus_clk <= 1;
                 o_bus_we <= 1;
-                o_bus_addr <= reg_address;
+                o_bus_addr <= offset_address;
                 o_bus_data <= {`ZERO_24, `DST};
             end else if (o_bus_clk) begin
                 o_bus_clk <= 0;
@@ -2079,6 +2089,8 @@ always @(posedge i_rst or posedge i_clk) begin
                     2: begin // 6502 cycle 2
                             `ADDR0 = `CODE_BYTE;
                             `ADDR1 <= 0;
+                            `ADDR2 <= 0;
+                            `ADDR3 <= 0;
                             `OFFSET <= 0;
                             `PC <= inc_pc;
                             if (am_ZPG_zp) begin
@@ -2094,15 +2106,26 @@ always @(posedge i_rst or posedge i_clk) begin
                             end
                         end
                     3: begin // 6502 cycle 3
-                            `ADDR1 = `CODE_BYTE;
+                            if (am_IMM_m) begin
+                                if (op_LDA) begin
+                                    `A <= reg_code_byte;
+                                    `END_OPER_INSTR(op_LDA);
+                                end else if (op_LDX) begin
+                                    `X <= reg_code_byte;
+                                    `END_OPER_INSTR(op_LDX);
+                                end else if (op_LDY) begin
+                                    `Y <= reg_code_byte;
+                                    `END_OPER_INSTR(op_LDY);
+                                end
+                            end else begin
+                                `ADDR1 = `CODE_BYTE;
+                            end
                         end
                     4: begin // 6502 cycle 4
                             if (am_ZIIX_ZP_X | am_ZIIY_ZP_y) begin
                                 `IADDR0 <= `RAM_BYTE;
                                 `ADDR <= inc_addr;
                             end else begin
-                                `ADDR1 = `CODE_BYTE;
-                                `PC <= inc_pc;
                                 if (am_ABS_a) begin
                                     if (op_STA) begin
                                         `DST <= `A;

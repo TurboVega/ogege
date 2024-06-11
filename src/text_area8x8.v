@@ -30,9 +30,12 @@ module text_area8x8 (
     output reg o_data_ready,
     output wire [11:0] o_color,
     input  wire [15:0] i_pc,
-    input  wire [15:0] i_a,
+    input  wire [15:0] i_ad,
     input  wire [7:0] i_cb,
-    input  wire [7:0] i_rb
+    input  wire [7:0] i_rb,
+    input  wire [7:0] i_a,
+    input  wire [7:0] i_x,
+    input  wire [7:0] i_y
 );
 
     // The color palettes each hold 16 colors at 12 bits each (4 bits per
@@ -145,16 +148,25 @@ module text_area8x8 (
     logic [7:0] char2; assign char2 = (i_pc[7:4]<10 ? i_pc[7:4]+8'h30 : i_pc[7:4]+8'h41-8'd10);
     logic [7:0] char3; assign char3 = (i_pc[3:0]<10 ? i_pc[3:0]+8'h30 : i_pc[3:0]+8'h41-8'd10);
 
-    logic [7:0] achar0; assign achar0 = (i_a[15:12]<10 ? i_a[15:12]+8'h30 : i_a[15:12]+8'h41-8'd10);
-    logic [7:0] achar1; assign achar1 = (i_a[11:8]<10 ? i_a[11:8]+8'h30 : i_a[11:8]+8'h41-8'd10);
+    logic [7:0] achar0; assign achar0 = (i_ad[15:12]<10 ? i_ad[15:12]+8'h30 : i_ad[15:12]+8'h41-8'd10);
+    logic [7:0] achar1; assign achar1 = (i_ad[11:8]<10 ? i_ad[11:8]+8'h30 : i_ad[11:8]+8'h41-8'd10);
+    logic [7:0] achar2; assign achar2 = (i_ad[7:4]<10 ? i_ad[7:4]+8'h30 : i_ad[7:4]+8'h41-8'd10);
+    logic [7:0] achar3; assign achar3 = (i_ad[3:0]<10 ? i_ad[3:0]+8'h30 : i_ad[3:0]+8'h41-8'd10);
+
+    logic [7:0] cchar2; assign cchar2 = (i_cb[7:4]<10 ? i_cb[7:4]+8'h30 : i_cb[7:4]+8'h41-8'd10);
+    logic [7:0] cchar3; assign cchar3 = (i_cb[3:0]<10 ? i_cb[3:0]+8'h30 : i_cb[3:0]+8'h41-8'd10);
+
+    logic [7:0] rchar2; assign rchar2 = (i_rb[7:4]<10 ? i_rb[7:4]+8'h30 : i_rb[7:4]+8'h41-8'd10);
+    logic [7:0] rchar3; assign rchar3 = (i_rb[3:0]<10 ? i_rb[3:0]+8'h30 : i_rb[3:0]+8'h41-8'd10);
+
     logic [7:0] achar2; assign achar2 = (i_a[7:4]<10 ? i_a[7:4]+8'h30 : i_a[7:4]+8'h41-8'd10);
     logic [7:0] achar3; assign achar3 = (i_a[3:0]<10 ? i_a[3:0]+8'h30 : i_a[3:0]+8'h41-8'd10);
 
-    logic [7:0] cchar2; assign cchar2 = (i_a[7:4]<10 ? i_a[7:4]+8'h30 : i_a[7:4]+8'h41-8'd10);
-    logic [7:0] cchar3; assign cchar3 = (i_a[3:0]<10 ? i_a[3:0]+8'h30 : i_a[3:0]+8'h41-8'd10);
+    logic [7:0] xchar2; assign xchar2 = (i_x[7:4]<10 ? i_x[7:4]+8'h30 : i_x[7:4]+8'h41-8'd10);
+    logic [7:0] xchar3; assign xchar3 = (i_x[3:0]<10 ? i_x[3:0]+8'h30 : i_x[3:0]+8'h41-8'd10);
 
-    logic [7:0] rchar2; assign rchar2 = (i_a[7:4]<10 ? i_a[7:4]+8'h30 : i_a[7:4]+8'h41-8'd10);
-    logic [7:0] rchar3; assign rchar3 = (i_a[3:0]<10 ? i_a[3:0]+8'h30 : i_a[3:0]+8'h41-8'd10);
+    logic [7:0] ychar2; assign ychar2 = (i_y[7:4]<10 ? i_y[7:4]+8'h30 : i_y[7:4]+8'h41-8'd10);
+    logic [7:0] ychar3; assign ychar3 = (i_y[3:0]<10 ? i_y[3:0]+8'h30 : i_y[3:0]+8'h41-8'd10);
 
     assign cell_char_code = (text_cell_row == 10) ?
                                 (text_cell_column == 0 ? char0 :
@@ -175,6 +187,18 @@ module text_area8x8 (
                             : (text_cell_row == 13) ?
                                 (text_cell_column == 2 ? rchar2 :
                                  text_cell_column == 3 ? rchar3 :
+                                 8'h2E)
+                            : (text_cell_row == 14) ?
+                                (text_cell_column == 2 ? achar2 :
+                                 text_cell_column == 3 ? achar3 :
+                                 8'h2E)
+                            : (text_cell_row == 15) ?
+                                (text_cell_column == 2 ? xchar2 :
+                                 text_cell_column == 3 ? xchar3 :
+                                 8'h2E)
+                            : (text_cell_row == 16) ?
+                                (text_cell_column == 2 ? ychar2 :
+                                 text_cell_column == 3 ? ychar3 :
                                  8'h2E)
                             : cell_value[7:0];
 
