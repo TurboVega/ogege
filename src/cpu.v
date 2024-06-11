@@ -950,8 +950,8 @@ always @(posedge i_rst or posedge i_clk) begin
         op_TSB <= 0;
         op_WAI <= 0;
 
-    end else if (delay < 100000000) begin
-        delay <= delay + 1;
+    end else if (~transfer_in_progress & (load_from_address | store_to_address)) begin
+        transfer_in_progress <= 1;
     end else if (transfer_in_progress) begin
         if (~o_bus_clk) begin
             load_from_address <= 0;
@@ -959,13 +959,14 @@ always @(posedge i_rst or posedge i_clk) begin
             transfer_in_progress <= 0;
             `END_INSTR;
         end
+    end else if (delay < 100000000) begin
+        delay <= delay + 1;
     end else begin
         delay <= 0;
         reg_cycle <= reg_cycle + 1; // Assume micro-instructions will continue.
 
         if (reg_6502) begin
-            if (initiate_read_text | reading_text) begin
-            end else if (load_from_address) begin
+            if (load_from_address) begin
                 load_from_address <= 0;
 
                 if (i_bus_data_ready) begin
@@ -2138,6 +2139,7 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
                     3: begin // 6502 cycle 3
                             if (am_IMM_m) begin
+                                am_IMM_m <= 0;
                                 if (op_LDA) begin
                                     `A <= `ADDR0; // Immediate data
                                     `END_OPER_INSTR(op_LDA);
@@ -2150,6 +2152,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end
                             end else begin
                                 `ADDR1 = `CODE_BYTE;
+                                `PC <= inc_pc;
                             end
                         end
                     4: begin // 6502 cycle 4
@@ -2158,6 +2161,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `ADDR <= inc_addr;
                             end else begin
                                 if (am_ABS_a) begin
+                                    am_ABS_a <= 0;
                                     if (op_STA) begin
                                         `DST <= `A;
                                         `STORE_AFTER_OP(op_STA);
