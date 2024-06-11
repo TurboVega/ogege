@@ -286,9 +286,11 @@ module text_area8x8 (
             reg_cursor_row <= 0;
             reg_cursor_column <= 0;
             o_data_ready <= 0;
-        end else if (reg_clka) begin
+        end else if (~i_stb & reg_clka) begin
             reg_clka <= 0;
-            reg_put_cell <= reg_get_cell;
+            if (~reg_wea) begin
+                reg_put_cell <= reg_get_cell;
+            end
             o_data <= reg_get_cell;
             o_data_ready <= 1;
         end else if (i_stb & ~reg_clka) begin
