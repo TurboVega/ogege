@@ -194,6 +194,10 @@ reg `VW reg_dst_data;
 reg `VB reg_code_byte;
 reg `VB reg_data_byte;
 reg `VW reg_offset;
+reg load_from_address; // Load from or use the computed address
+reg store_to_address; // Store computed value at address
+reg transfer_in_progress; // Load/store in progress
+
 
 `LOGIC_8 var_code_byte;
 `LOGIC_8 var_ram_byte;
@@ -216,9 +220,6 @@ reg am_ZIX_zp_x;    // Zero Page Indexed with X zp,x (6502)
 reg am_ZIY_zp_y;    // Zero Page Indexed with Y zp,y (6502)
 reg am_ZPG_zp;      // Zero Page zp (6502)
 reg am_ZPI_ZP;      // Zero Page Indirect (zp) (6502)
-
-reg am_LOAD_FROM_ADDR;    // Load from or use the computed address
-reg am_STORE_TO_ADDR; // Store computed value at address
 
 reg ame_ABS_a;      // Absolute a (65832)
 reg ame_ACC_A;      // Accumulator A (65832)
@@ -771,22 +772,40 @@ logic sub_ea_src_c; assign sub_ea_src_c = sub_ea_src[32];
 `define END_INSTR           reg_cycle <= 0
 `define END_OPER(op)        op <= 0
 `define END_OPER_INSTR(op)  `END_OPER(op); `END_INSTR
-`define STORE_AFTER_OP(op)  `END_OPER(op); am_STORE_TO_ADDR <= 1
+`define STORE_AFTER_OP(op)  `END_OPER(op); store_to_address <= 1
 
 logic address_text_peripheral;
 assign address_text_peripheral = (reg_address[15:7] == `TEXT_PERIPH_BASE_HIGH_PART);
 
 logic initiate_read_text;
-assign initiate_read_text = am_LOAD_FROM_ADDR & ~o_bus_clk & address_text_peripheral & ~i_bus_data_ready;
+assign initiate_read_text =
+    ~transfer_in_progress &
+    load_from_address &
+    ~o_bus_clk &
+    address_text_peripheral &
+    ~i_bus_data_ready;
 
 logic reading_text;
-assign reading_text = am_LOAD_FROM_ADDR & o_bus_clk & address_text_peripheral & ~i_bus_data_ready;
+assign reading_text =
+    transfer_in_progress &
+    load_from_address &
+    o_bus_clk &
+    address_text_peripheral &
+    ~i_bus_data_ready;
 
 logic initiate_write_text;
-assign initiate_write_text = am_STORE_TO_ADDR & ~o_bus_clk & address_text_peripheral;
+assign initiate_write_text =
+    ~transfer_in_progress &
+    store_to_address &
+    ~o_bus_clk &
+    address_text_peripheral;
 
 logic writing_text;
-assign writing_text = am_STORE_TO_ADDR & o_bus_clk & address_text_peripheral;
+assign writing_text =
+    transfer_in_progress &
+    store_to_address &
+    o_bus_clk &
+    address_text_peripheral;
 
 assign o_cycle = reg_cycle;
 assign o_pc = reg_pc;
@@ -804,7 +823,7 @@ always @(posedge i_clk) begin
         o_bus_addr <= 0;
         o_bus_data <= 0;
     end else begin
-        if (am_LOAD_FROM_ADDR) begin
+        if (load_from_address) begin
             if (initiate_read_text) begin
                 o_bus_clk <= 1;
                 o_bus_we <= 0;
@@ -812,7 +831,7 @@ always @(posedge i_clk) begin
             end else if (o_bus_clk && i_bus_data_ready) begin
                 o_bus_clk <= 0;
             end
-        end else if (am_STORE_TO_ADDR) begin
+        end else if (store_to_address) begin
             if (initiate_write_text) begin
                 o_bus_clk <= 1;
                 o_bus_we <= 1;
@@ -880,8 +899,9 @@ always @(posedge i_rst or posedge i_clk) begin
         ame_AIY_a_y <= 0;
         ame_STK_s <= 0;
 
-        am_LOAD_FROM_ADDR <= 0;
-        am_STORE_TO_ADDR <= 0;
+        load_from_address <= 0;
+        store_to_address <= 0;
+        transfer_in_progress <= 0;
 
         op_ADC <= 0;
         op_ADD <= 0;
@@ -932,14 +952,21 @@ always @(posedge i_rst or posedge i_clk) begin
 
     end else if (delay < 100000000) begin
         delay <= delay + 1;
-    end else if (~am_STORE_TO_ADDR) begin
+    end else if (transfer_in_progress) begin
+        if (~o_bus_clk) begin
+            load_from_address <= 0;
+            store_to_address <= 0;
+            transfer_in_progress <= 0;
+            `END_INSTR;
+        end
+    end else begin
         delay <= 0;
         reg_cycle <= reg_cycle + 1; // Assume micro-instructions will continue.
 
         if (reg_6502) begin
             if (initiate_read_text | reading_text) begin
-            end else if (am_LOAD_FROM_ADDR) begin
-                am_LOAD_FROM_ADDR <= 0;
+            end else if (load_from_address) begin
+                load_from_address <= 0;
 
                 if (i_bus_data_ready) begin
                     var_ram_byte = i_bus_data`VB;
@@ -2098,13 +2125,13 @@ always @(posedge i_rst or posedge i_clk) begin
                             `OFFSET <= 0;
                             `PC <= inc_pc;
                             if (am_ZPG_zp) begin
-                                am_LOAD_FROM_ADDR <= 1;
+                                load_from_address <= 1;
                             end else if (am_ZIX_zp_x) begin
                                 `OFFSET <= {`ZERO_8, `X};
-                                am_LOAD_FROM_ADDR <= 1;
+                                load_from_address <= 1;
                             end else if (am_ZIY_zp_y) begin
                                 `OFFSET <= {`ZERO_8, `Y};
-                                am_LOAD_FROM_ADDR <= 1;
+                                load_from_address <= 1;
                             end else if (am_ZIIX_ZP_X) begin
                                 `OFFSET <= {`ZERO_8, `X};
                             end
@@ -2152,7 +2179,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                         `eDST0 <= inc_pc[7:0];
                                         `eDST1 <= inc_pc[15:8];
                                     end else begin
-                                        am_LOAD_FROM_ADDR <= 1;
+                                        load_from_address <= 1;
                                     end
                                 end else if (am_AIIX_A_X) begin
                                         `ADDR <= {`ZERO_8, reg_code_byte} + uext_x_16;
@@ -2161,11 +2188,11 @@ always @(posedge i_rst or posedge i_clk) begin
                                 end else if (am_AIX_a_x) begin
                                         `ADDR <= {`ZERO_8, reg_code_byte} + uext_x_16;
                                     am_AIX_a_x <= 0;
-                                    am_LOAD_FROM_ADDR <= 1;
+                                    load_from_address <= 1;
                                 end else if (am_AIY_a_y) begin
                                         `ADDR <= {`ZERO_8, reg_code_byte} + uext_y_16;
                                     am_AIY_a_y <= 0;
-                                    am_LOAD_FROM_ADDR <= 1;
+                                    load_from_address <= 1;
                                 end
                             end
                         end
@@ -2176,11 +2203,11 @@ always @(posedge i_rst or posedge i_clk) begin
                             end else if (am_ZIIX_ZP_X) begin
                                 `IADDR1 <= `DATA_BYTE;
                                 am_ZIIX_ZP_X <= 0;
-                                am_LOAD_FROM_ADDR <= 1;
+                                load_from_address <= 1;
                             end else if (am_ZIIY_ZP_y) begin
                                 `IADDR1 <= `DATA_BYTE + `Y;
                                 am_ZIIY_ZP_y <= 0;
-                                am_LOAD_FROM_ADDR <= 1;
+                                load_from_address <= 1;
                             end
                         end
                     6: begin // 6502 cycle 6
