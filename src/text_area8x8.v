@@ -171,50 +171,27 @@ module text_area8x8 (
     logic [7:0] ychar2; assign ychar2 = (i_y[7:4]<10 ? i_y[7:4]+8'h30 : i_y[7:4]+8'h41-8'd10);
     logic [7:0] ychar3; assign ychar3 = (i_y[3:0]<10 ? i_y[3:0]+8'h30 : i_y[3:0]+8'h41-8'd10);
 
-    assign cell_char_code = (text_cell_row == 9) ?
-                                (text_cell_column == 5 ? 8'h23 : // #
-                                 text_cell_column == 3 ? cychar :
-                                 8'h2E)
-                            : (text_cell_row == 10) ?
-                                (text_cell_column == 5 ? 8'h50 : // P
-                                 text_cell_column == 0 ? char0 :
-                                 text_cell_column == 1 ? char1 :
-                                 text_cell_column == 2 ? char2 :
-                                 text_cell_column == 3 ? char3 :
-                                 8'h2E)
-                            : (text_cell_row == 11) ?
-                                (text_cell_column == 5 ? 8'h40 : // @
-                                 text_cell_column == 0 ? adchar0 :
-                                 text_cell_column == 1 ? adchar1 :
-                                 text_cell_column == 2 ? adchar2 :
-                                 text_cell_column == 3 ? adchar3 :
-                                 8'h2E)
-                            : (text_cell_row == 12) ?
-                                (text_cell_column == 5 ? 8'h49 : // I
-                                 text_cell_column == 2 ? cchar2 :
-                                 text_cell_column == 3 ? cchar3 :
-                                 8'h2E)
-                            : (text_cell_row == 13) ?
-                                (text_cell_column == 5 ? 8'h44 : // D
-                                 text_cell_column == 2 ? rchar2 :
-                                 text_cell_column == 3 ? rchar3 :
-                                 8'h2E)
-                            : (text_cell_row == 14) ?
-                                (text_cell_column == 5 ? 8'h41 : // A
-                                 text_cell_column == 2 ? achar2 :
-                                 text_cell_column == 3 ? achar3 :
-                                 8'h2E)
-                            : (text_cell_row == 15) ?
-                                (text_cell_column == 5 ? 8'h58 : // X
-                                 text_cell_column == 2 ? xchar2 :
-                                 text_cell_column == 3 ? xchar3 :
-                                 8'h2E)
-                            : (text_cell_row == 16) ?
-                                (text_cell_column == 5 ? 8'h59 : // Y
-                                 text_cell_column == 2 ? ychar2 :
-                                 text_cell_column == 3 ? ychar3 :
-                                 8'h2E)
-                            : cell_value[7:0];
+    assign cell_char_code = (text_cell_row != 58) ? cell_value[7:0] :
+                            text_cell_column == 0 ? cychar :
+                            text_cell_column == 6 ? char0 :
+                            text_cell_column == 7 ? char1 :
+                            text_cell_column == 8 ? char2 :
+                            text_cell_column == 9 ? char3 :
+                            text_cell_column == 45 ? adchar0 :
+                            text_cell_column == 46 ? adchar1 :
+                            text_cell_column == 47 ? adchar2 :
+                            text_cell_column == 48 ? adchar3 :
+                            text_cell_column == 52 ? cchar2 :
+                            text_cell_column == 53 ? cchar3 :
+                            text_cell_column == 58 ? rchar2 :
+                            text_cell_column == 59 ? rchar3 :
+                            text_cell_column == 21 ? achar2 :
+                            text_cell_column == 22 ? achar3 :
+                            text_cell_column == 26 ? xchar2 :
+                            text_cell_column == 27 ? xchar3 :
+                            text_cell_column == 31 ? ychar2 :
+                            text_cell_column == 32 ? ychar3 :
+                            cell_value[7:0];
 
     assign char_fg_color = reg_fg_palette_color[cell_fg_color_index];
     assign char_bg_color = reg_bg_palette_color[cell_bg_color_index];
