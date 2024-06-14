@@ -304,6 +304,7 @@ initial $readmemh("../ram/ram.bits", reg_bram);
 
 `define CODE_BYTE reg_bram[`PC]
 `define DATA_BYTE reg_bram[`ADDR]
+`define STACK_BYTE reg_bram['SP]
 
 `LOGIC_9 sext_a_9; assign sext_a_9 = {`A[7], `A};
 `LOGIC_32 sext_a_32; assign sext_a_32 = {`A[7] ? `ONES_24 : `ZERO_24, `A};
@@ -801,6 +802,7 @@ logic sub_ea_src_c; assign sub_ea_src_c = sub_ea_src[32];
 `define END_OPER(op)        op <= 0
 `define END_OPER_INSTR(op)  `END_OPER(op); `END_INSTR
 `define STORE_AFTER_OP(op)  `END_OPER(op); store_to_address <= 1
+`define STORE_DST           store_to_address <= 1
 
 logic address_text_peripheral;
 assign address_text_peripheral = (reg_address[15:7] == `TEXT_PERIPH_BASE_HIGH_PART);
@@ -910,7 +912,6 @@ always @(posedge i_rst or posedge i_clk) begin
         am_AIY_a_y <= 0;
         am_IMM_m <= 0;
         am_PCR_r <= 0;
-        am_STK_s <= 0;
         am_STK_s <= 0;
         am_ZIIX_ZP_X <= 0;
         am_ZIIY_ZP_y <= 0;
@@ -1184,8 +1185,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                     end
 
                                 8'h08: begin
-                                        op_PHP <= 1;
-                                        am_STK_s <= 1;
+                                        // PHP
+                                        var_hw_address = dec_sp;
+                                        `SP <= var_hw_address;
+                                        `ADDR <= var_hw_address;
+                                        `DST <= `P;
+                                        `STORE_DST;
                                     end
 
                                 8'h09: begin
@@ -1458,8 +1463,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                     end
 
                                 8'h48: begin
-                                        op_PHA <= 1;
-                                        am_STK_s <= 1;
+                                        // PHA
+                                        var_hw_address = dec_sp;
+                                        `SP <= var_hw_address;
+                                        `ADDR <= var_hw_address;
+                                        `DST <= `A;
+                                        `STORE_DST;
                                     end
 
                                 8'h49: begin
@@ -1531,8 +1540,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                     end
 
                                 8'h5A: begin
-                                        op_PHY <= 1;
-                                        am_STK_s <= 1;
+                                        // PHY
+                                        var_hw_address = dec_sp;
+                                        `SP <= var_hw_address;
+                                        `ADDR <= var_hw_address;
+                                        `DST <= `Y;
+                                        `STORE_DST;
                                     end
 
                                 8'h5D: begin
@@ -2045,8 +2058,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                     end
 
                                 8'hDA: begin
-                                        op_PHX <= 1;
-                                        am_STK_s <= 1;
+                                        // PHX
+                                        var_hw_address = dec_sp;
+                                        `SP <= var_hw_address;
+                                        `ADDR <= var_hw_address;
+                                        `DST <= `X;
+                                        `STORE_DST;
                                     end
 
                                 8'hDB: begin
