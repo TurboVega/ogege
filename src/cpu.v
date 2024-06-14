@@ -2202,24 +2202,97 @@ always @(posedge i_rst or posedge i_clk) begin
                     3: begin // 6502 cycle 3
                             if (am_IMM_m) begin
                                 am_IMM_m <= 0;
+                                var_ram_byte <= `ADDR0;
                                 if (op_ADC) begin
+                                    `do_uext_var_9;
+                                    `do_adc_a_var; `A <= adc_a_var;
+                                    `do_adc_a_var_n; `N <= adc_a_var_n;
+                                    `do_adc_a_var_v; `V <= adc_a_var_v;
+                                    `do_adc_a_var_z; `Z <= adc_a_var_z;
+                                    `do_adc_a_var_c; `C <= adc_a_var_c;
+                                    `END_OPER_INSTR(op_ADC);
                                 end else if (op_AND) begin
+                                    `do_and_a_var; `A <= and_a_var;
+                                    `do_and_a_var_n; `N <= and_a_var_n;
+                                    `do_and_a_var_z; `Z <= and_a_var_z;
+                                    `END_OPER_INSTR(op_AND);
+                                end else if (op_ASL) begin
+                                    `do_asl_var; `DST <= var_ram_byte;
+                                    `do_asl_var_n; `N <= asl_var_n;
+                                    `do_asl_var_z; `Z <= asl_var_z;
+                                    `do_asl_var_c; `C <= asl_var_c;
+                                    `STORE_AFTER_OP(op_ASL);
                                 end else if (op_BIT) begin
+                                    `do_and_a_var;
+                                    `do_and_a_var_n; `N <= and_a_var_n;
+                                    `do_and_a_var_v; `V <= and_a_var_v;
+                                    `do_and_a_var_z; `Z <= and_a_var_z;
+                                    `END_OPER_INSTR(op_BIT);
                                 end else if (op_CMP) begin
+                                    `do_uext_var_9;
+                                    `do_sub_a_var;
+                                    `do_sub_a_var_n; `N <= sub_a_var_n;
+                                    `do_sub_a_var_v; `V <= sub_a_var_v;
+                                    `do_sub_a_var_z; `Z <= sub_a_var_z;
+                                    `do_sub_a_var_c; `C <= sub_a_var_c;
+                                    `END_OPER_INSTR(op_CMP);
                                 end else if (op_CPX) begin
+                                    `do_uext_var_9;
+                                    `do_sub_x_var;
+                                    `do_sub_x_var_n; `N <= sub_x_var_n;
+                                    `do_sub_x_var_v; `V <= sub_x_var_v;
+                                    `do_sub_x_var_z; `Z <= sub_x_var_z;
+                                    `do_sub_x_var_c; `C <= sub_x_var_c;
+                                    `END_OPER_INSTR(op_CPX);
                                 end else if (op_CPY) begin
+                                    `do_uext_var_9;
+                                    `do_sub_y_var;
+                                    `do_sub_y_var_n; `N <= sub_y_var_n;
+                                    `do_sub_y_var_v; `V <= sub_y_var_v;
+                                    `do_sub_y_var_z; `Z <= sub_y_var_z;
+                                    `do_sub_y_var_c; `C <= sub_y_var_c;
+                                    `END_OPER_INSTR(op_CPY);
                                 end else if (op_EOR) begin
+                                    `do_eor_a_var; `A <= eor_a_var;
+                                    `do_eor_a_var_n; `N <= eor_a_var_n;
+                                    `do_eor_a_var_z; `Z <= eor_a_var_z;
+                                    `END_OPER_INSTR(op_EOR);
                                 end else if (op_LDA) begin
-                                    `A <= `ADDR0; // Immediate data
+                                    `A <= var_ram_byte;
+                                    `N <= var_ram_byte[7];
+                                    `Z <= (var_ram_byte == `ZERO_8) ? 1 : 0;
                                     `END_OPER_INSTR(op_LDA);
                                 end else if (op_LDX) begin
-                                    `X <= `ADDR0; // Immediate data
+                                    `X <= var_ram_byte;
+                                    `N <= var_ram_byte[7];
+                                    `Z <= (var_ram_byte == `ZERO_8) ? 1 : 0;
                                     `END_OPER_INSTR(op_LDX);
                                 end else if (op_LDY) begin
-                                    `Y <= `ADDR0; // Immediate data
+                                    `Y <= var_ram_byte;
+                                    `N <= var_ram_byte[7];
+                                    `Z <= (var_ram_byte == `ZERO_8) ? 1 : 0;
                                     `END_OPER_INSTR(op_LDY);
                                 end else if (op_ORA) begin
+                                    `do_or_a_var; `A <= or_a_var;
+                                    `do_or_a_var_n; `N <= or_a_var_n;
+                                    `do_or_a_var_z; `Z <= or_a_var_z;
+                                    `END_OPER_INSTR(op_ORA);
                                 end else if (op_SBC) begin
+                                    `do_uext_var_9;
+                                    `do_sbc_a_var; `A <= sbc_a_var;
+                                    `do_sbc_a_var_c; `C <= sbc_a_var_c;
+                                    `do_sbc_a_var_v; `V <= sbc_a_var_v;
+                                    `do_sbc_a_var_n; `N <= sbc_a_var_n;
+                                    `do_sbc_a_var_z; `Z <= sbc_a_var_z;
+                                    `END_OPER_INSTR(op_SBC);
+                                end else if (op_SUB) begin
+                                    `do_uext_var_9;
+                                    `do_sub_a_var; `A <= sub_a_var;
+                                    `do_sub_a_var_n; `N <= sub_a_var_n;
+                                    `do_sub_a_var_v; `V <= sub_a_var_v;
+                                    `do_sub_a_var_z; `Z <= sub_a_var_z;
+                                    `do_sub_a_var_c; `C <= sub_a_var_c;
+                                    `END_OPER_INSTR(op_SUB);
                                 end
                             end else if (am_PCR_r) begin
                                 am_PCR_r <= 0;
