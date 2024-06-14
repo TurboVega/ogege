@@ -1194,8 +1194,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                     end
 
                                 8'h0A: begin
-                                        op_ASL <= 1;
-                                        am_ACC_A <= 1;
+                                        // ASL
+                                        `A <= asl_a;
+                                        `N <= asl_a_n;
+                                        `Z <= asl_a_z;
+                                        `C <= asl_a_c;
+                                        `END_INSTR;
                                     end
 
                                 8'h0C: begin
@@ -1342,8 +1346,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                     end
 
                                 8'h2A: begin
-                                        op_ROL <= 1;
-                                        am_ACC_A <= 1;
+                                        // ROL
+                                        `A <= rol_a;
+                                        `N <= rol_a_n;
+                                        `Z <= rol_a_z;
+                                        `C <= rol_a_c;
+                                        `END_INSTR;
                                     end
 
                                 8'h2C: begin
@@ -1460,8 +1468,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                     end
 
                                 8'h4A: begin
-                                        op_LSR <= 1;
-                                        am_ACC_A <= 1;
+                                        // LSR
+                                        `A <= lsr_a;
+                                        `N <= lsr_a_n;
+                                        `Z <= lsr_a_z;
+                                        `C <= lsr_a_c;
+                                        `END_INSTR;
                                     end
 
                                 8'h4C: begin
@@ -1569,8 +1581,12 @@ always @(posedge i_rst or posedge i_clk) begin
                                     end
 
                                 8'h6A: begin
-                                        op_ROR <= 1;
-                                        am_ACC_A <= 1;
+                                        // ROR
+                                        `A <= ror_a;
+                                        `N <= ror_a_n;
+                                        `Z <= ror_a_z;
+                                        `C <= ror_a_c;
+                                        `END_INSTR;
                                     end
 
                                 8'h6C: begin
