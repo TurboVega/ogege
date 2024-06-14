@@ -61,7 +61,7 @@ static const char* lines[] = {
  " . . . . . . . . : . . . . . . .  LDY      . . . . . . . . : . . . . . . .  WAI ", //55
  "                                                                                ", //56
  "                                                                                ", //57
- "#x pc:xxxx sp:xxxx a:xx x:xx y:xx ps:xx addr:xxxx i:xx d:xx                     ", //58
+ "#? pc:???? sp:???? a:?? x:?? y:?? ps:?? addr:???? i:?? d:??                     ", //58
  "================================================================================"  //59
 //00000000001111111111222222222233333333334444444444555555555566666666667777777777
 //01234567890123456789012345678901234567890123456789012345678901234567890123456789
@@ -74,6 +74,17 @@ int main() {
             unsigned char code = 0x20;
             if (c < 80 && r < 60) {
                 code = lines[r][c];
+                if (code == '/') color = 0x80;
+                else if (c > 0 && code != ' ' && lines[r][c-1] == '/') color = 0xF0;
+                else if (r >= 7 && r <= 55) {
+                    if (c <= 31) {
+                        if ((c & 2) == 0) color = 0x90;
+                        else color = 0x07;
+                    } else if (c >= 42 && c <= 73) {
+                        if ((c & 2) == 0) color = 0x90;
+                        else color = 0x07;                        
+                    }
+                } else if (code == '?') color = 0xF0;
             }
             printf("%02hX%02hX\n", color, code);
         }

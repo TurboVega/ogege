@@ -172,7 +172,7 @@ module text_area8x8 (
     logic [7:0] ychar3; assign ychar3 = (i_y[3:0]<10 ? i_y[3:0]+8'h30 : i_y[3:0]+8'h41-8'd10);
 
     assign cell_char_code = (text_cell_row != 58) ? cell_value[7:0] :
-                            text_cell_column == 0 ? cychar :
+                            text_cell_column == 1 ? cychar :
                             text_cell_column == 6 ? char0 :
                             text_cell_column == 7 ? char1 :
                             text_cell_column == 8 ? char2 :
@@ -183,8 +183,8 @@ module text_area8x8 (
                             text_cell_column == 48 ? adchar3 :
                             text_cell_column == 52 ? cchar2 :
                             text_cell_column == 53 ? cchar3 :
-                            text_cell_column == 58 ? rchar2 :
-                            text_cell_column == 59 ? rchar3 :
+                            text_cell_column == 57 ? rchar2 :
+                            text_cell_column == 58 ? rchar3 :
                             text_cell_column == 21 ? achar2 :
                             text_cell_column == 22 ? achar3 :
                             text_cell_column == 26 ? xchar2 :
