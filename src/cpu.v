@@ -2377,7 +2377,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                 if ((reg_src_data & reg_which) != 0) begin
                                     `PC <= `PC + {(reg_src_data[7] ? `ONES_8 : `ZERO_8), reg_src_data};
                                 end
-                                `END_OPER_INSTR(op_BBR);
+                                `END_OPER_INSTR(op_BBS);
                             end
                         end
                     6: begin // 6502 cycle 6
