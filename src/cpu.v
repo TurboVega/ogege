@@ -1222,7 +1222,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     begin
                                         op_BBR <= 1;
                                         am_PCR_r <= 1;
-                                        reg_which <= reg_code_byte[6:4];
+                                        reg_which <= (`ONE_8 << reg_code_byte[6:4]);
                                     end
 
                                 8'h10: begin
@@ -1699,7 +1699,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     begin
                                         op_SMB <= 1;
                                         am_ZPG_zp <= 1;
-                                        reg_which <= reg_code_byte[6:4];
+                                        reg_which <= (`ONE_8 << reg_code_byte[6:4]);
                                     end
 
                                 8'h88: begin
@@ -1741,7 +1741,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     begin
                                         op_BBS <= 1;
                                         am_PCR_r <= 1;
-                                        reg_which <= reg_code_byte[6:4];
+                                        reg_which <= (`ONE_8 << reg_code_byte[6:4]);
                                     end
 
                                 8'h90: begin
@@ -2295,9 +2295,13 @@ always @(posedge i_rst or posedge i_clk) begin
                                     `END_OPER_INSTR(op_SUB);
                                 end
                             end else if (am_PCR_r) begin
-                                am_PCR_r <= 0;
-                                `PC <= `PC + {(reg_address[7] ? `ONES_8 : `ZERO_8), `ADDR0};
-                                `END_INSTR;
+                                if (op_BBR | op_BBS) begin
+                                    `SRC = `CODE_BYTE;
+                                end else begin
+                                    am_PCR_r <= 0;
+                                    `PC <= `PC + {(reg_address[7] ? `ONES_8 : `ZERO_8), `ADDR0};
+                                    `END_INSTR;
+                                end
                             end else begin
                                 `ADDR1 = `CODE_BYTE;
                                 `PC <= inc_pc;
@@ -2305,8 +2309,10 @@ always @(posedge i_rst or posedge i_clk) begin
                         end
                     4: begin // 6502 cycle 4
                             if (am_ZIIX_ZP_X | am_ZIIY_ZP_y) begin
-                                `IADDR0 <= `DATA_BYTE;
+                                `IADDR1 <= `DATA_BYTE;
                                 `ADDR <= inc_addr;
+                            end else if (op_BBR | op_BBS) begin
+                                reg_data_byte <= `DATA_BYTE;
                             end else begin
                                 if (am_ABS_a) begin
                                     am_ABS_a <= 0;
@@ -2360,6 +2366,18 @@ always @(posedge i_rst or posedge i_clk) begin
                                 `IADDR1 <= `DATA_BYTE + `Y;
                                 am_ZIIY_ZP_y <= 0;
                                 load_from_address <= 1;
+                            end else if (op_BBR) begin
+                                am_PCR_r <= 0;
+                                if ((reg_src_data & reg_which) == 0) begin
+                                    `PC <= `PC + {(reg_src_data[7] ? `ONES_8 : `ZERO_8), reg_src_data};
+                                end
+                                `END_OPER_INSTR(op_BBR);
+                            end else if (op_BBS) begin
+                                am_PCR_r <= 0;
+                                if ((reg_src_data & reg_which) != 0) begin
+                                    `PC <= `PC + {(reg_src_data[7] ? `ONES_8 : `ZERO_8), reg_src_data};
+                                end
+                                `END_OPER_INSTR(op_BBR);
                             end
                         end
                     6: begin // 6502 cycle 6
