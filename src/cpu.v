@@ -1068,21 +1068,27 @@ always @(posedge i_rst or posedge i_clk) begin
                     `do_inc_var_n; `N <= inc_var_n;
                     `do_inc_var_z; `Z <= inc_var_z;
                     `STORE_AFTER_OP(op_INC);
-                end else if (op_LDA) begin
+                end else if (op_LDA | op_PLA) begin
                     `A <= var_ram_byte;
                     `N <= var_ram_byte[7];
                     `Z <= (var_ram_byte == `ZERO_8) ? 1 : 0;
+                    `END_OPER(op_PLA);
                     `END_OPER_INSTR(op_LDA);
-                end else if (op_LDX) begin
+                end else if (op_LDX | op_PLX) begin
                     `X <= var_ram_byte;
                     `N <= var_ram_byte[7];
                     `Z <= (var_ram_byte == `ZERO_8) ? 1 : 0;
+                    `END_OPER(op_PLX);
                     `END_OPER_INSTR(op_LDX);
-                end else if (op_LDY) begin
+                end else if (op_LDY | op_PLY) begin
                     `Y <= var_ram_byte;
                     `N <= var_ram_byte[7];
                     `Z <= (var_ram_byte == `ZERO_8) ? 1 : 0;
+                    `END_OPER(op_PLY);
                     `END_OPER_INSTR(op_LDY);
+                end else if (op_PLP) begin
+                    `P <= var_ram_byte;
+                    `END_OPER_INSTR(op_PLP);
                 end else if (op_LSR) begin
                     `do_lsr_var; `DST <= var_ram_byte;
                     `do_lsr_var_n; `N <= lsr_var_n;
@@ -1342,7 +1348,9 @@ always @(posedge i_rst or posedge i_clk) begin
 
                                 8'h28: begin
                                         op_PLP <= 1;
-                                        am_STK_s <= 1;
+                                        `ADDR = `SP;
+                                        `SP = inc_sp;
+                                        load_from_address <= 1;
                                     end
 
                                 8'h29: begin
@@ -1585,7 +1593,9 @@ always @(posedge i_rst or posedge i_clk) begin
 
                                 8'h68: begin
                                         op_PLA <= 1;
-                                        am_STK_s <= 1;
+                                        `ADDR = `SP;
+                                        `SP = inc_sp;
+                                        load_from_address <= 1;
                                     end
 
                                 8'h69: begin
@@ -1664,7 +1674,9 @@ always @(posedge i_rst or posedge i_clk) begin
 
                                 8'h7A: begin
                                         op_PLY <= 1;
-                                        am_STK_s <= 1;
+                                        `ADDR = `SP;
+                                        `SP = inc_sp;
+                                        load_from_address <= 1;
                                     end
 
                                 8'h7C: begin
@@ -2180,7 +2192,9 @@ always @(posedge i_rst or posedge i_clk) begin
 
                                 8'hFA: begin
                                         op_PLX <= 1;
-                                        am_STK_s <= 1;
+                                        `ADDR = `SP;
+                                        `SP = inc_sp;
+                                        load_from_address <= 1;
                                     end
 
                                 8'hFD: begin
