@@ -1100,6 +1100,9 @@ always @(posedge i_rst or posedge i_clk) begin
                     `do_or_a_var_n; `N <= or_a_var_n;
                     `do_or_a_var_z; `Z <= or_a_var_z;
                     `END_OPER_INSTR(op_ORA);
+                end else if (op_RMB) begin
+                    `DST <= var_ram_byte &(~reg_which);
+                    `STORE_AFTER_OP(op_RMB);
                 end else if (op_ROL) begin
                     `do_rol_var; `DST <= var_ram_byte;
                     `do_rol_var_n; `N <= rol_var_n;
@@ -1120,6 +1123,9 @@ always @(posedge i_rst or posedge i_clk) begin
                     `do_sbc_a_var_n; `N <= sbc_a_var_n;
                     `do_sbc_a_var_z; `Z <= sbc_a_var_z;
                     `END_OPER_INSTR(op_SBC);
+                end else if (op_SMB) begin
+                    `DST <= var_ram_byte | reg_which;
+                    `STORE_AFTER_OP(op_RMB);
                 end else if (op_SUB) begin
                     `do_uext_var_9;
                     `do_sub_a_var; `A <= sub_a_var;
@@ -1187,7 +1193,7 @@ always @(posedge i_rst or posedge i_clk) begin
                                     begin
                                         op_RMB <= 1;
                                         am_ZPG_zp <= 1;
-                                        reg_which <= reg_code_byte[6:4];
+                                        reg_which <= (`ONE_8 << reg_code_byte[6:4]);
                                     end
 
                                 8'h08: begin
