@@ -1524,11 +1524,6 @@ always @(posedge i_rst or posedge i_clk) begin
                                         am_STK_s <= 1;
                                     end
 
-                                8'h5C: begin
-                                        op_JSR <= 1;
-                                        am_AIIX_A_X <= 1;
-                                    end
-
                                 8'h5D: begin
                                         op_EOR <= 1;
                                         am_AIX_a_x <= 1;
