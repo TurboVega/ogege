@@ -44,6 +44,32 @@ module cpu (
     output  logic [7:0] o_y
 );
 
+// BRAM (lower 64KB of CPU RAM)
+
+reg bram_wea,           // write enable A
+reg bram_web,           // write enable B
+reg bram_clka,          // clock A
+reg bram_clkb,          // clock B
+reg `VB bram_dia,       // data in A
+reg `VB bram_dib,       // data in B
+reg `VHW bram_addra,    // address A
+reg `VHW bram_addrb,    // address B
+reg `VB bram_doa,       // data out A
+reg `VB bram_dob        // data out B
+
+bram_64kb bram_64kb_inst (
+        .wea(bram_wea),
+        .web(bram_web),
+        .clka(bram_clka),
+        .clkb(bram_clkb),
+        .dia(bram_dia),
+        .dib(bram_dib),
+        .addra(bram_addra),
+        .addrb(bram_addrb),
+        .doa(bram_doa),
+        .dob(bram_dob)
+    );
+
 // 6502 CPU registers
 
 reg `VB reg_a;              // Accumulator
@@ -295,10 +321,6 @@ reg op_WAI;
 `define eDST1 reg_dst_data[15:8]
 `define eDST2 reg_dst_data[23:16]
 `define eDST3 reg_dst_data[31:24]
-
-reg `VB reg_bram[0:65535]; // 64 KB
-
-initial $readmemh("../ram/ram.bits", reg_bram);
 
 //-------------------------------------------------------------------------------
 
@@ -876,6 +898,46 @@ always @(posedge i_clk) begin
         end
     end
 end
+
+always @(posedge i_clk) begin
+    if (i_rst) begin
+        o_bus_clk <= 0;
+        o_bus_we <= 0;
+        o_bus_addr <= 0;
+        o_bus_data <= 0;
+    end else begin
+        if (load_from_address) begin
+            if (initiate_read_text) begin
+                o_bus_clk <= 1;
+                o_bus_we <= 0;
+                o_bus_addr <= offset_address;
+            end else if (o_bus_clk && i_bus_data_ready) begin
+                o_bus_clk <= 0;
+            end
+        end else if (store_to_address) begin
+            if (initiate_write_text) begin
+                o_bus_clk <= 1;
+                o_bus_we <= 1;
+                o_bus_addr <= offset_address;
+                o_bus_data <= {`ZERO_24, `DST};
+            end else if (o_bus_clk) begin
+                o_bus_clk <= 0;
+            end
+        end
+    end
+end
+
+reg bram_wea,           // write enable A
+reg bram_web,           // write enable B
+reg bram_clka,          // clock A
+reg bram_clkb,          // clock B
+reg `VB bram_dia,       // data in A
+reg `VB bram_dib,       // data in B
+reg `VHW bram_addra,    // address A
+reg `VHW bram_addrb,    // address B
+reg `VB bram_doa,       // data out A
+reg `VB bram_dob        // data out B
+
 
 always @(posedge i_clk) begin
     if (push_edst1) begin
