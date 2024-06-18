@@ -304,7 +304,7 @@ initial $readmemh("../ram/ram.bits", reg_bram);
 
 `define CODE_BYTE reg_bram[`PC]
 `define DATA_BYTE reg_bram[`ADDR]
-`define STACK_BYTE reg_bram['SP]
+`define STACK_BYTE reg_bram[`SP]
 
 `LOGIC_9 sext_a_9; assign sext_a_9 = {`A[7], `A};
 `LOGIC_32 sext_a_32; assign sext_a_32 = {`A[7] ? `ONES_24 : `ZERO_24, `A};
@@ -846,6 +846,9 @@ assign o_a = `A;
 assign o_x = `X;
 assign o_y = `Y;
 
+logic push_edst0;
+logic push_edst1;
+
 always @(posedge i_clk) begin
     if (i_rst) begin
         o_bus_clk <= 0;
@@ -871,6 +874,14 @@ always @(posedge i_clk) begin
                 o_bus_clk <= 0;
             end
         end
+    end
+end
+
+always @(posedge i_clk) begin
+    if (push_edst1) begin
+        `STACK_BYTE <= `eDST1;
+    end else if (push_edst0) begin
+        `STACK_BYTE <= `eDST0;
     end
 end
 
@@ -931,6 +942,8 @@ always @(posedge i_rst or posedge i_clk) begin
         load_from_address <= 0;
         store_to_address <= 0;
         transfer_in_progress <= 0;
+        push_edst0 <= 0;
+        push_edst1 <= 1;
 
         op_ADC <= 0;
         op_ADD <= 0;
@@ -979,6 +992,12 @@ always @(posedge i_rst or posedge i_clk) begin
         op_TSB <= 0;
         op_WAI <= 0;
 
+    end else if (push_edst1) begin
+        push_edst1 <= 0;
+        push_edst0 <= 1;
+    end else if (push_edst0) begin
+        push_edst0 <= 0;
+        `END_INSTR;
     end else if (~transfer_in_progress & (load_from_address | store_to_address)) begin
         transfer_in_progress <= 1;
     end else if (transfer_in_progress) begin
@@ -2354,13 +2373,14 @@ always @(posedge i_rst or posedge i_clk) begin
                                 if (am_ABS_a) begin
                                     am_ABS_a <= 0;
                                     if (op_JMP) begin
-                                            `PC <= `ADDR;
+                                        `PC <= `ADDR;
                                         `END_OPER_INSTR(op_JMP);
                                     end else if (op_JSR) begin
-                                            `PC <= `ADDR;
+                                        `PC <= `ADDR;
                                         `END_OPER(op_JSR);
-                                        `eDST0 <= inc_pc[7:0];
-                                        `eDST1 <= inc_pc[15:8];
+                                        `eDST0 <= `PC[7:0];
+                                        `eDST1 <= `PC[15:8];
+                                        push_edst0 <= 1;
                                     end else if (op_STA) begin
                                         `DST <= `A;
                                         `STORE_AFTER_OP(op_STA);
