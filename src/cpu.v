@@ -44,32 +44,6 @@ module cpu (
     output  logic [7:0] o_y
 );
 
-// BRAM (lower 64KB of CPU RAM)
-
-reg bram_wea,           // write enable A
-reg bram_web,           // write enable B
-reg bram_clka,          // clock A
-reg bram_clkb,          // clock B
-reg `VB bram_dia,       // data in A
-reg `VB bram_dib,       // data in B
-reg `VHW bram_addra,    // address A
-reg `VHW bram_addrb,    // address B
-reg `VB bram_doa,       // data out A
-reg `VB bram_dob        // data out B
-
-bram_64kb bram_64kb_inst (
-        .wea(bram_wea),
-        .web(bram_web),
-        .clka(bram_clka),
-        .clkb(bram_clkb),
-        .dia(bram_dia),
-        .dib(bram_dib),
-        .addra(bram_addra),
-        .addrb(bram_addrb),
-        .doa(bram_doa),
-        .dob(bram_dob)
-    );
-
 // 6502 CPU registers
 
 reg `VB reg_a;              // Accumulator

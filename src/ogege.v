@@ -118,13 +118,23 @@ logic `VW bus_wr_data;
 logic `VW bus_rd_data;
 logic bus_rd_ready;
 
+// Connection to BRAM peripheral
+logic periph_bram_stb; assign periph_bram_stb = bus_clk;
+logic periph_bram_we; assign periph_bram_we = bus_we;
+logic 'VHW periph_bram_addr; assign periph_bram_addr = bus_addr`VHW;
+logic 'VB periph_bram_i_data; assign periph_bram_i_data = bus_wr_data`VB;
+logic 'VB periph_bram_o_data; assign bus_rd_data'VB = periph_bram_o_data;
+logic periph_bram_o_data_ready; assign bus_rd_ready = periph_bram_o_data_ready;
+
 // Connection to text area peripheral
 logic periph_text_stb; assign periph_text_stb = bus_clk;
 logic periph_text_we; assign periph_text_we = bus_we;
 logic [6:0] periph_text_addr; assign periph_text_addr = bus_addr[6:0];
 logic [7:0] periph_text_i_data; assign periph_text_i_data = bus_wr_data[7:0];
 logic [7:0] periph_text_o_data; assign bus_rd_data[7:0] = periph_text_o_data;
-logic periph_text_o_data_ready; assign bus_rd_ready = periph_text_o_data_ready;
+
+logic periph_text_o_data_ready; assign bus_rd_ready =
+    periph_bram_o_data_ready | periph_text_o_data_ready +;
 
 logic [3:0] cur_cycle;
 logic [15:0] cur_pc;
@@ -161,6 +171,29 @@ text_area8x8 text_area8x8_inst (
     .i_y(cur_y)
 );
 
+reg bram_web;
+reg bram_clkb;
+reg `VB bram_dib;
+reg `VHW bram_addrb;
+reg `VB bram_dob;
+reg dram_drb;
+
+bram_64kb bram_64kb_inst (
+        .wea(periph_bram_we),
+        .web(bram_web),
+        .clka(periph_bram_stb),
+        .clkb(bram_clkb),
+        .dia(periph_bram_i_data),
+        .dib(bram_dib),
+        .addra(periph_bram_addr),
+        .addrb(bram_addrb),
+        .doa(periph_bram_o_data),
+        .dob(bram_dob),
+        .dra(periph_bram_o_data_ready),
+        .drb(dram_drb)
+    );
+
+// The CPUs!
 cpu cpu_inst (
     .i_rst(rst_s),
 	.i_clk(pix_clk),
@@ -179,6 +212,13 @@ cpu cpu_inst (
     .o_x(cur_x),
     .o_y(cur_y)
 );
+
+always @(posedge rst_s) begin
+    bram_web <= 0;
+    bram_clkb <= 0;
+    bram_dib <= 0;
+    bram_addrb <= 0;
+end
 
 assign rst_s = ~rstn_i;
 assign o_led = 8'b0;
