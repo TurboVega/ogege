@@ -18,9 +18,6 @@
 `define RESET_SP_ADDRESS            16'h0100 // Initial stack pointer
 `define RESET_STATUS_BITS           8'b00110100 // initial program status flags
 
-`define TEXT_PERIPH_BASE_ADDRESS    16'hFF00 // location of text area peripheral
-`define TEXT_PERIPH_BASE_HIGH_PART  9'h1FE   // highest 9 bits of address
-
 `define VB  [7:0]
 `define VHW [15:0]
 `define VW  [31:0]
@@ -799,9 +796,6 @@ logic sub_ea_src_c; assign sub_ea_src_c = sub_ea_src[32];
 `define END_OPER_INSTR(op)  `END_OPER(op); `END_INSTR
 `define STORE_AFTER_OP(op)  `END_OPER(op); store_to_address <= 1
 `define STORE_DST           store_to_address <= 1
-
-logic address_text_peripheral;
-assign address_text_peripheral = (reg_address[15:7] == `TEXT_PERIPH_BASE_HIGH_PART);
 
 logic initiate_read_text;
 assign initiate_read_text =

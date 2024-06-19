@@ -16,6 +16,7 @@
 
 module text_area8x8 (
     input  wire i_rst,
+    input  wire i_cs,
     input  wire i_pix_clk,
     input  wire i_blank,
     input  wire i_cpu_clk,
@@ -263,6 +264,8 @@ module text_area8x8 (
             reg_cursor_row <= 0;
             reg_cursor_column <= 0;
             o_data_ready <= 0;
+        end else if (~i_cs) begin
+            // do nothing
         end else if (~i_stb & reg_clka) begin
             reg_clka <= 0;
             if (~reg_wea) begin

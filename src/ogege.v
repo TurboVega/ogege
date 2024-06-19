@@ -11,8 +11,17 @@
 
 `default_nettype none
 
-`define VB  [7:0]
-`define VHW [15:0]
+// BRAM peripheral addresses range 00000000..0FFFF, except I/O area
+`define BRAM_PERIPH_BASE_HIGH_PART  16'h0000 // highest 16 bits of address
+
+// Text area peripheral addresses range 0000FF00..0000FF7F
+`define TEXT_PERIPH_BASE_HIGH_PART  25'h00001FE // highest 25 bits of address
+
+// PSRAM peripheral addresses range 40000000..407FFFFF
+`define PSRAM_PERIPH_BASE_HIGH_PART  8'h40 // highest 8 bits of address
+
+`define VB  'VB
+`define VHW 'VHW
 `define VW  [31:0]
 
 module ogege (
@@ -25,7 +34,7 @@ module ogege (
 	output wire       o_hsync,
 	output wire       o_clk,
 	output wire       o_rst,
-	output wire [7:0] o_led/*,
+	output wire 'VB o_led/*,
 	output wire       o_psram_csn,
 	output wire       o_psram_sclk,
 	inout  wire       io_psram_data0,
@@ -118,36 +127,65 @@ logic `VW bus_wr_data;
 logic `VW bus_rd_data;
 logic bus_rd_ready;
 
+// Peripheral chip selects
+logic periph_psram_cs;
+logic periph_bram_cs;
+logic periph_text_cs;
+
+// Connection to PSRAM peripheral
+assign periph_psram_cs = (bus_addr[31:23] == `PSRAM_PERIPH_BASE_HIGH_PART);
+logic periph_psram_stb; assign periph_psram_stb = bus_clk;
+logic periph_psram_we; assign periph_psram_we = bus_we;
+logic [23:0] periph_psram_addr; assign periph_psram_addr = bus_addr[23:0];
+logic 'VB periph_psram_i_data; assign periph_psram_i_data = bus_wr_data`VB;
+logic 'VB periph_psram_o_data;
+logic periph_psram_o_data_ready;
+
 // Connection to BRAM peripheral
+assign periph_bram_cs = (bus_addr[31:16] == `BRAM_PERIPH_BASE_HIGH_PART) & (~periph_text_cs);
 logic periph_bram_stb; assign periph_bram_stb = bus_clk;
 logic periph_bram_we; assign periph_bram_we = bus_we;
 logic 'VHW periph_bram_addr; assign periph_bram_addr = bus_addr`VHW;
 logic 'VB periph_bram_i_data; assign periph_bram_i_data = bus_wr_data`VB;
-logic 'VB periph_bram_o_data; assign bus_rd_data'VB = periph_bram_o_data;
-logic periph_bram_o_data_ready; assign bus_rd_ready = periph_bram_o_data_ready;
+logic 'VB periph_bram_o_data;
+logic periph_bram_o_data_ready;
 
 // Connection to text area peripheral
+assign periph_text_cs = (bus_addr[31:7] == `TEXT_PERIPH_BASE_HIGH_PART);
 logic periph_text_stb; assign periph_text_stb = bus_clk;
 logic periph_text_we; assign periph_text_we = bus_we;
 logic [6:0] periph_text_addr; assign periph_text_addr = bus_addr[6:0];
-logic [7:0] periph_text_i_data; assign periph_text_i_data = bus_wr_data[7:0];
-logic [7:0] periph_text_o_data; assign bus_rd_data[7:0] = periph_text_o_data;
+logic 'VB periph_text_i_data; assign periph_text_i_data = bus_wr_data'VB;
+logic 'VB periph_text_o_data;
+logic periph_text_o_data_ready;
 
-logic periph_text_o_data_ready; assign bus_rd_ready =
-    periph_bram_o_data_ready | periph_text_o_data_ready +;
+// Returned (read) values from peripherals
+
+assign bus_rd_data =
+    periph_bram_cs ?  periph_bram_o_data :
+    periph_psram_cs ? periph_psram_o_data :
+    periph_text_cs ? periph_text_o_data :
+    `ZERO_8;
+
+assign bus_rd_ready =
+    periph_bram_cs ?  periph_bram_o_data_ready :
+    periph_psram_cs ? periph_psram_o_data_ready :
+    periph_text_cs ? periph_text_o_data_ready :
+    1'b0;
 
 logic [3:0] cur_cycle;
-logic [15:0] cur_pc;
-logic [15:0] cur_ad;
-logic [7:0] cur_cb;
-logic [7:0] cur_rb;
-logic [7:0] cur_a;
-logic [7:0] cur_x;
-logic [7:0] cur_y;
+logic 'VHW cur_pc;
+logic 'VHW cur_ad;
+logic 'VB cur_cb;
+logic 'VB cur_rb;
+logic 'VB cur_a;
+logic 'VB cur_x;
+logic 'VB cur_y;
 
 // Text area peripheral
 text_area8x8 text_area8x8_inst (
 	.i_rst(rst_s),
+    .i_cs(periph_text_cs),
 	.i_pix_clk(pix_clk),
 	.i_blank(blank_s),
     .i_cpu_clk(pix_clk),

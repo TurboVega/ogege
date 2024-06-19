@@ -11,6 +11,8 @@
 
 module bram_64kb(
         input wire rst,             // reset
+        input wire csa,             // chip select A
+        input wire csb,             // chip select B
         input wire wea,             // write enable A
         input wire web,             // write enable B
         input wire clka,            // clock A
@@ -32,6 +34,8 @@ module bram_64kb(
     always @(posedge clka) begin
         if (rst) begin
             dra <= 0;
+        end else if (~csa)
+            // do nothing
         end else if (wea) begin
             bram[addra] <= dia;
         end else begin
@@ -43,6 +47,8 @@ module bram_64kb(
     always @(posedge clkb) begin
         if (rst) begin
             drb <= 0;
+        end else if (~csb)
+            // do nothing
         end else if (web) begin
             bram[addra] <= dib;
         end else begin

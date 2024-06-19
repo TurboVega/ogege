@@ -51,6 +51,7 @@ typedef enum {
 
 module psram (
 	input   wire i_rst,
+    input   wire i_cs,
 	input   wire i_clk,
     input   reg i_stb,
 	input   reg i_we,
@@ -185,7 +186,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
             // Idle, awaiting command
             IDLE: begin
-                    if (i_stb) begin
+                    if (i_cs & i_stb) begin
                         if (i_we) begin
                             // A write to PSRAM is done by command 38H
                             // The command bits are sent 4-at-a-time, on both PSRAM chips
