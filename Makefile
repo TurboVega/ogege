@@ -1,13 +1,13 @@
 OFL   = openFPGALoader
 RM    = rm -rf
 
-CC_TOOL=/home/curtis/cc-toolchain-linux
+CC_TOOL=/home/curtis/gatemate/cc-toolchain-linux
 CC_TOOL_DIR=$(CC_TOOL)
 YOSYS = $(CC_TOOL)/bin/yosys/yosys
 P_R   = $(CC_TOOL)/bin/p_r/p_r
 
-PRFLAGS = --verbose -cCP
-YS_OPTS = -verbose -D DISP_640x480_60Hz=1
+PRFLAGS = --verbose -cCP +crf
+YS_OPTS = --verbose 3 -D DISP_640x480_60Hz=1
 BOARD = gatemate_evb_jtag
 OFLFLAGS = --cable dirtyJtag --verbose
 
@@ -22,15 +22,15 @@ ogege.asc: ogege.blif
 ogege.blif: ogege.v
 OBJS += $(SOURCEDIR)/ogege.v
 OBJS += $(SOURCEDIR)/vga_core.v
-OBJS += $(SOURCEDIR)/char_gen8x8.v
-OBJS += $(SOURCEDIR)/component_blender.v
-OBJS += $(SOURCEDIR)/color_blender.v
-OBJS += $(SOURCEDIR)/char_gen8x8.v
-OBJS += $(SOURCEDIR)/char_blender8x8.v
-OBJS += $(SOURCEDIR)/text_area8x8.v
-OBJS += $(SOURCEDIR)/text_array8x8.v
-OBJS += $(SOURCEDIR)/canvas.v
-OBJS += $(SOURCEDIR)/frame_buffer.v
+#OBJS += $(SOURCEDIR)/char_gen8x8.v
+#OBJS += $(SOURCEDIR)/component_blender.v
+#OBJS += $(SOURCEDIR)/color_blender.v
+#OBJS += $(SOURCEDIR)/char_gen8x8.v
+#OBJS += $(SOURCEDIR)/char_blender8x8.v
+#OBJS += $(SOURCEDIR)/text_area8x8.v
+#OBJS += $(SOURCEDIR)/text_array8x8.v
+#OBJS += $(SOURCEDIR)/canvas.v
+#OBJS += $(SOURCEDIR)/frame_buffer.v
 OBJS += $(SOURCEDIR)/gatemate_100MHz_pll.v
 OBJS += $(SOURCEDIR)/psram.v
 
