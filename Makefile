@@ -7,7 +7,7 @@ YOSYS = $(CC_TOOL)/bin/yosys/yosys
 P_R   = $(CC_TOOL)/bin/p_r/p_r
 
 PRFLAGS = --verbose -cCP +crf
-YS_OPTS = -verbose -D DISP_640x480_60Hz=1
+YS_OPTS = --verbose 3 -D DISP_640x480_60Hz=1
 BOARD = gatemate_evb_jtag
 OFLFLAGS = --cable dirtyJtag --verbose
 
