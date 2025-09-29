@@ -1,12 +1,11 @@
-OFL   = openFPGALoader
 RM    = rm -rf
 
-CC_TOOL=/home/curtis/gatemate/cc-toolchain-linux
+CC_TOOL=/home/curtis/gatemate/oss-cad-suite-linux-x64-20250929/oss-cad-suite
 CC_TOOL_DIR=$(CC_TOOL)
-YOSYS = $(CC_TOOL)/bin/yosys/yosys
-P_R   = $(CC_TOOL)/bin/p_r/p_r
+YOSYS = $(CC_TOOL)/bin/yosys
+P_R   = $(CC_TOOL)/bin/nextpnr-himbaechel
+OFL   = $(CC_TOOL)/bin/openFPGALoader
 
-PRFLAGS = --verbose -cCP +crf
 YS_OPTS = --verbose 3 -D DISP_640x480_60Hz=1
 BOARD = gatemate_evb_jtag
 OFLFLAGS = --cable dirtyJtag --verbose
@@ -39,12 +38,17 @@ info:
 	@echo "    To clean up: make clean"
 
 all:impl
-synth: $(TOP)_synth.v
-$(TOP)_synth.v: $(OBJS)
-	$(YOSYS) -ql synth.log -p 'read -sv $^; synth_gatemate -top $(TOP) -nomx8 -vlog $(TOP)_synth.v'
 
-$(TOP)_00.cfg: $(TOP)_synth.v $(CONSTR)
-	$(P_R) -v -i $(TOP)_synth.v -ccf $(CONSTR) -o $(TOP) $(PRFLAGS)
+synth: $(TOP)_synth.v
+       
+$(TOP)_synth.v: $(OBJS)
+	$(YOSYS) -ql synth.log -p 'read_verilog -sv $^; synth_gatemate -top $(TOP) -nomx8 -vlog -luttree -nomx8 -nomult; write_json gm_netlist.json; write_verilog gm_netlist.v;'
+	echo '** SYNTH ENDED **'
+  
+$(TOP)_00.cfg: gm_netlist.json $(CONSTR)
+	$(P_R) -o ccf=$(CONSTR) -o out=$(TOP).bit --device=CCGM1A1 --json gm_netlist.json --router router2
+	echo '** P-R ENDED **'
+
 impl:$(TOP)_00.cfg
 
 # ------ APPLE 1 ------
@@ -54,10 +58,10 @@ ogege.bin: ogege.asc
 ogege.asc: ogege.json
 ogege.json: $(SOURCEDIR)/ogege.v \
 
-jtag: $(TOP)_00.cfg.bit
+jtag: $(TOP).bit
 	sudo $(OFL) $(OFLFLAGS) -b $(BOARD) --bitstream $^
 
-jtag-flash: $(TOP)_00.cfg
+jtag-flash: $(TOP).bit
 	sudo $(OFL) $(OFLFLAGS) -b $(BOARD) -f --verify $^
 
 # ------ HELPERS ------

@@ -5,8 +5,8 @@ Pin_in  "rstn_i" Loc = "IO_SB_B7" | PULLUP=true;
 Pin_out "o_clk" Loc = "IO_NB_B6"; #JB9
 Pin_out "o_rst" Loc = "IO_NB_B7"; #JB10
 
-Pin_in  "ps2clk" Loc = "IO_WB_A0";
-Pin_in  "ps2data" Loc = "IO_WB_B0";
+#Pin_in  "ps2clk" Loc = "IO_WB_A0";
+#Pin_in  "ps2data" Loc = "IO_WB_B0";
 
 #J1
 Pin_out "o_r[0]" Loc = "IO_WB_B3";
@@ -28,14 +28,14 @@ Pin_out "o_hsync" Loc = "IO_WB_A1";
 Pin_out "o_vsync" Loc = "IO_WB_B1";
 
 # leds
-Pin_out   "o_led"   Loc = "IO_SB_B6"; # LED D1
-#Pin_out   "o_led[1]"   Loc = "IO_EB_B2"; # LED D2
-#Pin_out   "o_led[2]"   Loc = "IO_EB_B3"; # LED D3
-#Pin_out   "o_led[3]"   Loc = "IO_EB_B4"; # LED D4
-#Pin_out   "o_led[4]"   Loc = "IO_EB_B5"; # LED D5
-#Pin_out   "o_led[5]"   Loc = "IO_EB_B6"; # LED D6
-#Pin_out   "o_led[6]"   Loc = "IO_EB_B7"; # LED D7
-#Pin_out   "o_led[7]"   Loc = "IO_EB_B8"; # LED D8
+Pin_out   "o_led[0]"   Loc = "IO_SB_B6"; # LED D1
+Pin_out   "o_led[1]"   Loc = "IO_EB_B2"; # LED D2
+Pin_out   "o_led[2]"   Loc = "IO_EB_B3"; # LED D3
+Pin_out   "o_led[3]"   Loc = "IO_EB_B4"; # LED D4
+Pin_out   "o_led[4]"   Loc = "IO_EB_B5"; # LED D5
+Pin_out   "o_led[5]"   Loc = "IO_EB_B6"; # LED D6
+Pin_out   "o_led[6]"   Loc = "IO_EB_B7"; # LED D7
+Pin_out   "o_led[7]"   Loc = "IO_EB_B8"; # LED D8
 
 #PSRAM
 Pin_out     "o_psram_csn"       Loc = "IO_WC_A4"; # PSRAM CSn
