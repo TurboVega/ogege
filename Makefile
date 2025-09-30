@@ -7,8 +7,8 @@ P_R   = $(CC_TOOL)/bin/nextpnr-himbaechel
 OFL   = $(CC_TOOL)/bin/openFPGALoader
 
 YS_OPTS = --verbose 3 -D DISP_640x480_60Hz=1
-BOARD = gatemate_evb_jtag
-OFLFLAGS = --cable dirtyJtag --verbose
+BOARD = olimex_gatemateevb --cable dirtyJtag
+OFLFLAGS = --verbose
 
 SOURCEDIR = src
 TOP    = ogege
@@ -51,7 +51,6 @@ $(TOP)_00.cfg: gm_netlist.json $(CONSTR)
 
 impl:$(TOP)_00.cfg
 
-# ------ APPLE 1 ------
 ogege: dir ogege.bit
 
 ogege.bin: ogege.asc

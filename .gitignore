@@ -3,6 +3,7 @@
 *.txt
 *.log
 *.cfg*
+*.crf
 *.prn
 *.pin
 *.bit
@@ -17,5 +18,8 @@
 *.pathes
 *.pos
 *.ref*
+*.json
+*.lst
+*netlist*
 log/
 net/
