@@ -20,6 +20,7 @@
 *.ref*
 *.json
 *.lst
+*.asc
 *netlist*
 log/
 net/

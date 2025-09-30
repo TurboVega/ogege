@@ -5,6 +5,7 @@ CC_TOOL_DIR=$(CC_TOOL)
 YOSYS = $(CC_TOOL)/bin/yosys
 P_R   = $(CC_TOOL)/bin/nextpnr-himbaechel
 OFL   = $(CC_TOOL)/bin/openFPGALoader
+GMPACK = $(CC_TOOL)/bin/gmpack
 
 YS_OPTS = --verbose 3 -D DISP_640x480_60Hz=1
 BOARD = olimex_gatemateevb --cable dirtyJtag
@@ -46,12 +47,15 @@ $(TOP)_synth.v: $(OBJS)
 	echo '** SYNTH ENDED **'
   
 $(TOP)_00.cfg: gm_netlist.json $(CONSTR)
-	$(P_R) -o ccf=$(CONSTR) -o out=$(TOP).bit --device=CCGM1A1 --json gm_netlist.json --router router2
+	$(P_R) -o ccf=$(CONSTR) -o out=$(TOP).asc --device=CCGM1A1 --json gm_netlist.json --router router2
 	echo '** P-R ENDED **'
 
 impl:$(TOP)_00.cfg
 
-ogege: dir ogege.bit
+ogege: dir $(TOP).bit
+
+$(TOP).bit:	$(TOP).asc
+	$(GMPACK) $(TOP).asc $(TOP).bit
 
 ogege.bin: ogege.asc
 ogege.asc: ogege.json

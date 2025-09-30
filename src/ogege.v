@@ -303,7 +303,8 @@ assign new_color =
 	state_color;
 
 assign rst_s = ~rstn_i;
-assign o_led = 8'b10101010;
+assign o_led[0:4] = text_row_count[4:0];
+assign o_led[7:5] = 3'b0;
 assign o_clk = clk_i;
 assign o_rst = rstn_i;
 assign blank_s = ~active_s;
