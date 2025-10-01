@@ -17,9 +17,8 @@ CONSTR = src/gatemate1a_evb.ccf
 
 #all: ogege prog
 
-ogege.bin: ogege.asc
-ogege.asc: ogege.blif
-ogege.blif: ogege.v
+ogege.bin: $(TOP).asc
+
 OBJS += $(SOURCEDIR)/ogege.v
 OBJS += $(SOURCEDIR)/vga_core.v
 #OBJS += $(SOURCEDIR)/char_gen8x8.v
@@ -38,21 +37,17 @@ info:
 	@echo "       To build: make all"
 	@echo "    To clean up: make clean"
 
-all:impl
+all:$(TOP).bit
 
 synth: $(TOP)_synth.v
-       
-$(TOP)_synth.v: $(OBJS)
-	$(YOSYS) -ql synth.log -p 'read_verilog -sv $^; synth_gatemate -top $(TOP) -nomx8 -vlog -luttree -nomx8 -nomult; write_json gm_netlist.json; write_verilog gm_netlist.v;'
+
+gm_netlist.json: $(OBJS)
+	$(YOSYS) -ql synth.log -p 'read_verilog -sv $(OBJS); synth_gatemate -nomx8 -nomult -luttree -top $(TOP) -json gm_netlist.json -vlog gm_netlist.v;'
 	echo '** SYNTH ENDED **'
   
-$(TOP)_00.cfg: gm_netlist.json $(CONSTR)
-	$(P_R) -o ccf=$(CONSTR) -o out=$(TOP).asc --device=CCGM1A1 --json gm_netlist.json --router router2
+$(TOP).asc: gm_netlist.json $(CONSTR)
+	$(P_R) -o ccf=$(CONSTR) -o out=$(TOP).asc --device=CCGM1A1 --json gm_netlist.json --router router2 --log nextpnr.log
 	echo '** P-R ENDED **'
-
-impl:$(TOP)_00.cfg
-
-ogege: dir $(TOP).bit
 
 $(TOP).bit:	$(TOP).asc
 	$(GMPACK) $(TOP).asc $(TOP).bit
@@ -69,8 +64,8 @@ jtag-flash: $(TOP).bit
 
 # ------ HELPERS ------
 clean:
-	$(RM) *.log *_synth.v *.history *.txt *.refwire *.refparam
-	$(RM) *.refcomp *.pos *.pathes *.path_struc *.net *.id *.prn
+	$(RM) *.log *_synth.v *.history *.txt *.refwire *.refparam *.asc
+	$(RM) *.refcomp *.pos *.pathes *.path_struc *.net *.id *.prn *.bit
 	$(RM) *_00.v *_00pre* *.used *.sdf *.place *.pin *.cfg* *.cdf *.idh
 
 .SECONDARY:
