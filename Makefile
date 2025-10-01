@@ -1,15 +1,15 @@
-OFL   = openFPGALoader
 RM    = rm -rf
 
-CC_TOOL=/home/curtis/gatemate/cc-toolchain-linux
+CC_TOOL=/home/curtis/gatemate/oss-cad-suite-linux-x64-20250929/oss-cad-suite
 CC_TOOL_DIR=$(CC_TOOL)
-YOSYS = $(CC_TOOL)/bin/yosys/yosys
-P_R   = $(CC_TOOL)/bin/p_r/p_r
+YOSYS = $(CC_TOOL)/bin/yosys
+P_R   = $(CC_TOOL)/bin/nextpnr-himbaechel
+OFL   = $(CC_TOOL)/bin/openFPGALoader
+GMPACK = $(CC_TOOL)/bin/gmpack
 
-PRFLAGS = --verbose -cCP +crf
 YS_OPTS = --verbose 3 -D DISP_640x480_60Hz=1
-BOARD = gatemate_evb_jtag
-OFLFLAGS = --cable dirtyJtag --verbose
+BOARD = olimex_gatemateevb --cable dirtyJtag
+OFLFLAGS = --verbose
 
 SOURCEDIR = src
 TOP    = ogege
@@ -17,56 +17,56 @@ CONSTR = src/gatemate1a_evb.ccf
 
 #all: ogege prog
 
-ogege.bin: ogege.asc
-ogege.asc: ogege.blif
-ogege.blif: ogege.v
+ogege.bin: $(TOP).asc
+
 OBJS += $(SOURCEDIR)/ogege.v
 OBJS += $(SOURCEDIR)/vga_core.v
-OBJS += $(SOURCEDIR)/char_gen8x8.v
 OBJS += $(SOURCEDIR)/component_blender.v
 OBJS += $(SOURCEDIR)/color_blender.v
 OBJS += $(SOURCEDIR)/char_gen8x8.v
 OBJS += $(SOURCEDIR)/char_blender8x8.v
 OBJS += $(SOURCEDIR)/text_area8x8.v
 OBJS += $(SOURCEDIR)/text_array8x8.v
-OBJS += $(SOURCEDIR)/canvas.v
-OBJS += $(SOURCEDIR)/frame_buffer.v
+#OBJS += $(SOURCEDIR)/canvas.v
+#OBJS += $(SOURCEDIR)/frame_buffer.v
 OBJS += $(SOURCEDIR)/gatemate_100MHz_pll.v
 OBJS += $(SOURCEDIR)/psram.v
-OBJS += $(SOURCEDIR)/cpu.v
+#OBJS += $(SOURCEDIR)/cpu.v
 
 info:
 	@echo "       To build: make all"
 	@echo "    To clean up: make clean"
 
-all:impl
+all:$(TOP).bit
+
 synth: $(TOP)_synth.v
-$(TOP)_synth.v: $(OBJS)
-	$(YOSYS) $(YS_OPTS) -ql synth.log -p 'read -sv $^; synth_gatemate -top $(TOP) -nomx8 -vlog $(TOP)_synth.v'
 
-$(TOP)_00.cfg: $(TOP)_synth.v $(CONSTR)
-	$(P_R) -v -i $(TOP)_synth.v -ccf $(CONSTR) -o $(TOP) $(PRFLAGS)
-impl:$(TOP)_00.cfg
+gm_netlist.json: $(OBJS)
+	$(YOSYS) -ql synth.log -p 'read_verilog -sv $(OBJS); synth_gatemate -nomx8 -nomult -luttree -top $(TOP) -json gm_netlist.json -vlog gm_netlist.v;'
+	echo '** SYNTH ENDED **'
+  
+$(TOP).asc: gm_netlist.json $(CONSTR)
+	$(P_R) -o ccf=$(CONSTR) -o out=$(TOP).asc --device=CCGM1A1 --json gm_netlist.json --router router2 --log nextpnr.log
+	echo '** P-R ENDED **'
 
-ogege: dir ogege.bit
+$(TOP).bit:	$(TOP).asc
+	$(GMPACK) $(TOP).asc $(TOP).bit
 
 ogege.bin: ogege.asc
 ogege.asc: ogege.json
 ogege.json: $(SOURCEDIR)/ogege.v \
 
-jtag: $(TOP)_00.cfg.bit
+jtag: $(TOP).bit
 	sudo $(OFL) $(OFLFLAGS) -b $(BOARD) --bitstream $^
 
-jtag-flash: $(TOP)_00.cfg
+jtag-flash: $(TOP).bit
 	sudo $(OFL) $(OFLFLAGS) -b $(BOARD) -f --verify $^
 
 # ------ HELPERS ------
 clean:
-	$(RM) *.log *_synth.v *.history *.txt *.refwire *.refparam
-	$(RM) *.refcomp *.pos *.pathes *.path_struc *.net *.id *.prn *.crf
+	$(RM) *.log *_synth.v *.history *.txt *.refwire *.refparam *.asc
+	$(RM) *.refcomp *.pos *.pathes *.path_struc *.net *.id *.prn *.bit
 	$(RM) *_00.v *_00pre* *.used *.sdf *.place *.pin *.cfg* *.cdf *.idh
-	$(RM) opcodes/opcodes
-	$(RM) ram/*.o ram/*.out ram/*.map
 
 .SECONDARY:
 .PHONY: all jtag jtag-flash clean

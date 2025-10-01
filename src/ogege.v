@@ -125,10 +125,14 @@ end
 // Memory/peripheral bus (32-bit)
 wire bus_clk;
 wire bus_we;
-wire `VW bus_addr;
-wire `VW bus_wr_data;
-wire `VW bus_rd_data;
+//wire `VW bus_addr;
+//wire `VW bus_wr_data;
+//wire `VW bus_rd_data;
 wire bus_rd_ready;
+
+reg `VW bus_addr = 0;
+reg `VW bus_wr_data = 0;
+reg `VW bus_rd_data = 0;
 
 // Peripheral chip selects
 wire periph_psram_cs;
@@ -169,7 +173,7 @@ assign bus_rd_ready =
     periph_text_cs ? periph_text_o_data_ready :
     1'b0;
 
-wire [3:0] cur_cycle;
+/*wire [3:0] cur_cycle;
 wire `VHW cur_pc;
 wire `VHW cur_sp;
 wire `VW cur_ad;
@@ -178,7 +182,18 @@ wire `VB cur_db;
 wire `VB cur_a;
 wire `VB cur_x;
 wire `VB cur_y;
-wire `VB cur_ps;
+wire `VB cur_ps;*/
+
+reg [3:0] cur_cycle = 0;
+reg `VHW cur_pc = 0;
+reg `VHW cur_sp = 0;
+reg `VW cur_ad = 0;
+reg `VB cur_cb = 0;
+reg `VB cur_db = 0;
+reg `VB cur_a = 0;
+reg `VB cur_x = 0;
+reg `VB cur_y = 0;
+reg `VB cur_ps = 0;
 
 // Text area peripheral
 text_area8x8 text_area8x8_inst (
@@ -235,7 +250,7 @@ psram psram_inst (
 );
 
 // The CPUs!
-cpu cpu_inst (
+/*cpu cpu_inst (
     .i_rst(rst_s),
 	.i_cpu_clk(clk_50mhz),
 	.i_bram_clk(clk_100mhz),
@@ -255,7 +270,7 @@ cpu cpu_inst (
     .o_x(cur_x),
     .o_y(cur_y),
 	.o_ps(cur_ps)
-);
+);*/
 
 assign rst_s = ~rstn_i;
 assign o_led = 8'b0;

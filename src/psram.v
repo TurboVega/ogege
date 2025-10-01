@@ -1,9 +1,7 @@
 /*
- * canvas.v
+ * psram.v
  *
- * This module provides a scrolling background canvas,
- * based on the given screen position (scan row and column),
- * and the canvas scroll position. 
+ * This module is an interface to the PSRAM memory.
  *
  * Copyright (C) 2024 Curtis Whitley
  * License: APACHE

@@ -19,6 +19,8 @@
 *.pos
 *.ref*
 *.crf
+*.asc
+*netlist*
 ram/*.lst
 ram/*.o
 ram/*.out
