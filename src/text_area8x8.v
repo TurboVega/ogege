@@ -35,7 +35,8 @@ module text_area8x8 (
     input  wire [3:0] i_cycle,    input  wire [15:0] i_test_wr,
     input  wire [23:0] i_test_ad,
     input  wire [15:0] i_test_wr,
-    input  wire [15:0] i_test_rd
+    input  wire [15:0] i_test_rd,
+    input  wire i_test_busy
 );
 
     // The color palettes each hold 16 colors at 12 bits each (4 bits per
@@ -162,6 +163,9 @@ module text_area8x8 (
     wire [7:0] adchar6; assign adchar6 = (i_test_ad[7:4]<10 ? {`Z4,i_test_ad[7:4]}+8'h30 : {`Z4,i_test_ad[7:4]}+8'h41-8'd10);
     wire [7:0] adchar7; assign adchar7 = (i_test_ad[3:0]<10 ? {`Z4,i_test_ad[3:0]}+8'h30 : {`Z4,i_test_ad[3:0]}+8'h41-8'd10);
 
+    wire [7:0] yeschar; assign yeschar = (i_test_busy ? 8'h59 : 8'h2D);
+    wire [7:0] nochar; assign nochar = (i_test_busy ? 8'h2D : 8'h4E);
+
     assign cell_char_code =
                             // row 48, column 42
                             (text_cell_row == 48) ?
@@ -189,6 +193,12 @@ module text_area8x8 (
                               text_cell_column == 43 ? adchar5 :
                               text_cell_column == 44 ? adchar6 :
                               text_cell_column == 45 ? adchar7 :
+                              cell_value[7:0]) :
+
+                            // row 52, column 41 or 45
+                            (text_cell_row == 52) ?
+                              (text_cell_column == 41 ? yeschar :
+                              text_cell_column == 45 ? nochar :
                               cell_value[7:0]) :
 
                             // everywhere else

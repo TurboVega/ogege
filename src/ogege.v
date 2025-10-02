@@ -186,14 +186,10 @@ text_area8x8 text_area8x8_inst (
     .o_data_ready(periph_text_o_data_ready),
 	.o_color(new_color),
 
-//    .i_test_ad(24'hE5F7B2),
     .i_test_ad(periph_psram_addr),
-
-//    .i_test_wr(16'h1234),
     .i_test_wr(periph_psram_i_data),
-
-//    .i_test_rd(16'hABCD)
-    .i_test_rd(periph_psram_o_data)
+    .i_test_rd(periph_psram_o_data),
+	.i_test_busy(periph_psram_busy)
 );
 
 psram psram_inst (
@@ -224,16 +220,18 @@ psram psram_inst (
 reg [2:0] test_state;
 reg finished;
 reg success;
+reg `VHW counter;
 
 always @(posedge rst_s or posedge pix_clk) begin
 	if (rst_s) begin
 		bus_clk <= 0;
 		bus_we <= 0;
 		bus_addr <= 32'h40000000;
-		bus_wr_data <= 0;
-		test_state <= 0;
+		bus_wr_data <= 16'h0000;
+		test_state <= 3'd6;
 		finished <= 0;
 		success <= 0;
+		counter <= 0;
 	end else begin
 		case (test_state)
 			3'd0: begin
@@ -290,8 +288,15 @@ always @(posedge rst_s or posedge pix_clk) begin
 						end else begin
 							finished <= 1;
 							success <= 0;
-							test_state <= 3'd6;
+							test_state <= 3'd7;
 						end
+					end
+				end
+			3'd6: begin
+					if (counter == 16'hFFFF) begin
+						test_state = 3'd0;
+					end else begin
+						counter <= counter + 1;
 					end
 				end
 		endcase;
