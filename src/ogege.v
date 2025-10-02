@@ -275,7 +275,7 @@ always @(posedge rst_s or posedge pix_clk) begin
 								if (bus_wr_data == 32'h0000FFFF) begin
 									finished <= 1;
 									success <= 1;
-									test_state <= 3'd6;
+									test_state <= 3'd7;
 								end else begin
 									bus_addr <= 0;
 									bus_wr_data <= bus_wr_data + 1;
