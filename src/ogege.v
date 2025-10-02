@@ -186,7 +186,7 @@ text_area8x8 text_area8x8_inst (
     .o_data_ready(periph_text_o_data_ready),
 	.o_color(new_color),
 
-    .i_test_ad(periph_psram_addr),
+    .i_test_ad(bus_addr),
     .i_test_wr(periph_psram_i_data),
     .i_test_rd(periph_psram_o_data),
 	.i_test_busy(periph_psram_busy)
