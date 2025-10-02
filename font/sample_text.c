@@ -4,7 +4,7 @@ static const char* lines[] = {
 //00000000001111111111222222222233333333334444444444555555555566666666667777777777
 //01234567890123456789012345678901234567890123456789012345678901234567890123456789
  "================================================================================", //00
- "#? pc:???? sp:???? a:?? x:?? y:?? ps:?? addr:???????? i:?? d:??                 ", //01
+ "                                                                                ", //01
  "                                                                                ", //02
  "                                                                                ", //03
  "                                                                                ", //04
@@ -17,33 +17,33 @@ static const char* lines[] = {
  "                                                                                ", //11
  "                                                                                ", //12
  "                                                                                ", //13
- "                                                                                ", //14
- "                                                                                ", //15
- "                                                                                ", //16
- "                                                                                ", //17
- "                                                                                ", //18
- "                                                                                ", //19
- "                                                                                ", //20
+ "            GGGG    A    TTTTT  EEEEE  M   M    A    TTTTT  EEEEE               ", //14
+ "           G       A A     T    E      MM MM   A A     T    E                   ", //15
+ "           G      A   A    T    E      M M M  A   A    T    E                   ", //16
+ "           G  GG  AAAAA    T    EEEE   M   M  AAAAA    T    EEEE                ", //17
+ "           G   G  A   A    T    E      M   M  A   A    T    E                   ", //18
+ "           G   G  A   A    T    E      M   M  A   A    T    E                   ", //19
+ "            GGGG  A   A    T    EEEEE  M   M  A   A    T    EEEEE               ", //20
  "                                                                                ", //21
  "                                                                                ", //22
  "                                                                                ", //23
- "                                                                                ", //24
- "                                                                                ", //25
- "                                                                                ", //26
- "                                                                                ", //27
- "                                                                                ", //28
- "                                                                                ", //29
- "                                                                                ", //30
+ "                     PPPP    SSS   RRRR    AAA   M   M                          ", //24
+ "                     P   P  S   S  R   R  A   A  MM MM                          ", //25
+ "                     P   P  S      R   R  A   A  M M M                          ", //26
+ "                     P PP    SSS   RRRR   AAAAA  M   M                          ", //27
+ "                     P          S  R   R  A   A  M   M                          ", //28
+ "                     P      S   S  R   R  A   A  M   M                          ", //29
+ "                     P       SSS   R   R  A   A  M   M                          ", //30
  "                                                                                ", //31
  "                                                                                ", //32
  "                                                                                ", //33
- "                                                                                ", //34
- "                                                                                ", //35
- "                                                                                ", //36
- "                                                                                ", //37
- "                                                                                ", //38
- "                                                                                ", //39
- "                                                                                ", //40
+ "                        TTTTT  EEEEE   SSS   TTTTT                              ", //34
+ "                          T    E      S   S    T                                ", //35
+ "                          T    E      S        T                                ", //36
+ "                          T    EEEE    SSS     T                                ", //37
+ "                          T    E          S    T                                ", //38
+ "                          T    E      S   S    T                                ", //39
+ "                          T    EEEEE   SSS     T                                ", //40
  "                                                                                ", //41
  "                                                                                ", //42
  "                                                                                ", //43
@@ -74,17 +74,9 @@ int main() {
             unsigned char code = 0x20;
             if (c < 80 && r < 60) {
                 code = lines[r][c];
-                if (code == '/') color = 0x80;
+                if (r >= 34 && r <= 40) color = 0x80;
                 else if (c > 0 && code != ' ' && lines[r][c-1] == '/') color = 0xF0;
-                /*else if (r >= 7 && r <= 55) {
-                    if (c <= 31) {
-                        if ((c & 2) == 0) color = 0x90;
-                        else color = 0x07;
-                    } else if (c >= 42 && c <= 73) {
-                        if ((c & 2) == 0) color = 0x90;
-                        else color = 0x07;                        
-                    }
-                }*/ else if (code == '?') color = 0xF0;
+                else if (code == '?') color = 0xF0;
             }
             printf("%02hX%02hX\n", color, code);
         }

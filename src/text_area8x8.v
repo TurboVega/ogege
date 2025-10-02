@@ -188,7 +188,7 @@ module text_area8x8 (
     wire [7:0] pschar0; assign pschar0 = (i_ps[7:4]<10 ? {`Z4,i_ps[7:4]}+8'h30 : {`Z4,i_ps[7:4]}+8'h41-8'd10);
     wire [7:0] pschar1; assign pschar1 = (i_ps[3:0]<10 ? {`Z4,i_ps[3:0]}+8'h30 : {`Z4,i_ps[3:0]}+8'h41-8'd10);
 
-    assign cell_char_code = (text_cell_row != 1) ? cell_value[7:0] :
+    assign cell_char_code = /*(text_cell_row != 1) ? cell_value[7:0] :
                             text_cell_column == 1 ? cychar :
                             text_cell_column == 6 ? pcchar0 :
                             text_cell_column == 7 ? pcchar1 :
@@ -217,7 +217,7 @@ module text_area8x8 (
                             text_cell_column == 31 ? ychar2 :
                             text_cell_column == 32 ? ychar3 :
                             text_cell_column == 37 ? pschar0 :
-                            text_cell_column == 38 ? pschar1 :
+                            text_cell_column == 38 ? pschar1 :*/
                             cell_value[7:0];
 
     assign char_fg_color = reg_fg_palette_color[cell_fg_color_index];

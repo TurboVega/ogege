@@ -15,10 +15,6 @@ SOURCEDIR = src
 TOP    = ogege
 CONSTR = src/gatemate1a_evb.ccf
 
-#all: ogege prog
-
-ogege.bin: $(TOP).asc
-
 OBJS += $(SOURCEDIR)/ogege.v
 OBJS += $(SOURCEDIR)/vga_core.v
 OBJS += $(SOURCEDIR)/component_blender.v
@@ -41,7 +37,7 @@ all:$(TOP).bit
 
 synth: $(TOP)_synth.v
 
-gm_netlist.json: $(OBJS)
+gm_netlist.json: $(OBJS) ./font/sample_text8x8.bits ./font/font8x8.bits
 	$(YOSYS) -ql synth.log -p 'read_verilog -sv $(OBJS); synth_gatemate -nomx8 -nomult -luttree -top $(TOP) -json gm_netlist.json -vlog gm_netlist.v;'
 	echo '** SYNTH ENDED **'
   
@@ -51,10 +47,15 @@ $(TOP).asc: gm_netlist.json $(CONSTR)
 
 $(TOP).bit:	$(TOP).asc
 	$(GMPACK) $(TOP).asc $(TOP).bit
+	echo '** BITS PACKED **'
 
-ogege.bin: ogege.asc
-ogege.asc: ogege.json
-ogege.json: $(SOURCEDIR)/ogege.v \
+./font/sample_text: ./font/sample_text.c
+	gcc -o ./font/sample_text ./font/sample_text.c
+	echo '** TEXT COMPILED **'
+
+./font/sample_text8x8.bits: ./font/sample_text
+	./font/sample_text >./font/sample_text8x8.bits
+	echo '** TEXT CONVERTED **'
 
 jtag: $(TOP).bit
 	sudo $(OFL) $(OFLFLAGS) -b $(BOARD) --bitstream $^
