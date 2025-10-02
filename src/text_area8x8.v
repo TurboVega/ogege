@@ -143,24 +143,24 @@ module text_area8x8 (
     assign cell_fg_color_index = cell_value[15:12];
     assign cell_bg_color_index = cell_value[11:8];
 
-    wire [7:0] wrchar0; assign wrchar0 = 8'h21;//(i_test_wr[15:12]<10 ? {`Z4,i_test_wr[15:12]}+8'h30 : {`Z4,i_test_wr[15:12]}+8'h41-8'd10);
-    wire [7:0] wrchar1; assign wrchar1 = 8'h21;//(i_test_wr[11:8]<10 ? {`Z4,i_test_wr[11:8]}+8'h30 : {`Z4,i_test_wr[11:8]}+8'h41-8'd10);
-    wire [7:0] wrchar2; assign wrchar2 = 8'h21;//(i_test_wr[7:4]<10 ? {`Z4,i_test_wr[7:4]}+8'h30 : {`Z4,i_test_wr[7:4]}+8'h41-8'd10);
-    wire [7:0] wrchar3; assign wrchar3 = 8'h21;//(i_test_wr[3:0]<10 ? {`Z4,i_test_wr[3:0]}+8'h30 : {`Z4,i_test_wr[3:0]}+8'h41-8'd10);
+    wire [7:0] wrchar0; assign wrchar0 = (i_test_wr[15:12]<10 ? {`Z4,i_test_wr[15:12]}+8'h30 : {`Z4,i_test_wr[15:12]}+8'h41-8'd10);
+    wire [7:0] wrchar1; assign wrchar1 = (i_test_wr[11:8]<10 ? {`Z4,i_test_wr[11:8]}+8'h30 : {`Z4,i_test_wr[11:8]}+8'h41-8'd10);
+    wire [7:0] wrchar2; assign wrchar2 = (i_test_wr[7:4]<10 ? {`Z4,i_test_wr[7:4]}+8'h30 : {`Z4,i_test_wr[7:4]}+8'h41-8'd10);
+    wire [7:0] wrchar3; assign wrchar3 = (i_test_wr[3:0]<10 ? {`Z4,i_test_wr[3:0]}+8'h30 : {`Z4,i_test_wr[3:0]}+8'h41-8'd10);
 
-    wire [7:0] rdchar0; assign rdchar0 = 8'h21;//(i_test_rd[15:12]<10 ? {`Z4,i_test_rd[15:12]}+8'h30 : {`Z4,i_test_rd[15:12]}+8'h41-8'd10);
-    wire [7:0] rdchar1; assign rdchar1 = 8'h21;//(i_test_rd[11:8]<10 ? {`Z4,i_test_rd[11:8]}+8'h30 : {`Z4,i_test_rd[11:8]}+8'h41-8'd10);
-    wire [7:0] rdchar2; assign rdchar2 = 8'h21;//(i_test_rd[7:4]<10 ? {`Z4,i_test_rd[7:4]}+8'h30 : {`Z4,i_test_rd[7:4]}+8'h41-8'd10);
-    wire [7:0] rdchar3; assign rdchar3 = 8'h21;//(i_test_rd[3:0]<10 ? {`Z4,i_test_rd[3:0]}+8'h30 : {`Z4,i_test_rd[3:0]}+8'h41-8'd10);
+    wire [7:0] rdchar0; assign rdchar0 = (i_test_rd[15:12]<10 ? {`Z4,i_test_rd[15:12]}+8'h30 : {`Z4,i_test_rd[15:12]}+8'h41-8'd10);
+    wire [7:0] rdchar1; assign rdchar1 = (i_test_rd[11:8]<10 ? {`Z4,i_test_rd[11:8]}+8'h30 : {`Z4,i_test_rd[11:8]}+8'h41-8'd10);
+    wire [7:0] rdchar2; assign rdchar2 = (i_test_rd[7:4]<10 ? {`Z4,i_test_rd[7:4]}+8'h30 : {`Z4,i_test_rd[7:4]}+8'h41-8'd10);
+    wire [7:0] rdchar3; assign rdchar3 = (i_test_rd[3:0]<10 ? {`Z4,i_test_rd[3:0]}+8'h30 : {`Z4,i_test_rd[3:0]}+8'h41-8'd10);
 
     wire [7:0] adchar0; assign adchar0 = 8'h30;
     wire [7:0] adchar1; assign adchar1 = 8'h30;
-    wire [7:0] adchar2; assign adchar2 = 8'h21;//(i_test_ad[23:20]<10 ? {`Z4,i_test_ad[23:20]}+8'h30 : {`Z4,i_test_ad[23:20]}+8'h41-8'd10);
-    wire [7:0] adchar3; assign adchar3 = 8'h21;//(i_test_ad[19:16]<10 ? {`Z4,i_test_ad[19:16]}+8'h30 : {`Z4,i_test_ad[19:16]}+8'h41-8'd10);
-    wire [7:0] adchar4; assign adchar4 = 8'h21;//(i_test_ad[15:12]<10 ? {`Z4,i_test_ad[15:12]}+8'h30 : {`Z4,i_test_ad[15:12]}+8'h41-8'd10);
-    wire [7:0] adchar5; assign adchar5 = 8'h21;//(i_test_ad[11:8]<10 ? {`Z4,i_test_ad[11:8]}+8'h30 : {`Z4,i_test_ad[11:8]}+8'h41-8'd10);
-    wire [7:0] adchar6; assign adchar6 = 8'h21;//(i_test_ad[7:4]<10 ? {`Z4,i_test_ad[7:4]}+8'h30 : {`Z4,i_test_ad[7:4]}+8'h41-8'd10);
-    wire [7:0] adchar7; assign adchar7 = 8'h21;//(i_test_ad[3:0]<10 ? {`Z4,i_test_ad[3:0]}+8'h30 : {`Z4,i_test_ad[3:0]}+8'h41-8'd10);
+    wire [7:0] adchar2; assign adchar2 = (i_test_ad[23:20]<10 ? {`Z4,i_test_ad[23:20]}+8'h30 : {`Z4,i_test_ad[23:20]}+8'h41-8'd10);
+    wire [7:0] adchar3; assign adchar3 = (i_test_ad[19:16]<10 ? {`Z4,i_test_ad[19:16]}+8'h30 : {`Z4,i_test_ad[19:16]}+8'h41-8'd10);
+    wire [7:0] adchar4; assign adchar4 = (i_test_ad[15:12]<10 ? {`Z4,i_test_ad[15:12]}+8'h30 : {`Z4,i_test_ad[15:12]}+8'h41-8'd10);
+    wire [7:0] adchar5; assign adchar5 = (i_test_ad[11:8]<10 ? {`Z4,i_test_ad[11:8]}+8'h30 : {`Z4,i_test_ad[11:8]}+8'h41-8'd10);
+    wire [7:0] adchar6; assign adchar6 = (i_test_ad[7:4]<10 ? {`Z4,i_test_ad[7:4]}+8'h30 : {`Z4,i_test_ad[7:4]}+8'h41-8'd10);
+    wire [7:0] adchar7; assign adchar7 = (i_test_ad[3:0]<10 ? {`Z4,i_test_ad[3:0]}+8'h30 : {`Z4,i_test_ad[3:0]}+8'h41-8'd10);
 
     assign cell_char_code =
                             // row 48, column 42

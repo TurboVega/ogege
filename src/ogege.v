@@ -185,8 +185,14 @@ text_area8x8 text_area8x8_inst (
     .o_data(periph_text_o_data),
     .o_data_ready(periph_text_o_data_ready),
 	.o_color(new_color),
+
+//    .i_test_ad(24'hE5F7B2),
     .i_test_ad(periph_psram_addr),
+
+//    .i_test_wr(16'h1234),
     .i_test_wr(periph_psram_i_data),
+
+//    .i_test_rd(16'hABCD)
     .i_test_rd(periph_psram_o_data)
 );
 
