@@ -32,16 +32,10 @@ module text_area8x8 (
     output reg [7:0] o_data,
     output reg o_data_ready,
     output wire [11:0] o_color,
-    input  wire [3:0] i_cycle,
-    input  wire [15:0] i_pc,
-    input  wire [15:0] i_sp,
-    input  wire [31:0] i_ad,
-    input  wire [7:0] i_cb,
-    input  wire [7:0] i_db,
-    input  wire [7:0] i_a,
-    input  wire [7:0] i_x,
-    input  wire [7:0] i_y,
-    input  wire [7:0] i_ps
+    input  wire [3:0] i_cycle,    input  wire [15:0] i_test_wr,
+    input  wire [23:0] i_test_ad,
+    input  wire [15:0] i_test_wr,
+    input  wire [15:0] i_test_rd
 );
 
     // The color palettes each hold 16 colors at 12 bits each (4 bits per
@@ -149,75 +143,55 @@ module text_area8x8 (
     assign cell_fg_color_index = cell_value[15:12];
     assign cell_bg_color_index = cell_value[11:8];
 
-    wire [7:0] cychar; assign cychar = (i_cycle<10 ? {`Z4,i_cycle}+8'h30 : {`Z4,i_cycle}+8'h41-8'd10);
+    wire [7:0] wrchar0; assign wrchar0 = 8'h21;//(i_test_wr[15:12]<10 ? {`Z4,i_test_wr[15:12]}+8'h30 : {`Z4,i_test_wr[15:12]}+8'h41-8'd10);
+    wire [7:0] wrchar1; assign wrchar1 = 8'h21;//(i_test_wr[11:8]<10 ? {`Z4,i_test_wr[11:8]}+8'h30 : {`Z4,i_test_wr[11:8]}+8'h41-8'd10);
+    wire [7:0] wrchar2; assign wrchar2 = 8'h21;//(i_test_wr[7:4]<10 ? {`Z4,i_test_wr[7:4]}+8'h30 : {`Z4,i_test_wr[7:4]}+8'h41-8'd10);
+    wire [7:0] wrchar3; assign wrchar3 = 8'h21;//(i_test_wr[3:0]<10 ? {`Z4,i_test_wr[3:0]}+8'h30 : {`Z4,i_test_wr[3:0]}+8'h41-8'd10);
 
-    wire [7:0] pcchar0; assign pcchar0 = (i_pc[15:12]<10 ? {`Z4,i_pc[15:12]}+8'h30 : {`Z4,i_pc[15:12]}+8'h41-8'd10);
-    wire [7:0] pcchar1; assign pcchar1 = (i_pc[11:8]<10 ? {`Z4,i_pc[11:8]}+8'h30 : {`Z4,i_pc[11:8]}+8'h41-8'd10);
-    wire [7:0] pcchar2; assign pcchar2 = (i_pc[7:4]<10 ? {`Z4,i_pc[7:4]}+8'h30 : {`Z4,i_pc[7:4]}+8'h41-8'd10);
-    wire [7:0] pcchar3; assign pcchar3 = (i_pc[3:0]<10 ? {`Z4,i_pc[3:0]}+8'h30 : {`Z4,i_pc[3:0]}+8'h41-8'd10);
+    wire [7:0] rdchar0; assign rdchar0 = 8'h21;//(i_test_rd[15:12]<10 ? {`Z4,i_test_rd[15:12]}+8'h30 : {`Z4,i_test_rd[15:12]}+8'h41-8'd10);
+    wire [7:0] rdchar1; assign rdchar1 = 8'h21;//(i_test_rd[11:8]<10 ? {`Z4,i_test_rd[11:8]}+8'h30 : {`Z4,i_test_rd[11:8]}+8'h41-8'd10);
+    wire [7:0] rdchar2; assign rdchar2 = 8'h21;//(i_test_rd[7:4]<10 ? {`Z4,i_test_rd[7:4]}+8'h30 : {`Z4,i_test_rd[7:4]}+8'h41-8'd10);
+    wire [7:0] rdchar3; assign rdchar3 = 8'h21;//(i_test_rd[3:0]<10 ? {`Z4,i_test_rd[3:0]}+8'h30 : {`Z4,i_test_rd[3:0]}+8'h41-8'd10);
 
-    wire [7:0] spchar0; assign spchar0 = (i_sp[15:12]<10 ? {`Z4,i_sp[15:12]}+8'h30 : {`Z4,i_sp[15:12]}+8'h41-8'd10);
-    wire [7:0] spchar1; assign spchar1 = (i_sp[11:8]<10 ? {`Z4,i_sp[11:8]}+8'h30 : {`Z4,i_sp[11:8]}+8'h41-8'd10);
-    wire [7:0] spchar2; assign spchar2 = (i_sp[7:4]<10 ? {`Z4,i_sp[7:4]}+8'h30 : {`Z4,i_sp[7:4]}+8'h41-8'd10);
-    wire [7:0] spchar3; assign spchar3 = (i_sp[3:0]<10 ? {`Z4,i_sp[3:0]}+8'h30 : {`Z4,i_sp[3:0]}+8'h41-8'd10);
+    wire [7:0] adchar0; assign adchar0 = 8'h30;
+    wire [7:0] adchar1; assign adchar1 = 8'h30;
+    wire [7:0] adchar2; assign adchar2 = 8'h21;//(i_test_ad[23:20]<10 ? {`Z4,i_test_ad[23:20]}+8'h30 : {`Z4,i_test_ad[23:20]}+8'h41-8'd10);
+    wire [7:0] adchar3; assign adchar3 = 8'h21;//(i_test_ad[19:16]<10 ? {`Z4,i_test_ad[19:16]}+8'h30 : {`Z4,i_test_ad[19:16]}+8'h41-8'd10);
+    wire [7:0] adchar4; assign adchar4 = 8'h21;//(i_test_ad[15:12]<10 ? {`Z4,i_test_ad[15:12]}+8'h30 : {`Z4,i_test_ad[15:12]}+8'h41-8'd10);
+    wire [7:0] adchar5; assign adchar5 = 8'h21;//(i_test_ad[11:8]<10 ? {`Z4,i_test_ad[11:8]}+8'h30 : {`Z4,i_test_ad[11:8]}+8'h41-8'd10);
+    wire [7:0] adchar6; assign adchar6 = 8'h21;//(i_test_ad[7:4]<10 ? {`Z4,i_test_ad[7:4]}+8'h30 : {`Z4,i_test_ad[7:4]}+8'h41-8'd10);
+    wire [7:0] adchar7; assign adchar7 = 8'h21;//(i_test_ad[3:0]<10 ? {`Z4,i_test_ad[3:0]}+8'h30 : {`Z4,i_test_ad[3:0]}+8'h41-8'd10);
 
-    wire [7:0] adchar0; assign adchar0 = (i_ad[31:28]<10 ? {`Z4,i_ad[31:28]}+8'h30 : {`Z4,i_ad[31:28]}+8'h41-8'd10);
-    wire [7:0] adchar1; assign adchar1 = (i_ad[27:24]<10 ? {`Z4,i_ad[27:24]}+8'h30 : {`Z4,i_ad[27:24]}+8'h41-8'd10);
-    wire [7:0] adchar2; assign adchar2 = (i_ad[23:20]<10 ? {`Z4,i_ad[23:20]}+8'h30 : {`Z4,i_ad[23:20]}+8'h41-8'd10);
-    wire [7:0] adchar3; assign adchar3 = (i_ad[19:16]<10 ? {`Z4,i_ad[19:16]}+8'h30 : {`Z4,i_ad[19:16]}+8'h41-8'd10);
-    wire [7:0] adchar4; assign adchar4 = (i_ad[15:12]<10 ? {`Z4,i_ad[15:12]}+8'h30 : {`Z4,i_ad[15:12]}+8'h41-8'd10);
-    wire [7:0] adchar5; assign adchar5 = (i_ad[11:8]<10 ? {`Z4,i_ad[11:8]}+8'h30 : {`Z4,i_ad[11:8]}+8'h41-8'd10);
-    wire [7:0] adchar6; assign adchar6 = (i_ad[7:4]<10 ? {`Z4,i_ad[7:4]}+8'h30 : {`Z4,i_ad[7:4]}+8'h41-8'd10);
-    wire [7:0] adchar7; assign adchar7 = (i_ad[3:0]<10 ? {`Z4,i_ad[3:0]}+8'h30 : {`Z4,i_ad[3:0]}+8'h41-8'd10);
+    assign cell_char_code =
+                            // row 48, column 42
+                            (text_cell_row == 48) ?
+                              (text_cell_column == 42 ? wrchar0 :
+                              text_cell_column == 43 ? wrchar1 :
+                              text_cell_column == 44 ? wrchar2 :
+                              text_cell_column == 45 ? wrchar3 :
+                              cell_value[7:0]) :
 
-    wire [7:0] cchar2; assign cchar2 = (i_cb[7:4]<10 ? {`Z4,i_cb[7:4]}+8'h30 : {`Z4,i_cb[7:4]}+8'h41-8'd10);
-    wire [7:0] cchar3; assign cchar3 = (i_cb[3:0]<10 ? {`Z4,i_cb[3:0]}+8'h30 : {`Z4,i_cb[3:0]}+8'h41-8'd10);
+                            // row 50, column 42
+                            (text_cell_row == 50) ?
+                              (text_cell_column == 42 ? rdchar0 :
+                              text_cell_column == 43 ? rdchar1 :
+                              text_cell_column == 44 ? rdchar2 :
+                              text_cell_column == 45 ? rdchar3 :
+                              cell_value[7:0]) :
 
-    wire [7:0] dchar2; assign dchar2 = (i_db[7:4]<10 ? {`Z4,i_db[7:4]}+8'h30 : {`Z4,i_db[7:4]}+8'h41-8'd10);
-    wire [7:0] dchar3; assign dchar3 = (i_db[3:0]<10 ? {`Z4,i_db[3:0]}+8'h30 : {`Z4,i_db[3:0]}+8'h41-8'd10);
+                            // row 46, column 38
+                            (text_cell_row == 46) ?
+                              (text_cell_column == 38 ? adchar0 :
+                              text_cell_column == 39 ? adchar1 :
+                              text_cell_column == 40 ? adchar2 :
+                              text_cell_column == 41 ? adchar3 :
+                              text_cell_column == 42 ? adchar4 :
+                              text_cell_column == 43 ? adchar5 :
+                              text_cell_column == 44 ? adchar6 :
+                              text_cell_column == 45 ? adchar7 :
+                              cell_value[7:0]) :
 
-    wire [7:0] achar2; assign achar2 = (i_a[7:4]<10 ? {`Z4,i_a[7:4]}+8'h30 : {`Z4,i_a[7:4]}+8'h41-8'd10);
-    wire [7:0] achar3; assign achar3 = (i_a[3:0]<10 ? {`Z4,i_a[3:0]}+8'h30 : {`Z4,i_a[3:0]}+8'h41-8'd10);
-
-    wire [7:0] xchar2; assign xchar2 = (i_x[7:4]<10 ? {`Z4,i_x[7:4]}+8'h30 : {`Z4,i_x[7:4]}+8'h41-8'd10);
-    wire [7:0] xchar3; assign xchar3 = (i_x[3:0]<10 ? {`Z4,i_x[3:0]}+8'h30 : {`Z4,i_x[3:0]}+8'h41-8'd10);
-
-    wire [7:0] ychar2; assign ychar2 = (i_y[7:4]<10 ? {`Z4,i_y[7:4]}+8'h30 : {`Z4,i_y[7:4]}+8'h41-8'd10);
-    wire [7:0] ychar3; assign ychar3 = (i_y[3:0]<10 ? {`Z4,i_y[3:0]}+8'h30 : {`Z4,i_y[3:0]}+8'h41-8'd10);
-
-    wire [7:0] pschar0; assign pschar0 = (i_ps[7:4]<10 ? {`Z4,i_ps[7:4]}+8'h30 : {`Z4,i_ps[7:4]}+8'h41-8'd10);
-    wire [7:0] pschar1; assign pschar1 = (i_ps[3:0]<10 ? {`Z4,i_ps[3:0]}+8'h30 : {`Z4,i_ps[3:0]}+8'h41-8'd10);
-
-    assign cell_char_code = /*(text_cell_row != 1) ? cell_value[7:0] :
-                            text_cell_column == 1 ? cychar :
-                            text_cell_column == 6 ? pcchar0 :
-                            text_cell_column == 7 ? pcchar1 :
-                            text_cell_column == 8 ? pcchar2 :
-                            text_cell_column == 9 ? pcchar3 :
-                            text_cell_column == 14 ? spchar0 :
-                            text_cell_column == 15 ? spchar1 :
-                            text_cell_column == 16 ? spchar2 :
-                            text_cell_column == 17 ? spchar3 :
-                            text_cell_column == 45 ? adchar0 :
-                            text_cell_column == 46 ? adchar1 :
-                            text_cell_column == 47 ? adchar2 :
-                            text_cell_column == 48 ? adchar3 :
-                            text_cell_column == 49 ? adchar4 :
-                            text_cell_column == 50 ? adchar5 :
-                            text_cell_column == 51 ? adchar6 :
-                            text_cell_column == 52 ? adchar7 :
-                            text_cell_column == 56 ? cchar2 :
-                            text_cell_column == 57 ? cchar3 :
-                            text_cell_column == 61 ? dchar2 :
-                            text_cell_column == 62 ? dchar3 :
-                            text_cell_column == 21 ? achar2 :
-                            text_cell_column == 22 ? achar3 :
-                            text_cell_column == 26 ? xchar2 :
-                            text_cell_column == 27 ? xchar3 :
-                            text_cell_column == 31 ? ychar2 :
-                            text_cell_column == 32 ? ychar3 :
-                            text_cell_column == 37 ? pschar0 :
-                            text_cell_column == 38 ? pschar1 :*/
+                            // everywhere else
                             cell_value[7:0];
 
     assign char_fg_color = reg_fg_palette_color[cell_fg_color_index];

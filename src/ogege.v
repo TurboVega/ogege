@@ -34,7 +34,6 @@ module ogege (
 	output wire       o_hsync,
 	output wire       o_clk,
 	output wire       o_rst,
-	//output wire `VB   o_led,
 	output wire       o_led,
 	output wire       o_psram_csn,
 	output wire       o_psram_sclk,
@@ -123,16 +122,12 @@ always @(posedge pix_clk) begin
 end
 
 // Memory/peripheral bus (32-bit)
-wire bus_clk;
-wire bus_we;
-//wire `VW bus_addr;
-//wire `VW bus_wr_data;
-//wire `VW bus_rd_data;
+reg bus_clk;
+reg bus_we;
+reg `VW bus_addr;
+reg `VW bus_wr_data;
+wire `VW bus_rd_data;
 wire bus_rd_ready;
-
-reg `VW bus_addr = 0;
-reg `VW bus_wr_data = 0;
-reg `VW bus_rd_data = 0;
 
 // Peripheral chip selects
 wire periph_psram_cs;
@@ -164,36 +159,14 @@ wire [34:0] states_hit;
 reg `VW zero = 0;
 
 assign bus_rd_data =
-//    periph_psram_cs ? {zero[31:16], periph_psram_o_data} :
+    periph_psram_cs ? {zero[31:16], periph_psram_o_data} :
     periph_text_cs ? {zero[31:8], periph_text_o_data} :
     32'd0;
 
 assign bus_rd_ready =
-    //periph_psram_cs ? periph_psram_o_data_ready :
+    periph_psram_cs ? periph_psram_o_data_ready :
     periph_text_cs ? periph_text_o_data_ready :
     1'b0;
-
-/*wire [3:0] cur_cycle;
-wire `VHW cur_pc;
-wire `VHW cur_sp;
-wire `VW cur_ad;
-wire `VB cur_cb;
-wire `VB cur_db;
-wire `VB cur_a;
-wire `VB cur_x;
-wire `VB cur_y;
-wire `VB cur_ps;*/
-
-reg [3:0] cur_cycle = 0;
-reg `VHW cur_pc = 0;
-reg `VHW cur_sp = 0;
-reg `VW cur_ad = 0;
-reg `VB cur_cb = 0;
-reg `VB cur_db = 0;
-reg `VB cur_a = 0;
-reg `VB cur_x = 0;
-reg `VB cur_y = 0;
-reg `VB cur_ps = 0;
 
 // Text area peripheral
 text_area8x8 text_area8x8_inst (
@@ -212,16 +185,9 @@ text_area8x8 text_area8x8_inst (
     .o_data(periph_text_o_data),
     .o_data_ready(periph_text_o_data_ready),
 	.o_color(new_color),
-    .i_cycle(cur_cycle),
-    .i_pc(cur_pc),
-	.i_sp(cur_sp),
-    .i_ad(cur_ad),
-    .i_cb(cur_cb),
-    .i_db(cur_db),
-    .i_a(cur_a),
-    .i_x(cur_x),
-    .i_y(cur_y),
-	.i_ps(cur_ps)
+    .i_test_ad(periph_psram_addr),
+    .i_test_wr(periph_psram_i_data),
+    .i_test_rd(periph_psram_o_data)
 );
 
 psram psram_inst (
@@ -249,31 +215,85 @@ psram psram_inst (
 	.states_hit(states_hit)
 );
 
-// The CPUs!
-/*cpu cpu_inst (
-    .i_rst(rst_s),
-	.i_cpu_clk(clk_50mhz),
-	.i_bram_clk(clk_100mhz),
-    .o_bus_clk(bus_clk),
-    .o_bus_we(bus_we),
-    .o_bus_addr(bus_addr),
-    .o_bus_data(bus_wr_data),
-    .i_bus_data(bus_rd_data),
-    .i_bus_data_ready(bus_rd_ready),
-    .o_cycle(cur_cycle),
-    .o_pc(cur_pc),
-	.o_sp(cur_sp),
-    .o_ad(cur_ad),
-    .o_cb(cur_cb),
-    .o_db(cur_db),
-    .o_a(cur_a),
-    .o_x(cur_x),
-    .o_y(cur_y),
-	.o_ps(cur_ps)
-);*/
+reg [2:0] test_state;
+reg finished;
+reg success;
+
+always @(posedge rst_s or posedge pix_clk) begin
+	if (rst_s) begin
+		bus_clk <= 0;
+		bus_we <= 0;
+		bus_addr <= 32'h40000000;
+		bus_wr_data <= 0;
+		test_state <= 0;
+		finished <= 0;
+		success <= 0;
+	end else begin
+		case (test_state)
+			3'd0: begin
+					// Wait for PSRAM startup
+					if (~periph_psram_busy)
+						test_state <= 3'd1;
+				end
+			3'd1: begin
+					// Write a 16-bit value
+					bus_we <= 1;
+					bus_clk <= 1;
+					test_state <= 3'd2;
+				end
+			3'd2: begin
+					// Wait for the value to be written
+					if (periph_psram_busy) begin
+						bus_clk <= 0;
+						bus_we <= 0;
+						test_state <= 3'd3;
+					end
+				end
+			3'd3: begin
+					// Read the value back again
+					if (~periph_psram_busy) begin
+						bus_clk <= 1;
+						test_state <= 3'd4;
+					end
+				end
+			3'd4: begin
+					// Wait for the value to be read
+					if (periph_psram_busy) begin
+						bus_clk <= 0;
+						test_state <= 3'd5;
+					end
+				end
+			3'd5: begin
+					// Indicate completion
+					if (~periph_psram_busy) begin
+						if (bus_wr_data == bus_rd_data) begin
+							if (bus_addr == 32'h40FFFFFF) begin
+								if (bus_wr_data == 32'h0000FFFF) begin
+									finished <= 1;
+									success <= 1;
+									test_state <= 3'd6;
+								end else begin
+									bus_addr <= 0;
+									bus_wr_data <= bus_wr_data + 1;
+									test_state <= 3'd1;
+								end
+							end else begin
+								bus_addr <= bus_addr + 1;
+								test_state <= 3'd1;
+							end
+						end else begin
+							finished <= 1;
+							success <= 0;
+							test_state <= 3'd6;
+						end
+					end
+				end
+		endcase;
+	end;
+end
 
 assign rst_s = ~rstn_i;
-assign o_led = 8'b0;
+assign o_led = 1'd0;
 assign o_clk = clk_i;
 assign o_rst = rstn_i;
 assign blank_s = ~active_s;

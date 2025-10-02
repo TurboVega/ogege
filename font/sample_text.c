@@ -27,10 +27,10 @@ static const char* lines[] = {
  "                                                                                ", //21
  "                                                                                ", //22
  "                                                                                ", //23
- "                     PPPP    SSS   RRRR    AAA   M   M                          ", //24
- "                     P   P  S   S  R   R  A   A  MM MM                          ", //25
+ "                     PPPP    SSS   RRRR     A    M   M                          ", //24
+ "                     P   P  S   S  R   R   A A   MM MM                          ", //25
  "                     P   P  S      R   R  A   A  M M M                          ", //26
- "                     P PP    SSS   RRRR   AAAAA  M   M                          ", //27
+ "                     PPPP    SSS   RRRR   AAAAA  M   M                          ", //27
  "                     P          S  R   R  A   A  M   M                          ", //28
  "                     P      S   S  R   R  A   A  M   M                          ", //29
  "                     P       SSS   R   R  A   A  M   M                          ", //30
@@ -49,11 +49,11 @@ static const char* lines[] = {
  "                                                                                ", //43
  "                                                                                ", //44
  "                                                                                ", //45
- "                                                                                ", //46
+ "                             Address: ????????                                  ", //46
  "                                                                                ", //47
- "                                                                                ", //48
+ "                               Write:     ????                                  ", //48
  "                                                                                ", //49
- "                                                                                ", //50
+ "                                Read:     ????                                  ", //50
  "                                                                                ", //51
  "                                                                                ", //52
  "                                                                                ", //53
