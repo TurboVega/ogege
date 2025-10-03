@@ -135,42 +135,42 @@ always @(posedge i_rst or posedge i_clk) begin
                     o_psram_csn <= 0; // select
                     out_enable[0] <= 1;
                     out_enable[4] <= 1;
-                    data_to_chip <= 8'h00;
+                    data_to_chip <= 8'h00; // command bit 7 is 0
                     o_state <= MODE_CMD_6;
                 end
 
             MODE_CMD_6: begin
-                    data_to_chip <= 8'h00;
+                    data_to_chip <= 8'h00; // command bit 6 is 0
                     o_state <= MODE_CMD_5;
                 end
 
             MODE_CMD_5: begin
-                    data_to_chip <= 8'hFF;
+                    data_to_chip <= 8'hFF; // command bit 5 is 1
                     o_state <= MODE_CMD_4;
                 end
 
             MODE_CMD_4: begin
-                    data_to_chip <= 8'hFF;
+                    data_to_chip <= 8'hFF; // command bit 4 is 1
                     o_state <= MODE_CMD_3;
                 end
 
             MODE_CMD_3: begin
-                    data_to_chip <= 8'h00;
+                    data_to_chip <= 8'h00; // command bit 3 is 0
                     o_state <= MODE_CMD_2;
                 end
 
             MODE_CMD_2: begin
-                    data_to_chip <= 8'hFF;
+                    data_to_chip <= 8'hFF; // command bit 2 is 1
                     o_state <= MODE_CMD_1;
                 end
 
             MODE_CMD_1: begin
-                    data_to_chip <= 8'h00;
+                    data_to_chip <= 8'h00; // command bit 1 is 0
                     o_state <= MODE_CMD_0;
                 end
 
             MODE_CMD_0: begin
-                    data_to_chip <= 8'hFF;
+                    data_to_chip <= 8'hFF; // command bit 0 is 1
                     o_state <= MODE_DESELECT;
                 end
 
@@ -250,7 +250,7 @@ always @(posedge i_rst or posedge i_clk) begin
 
             READ_WAIT: begin
                     out_enable <= 8'h00;
-                    if (short_delay == 5)
+                    if (short_delay == 6)
                         o_state <= READ_DATA_7_4;
                     else
                         short_delay <= short_delay + 1;
