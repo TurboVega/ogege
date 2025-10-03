@@ -226,7 +226,7 @@ always @(posedge rst_s or posedge pix_clk) begin
 	if (rst_s) begin
 		bus_clk <= 0;
 		bus_we <= 0;
-		bus_addr <= {`PSRAM_PERIPH_BASE_HIGH_PART, 24'h000034};
+		bus_addr <= {`PSRAM_PERIPH_BASE_HIGH_PART, 24'h000000};
 		bus_wr_data <= 32'd0;
 		test_state <= 3'd6;
 		finished <= 0;
