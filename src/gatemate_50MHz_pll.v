@@ -11,7 +11,7 @@ wire usr_pll_lock_stdy, usr_pll_lock;
 wire pll_clk_nobuf;
 CC_PLL #(
     .REF_CLK("10.0"),    // reference input in MHz
-    .OUT_CLK("125.0"),   // pll output frequency in MHz
+    .OUT_CLK("50.35"),   // pll output frequency in MHz
     .LOCK_REQ(1),        // require lock before output
     .PERF_MD("SPEED"),   // LOWPOWER, ECONOMY, SPEED
     .LOW_JITTER(1),      // 0: disable, 1: enable low jitter mode

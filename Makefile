@@ -25,7 +25,7 @@ OBJS += $(SOURCEDIR)/text_area8x8.v
 OBJS += $(SOURCEDIR)/text_array8x8.v
 #OBJS += $(SOURCEDIR)/canvas.v
 #OBJS += $(SOURCEDIR)/frame_buffer.v
-OBJS += $(SOURCEDIR)/gatemate_100MHz_pll.v
+OBJS += $(SOURCEDIR)/gatemate_50MHz_pll.v
 OBJS += $(SOURCEDIR)/psram.v
 #OBJS += $(SOURCEDIR)/cpu.v
 

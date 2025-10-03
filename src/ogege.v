@@ -47,7 +47,7 @@ module ogege (
 	inout  wire       io_psram_data7
 );
 
-wire clk_100mhz, clk_50mhz, pix_clk, clk_locked;
+wire clk_main, clk_50mhz, pix_clk, clk_locked;
 reg [11:0] reg_fg_color = 12'b111111111111;
 reg [11:0] reg_bg_color = 12'b000000000000;
 wire [11:0] new_color;
@@ -64,33 +64,20 @@ reg [4:0] text_row_count;
 pll pll_inst (
 	.clock_in(clk_i), // 10 MHz
 	.rst_in(~rstn_i),
-	.clock_out(clk_100mhz), // 100 MHz
+	.clock_out(clk_main), // 100 MHz
 	.locked(clk_locked)
 );
 
-reg [2:0] cnt_4_ph_0 = 0;
-reg [2:0] cnt_4_ph_1 = 0;
-assign pix_clk = (cnt_4_ph_0 < 2) && (cnt_4_ph_1 != 2);
-assign clk_50mhz = cnt_4_ph_0[1];
+reg [1:0] clk_cnt = 0;
+assign pix_clk = clk_cnt[0]; // divides clk_main by 2 
+assign clk_50mhz = clk_main; // equals clk_main
 
-always @(posedge clk_100mhz or negedge rstn_i)
+always @(posedge clk_main or negedge rstn_i)
 begin
 	if (~rstn_i)
-		cnt_4_ph_0 <= 0;
-	else if (cnt_4_ph_0 == 3)
-		cnt_4_ph_0 <= 0;
+		clk_cnt <= 0;
 	else
-		cnt_4_ph_0 <= cnt_4_ph_0 + 1;
-end
-
-always @(negedge clk_100mhz or posedge rstn_i)
-begin
-	if (rstn_i)
-		cnt_4_ph_1 <= 0;
-	else if (cnt_4_ph_1 == 3)
-		cnt_4_ph_1 <= 0;
-	else
-		cnt_4_ph_1 <= cnt_4_ph_1 + 1;
+		clk_cnt <= clk_cnt + 1;
 end
 
 vga_core #(
