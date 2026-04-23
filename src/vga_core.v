@@ -18,7 +18,9 @@ module vga_core #(
 	output reg            de_o,
 	// vga control
 	output reg            vsync_o,
-	output reg            hsync_o
+	output reg            hsync_o,
+	output reg            hbstart_o,
+	output reg            vbstart_o
 );
 
 //ifdef DISP_640x480_60Hz
@@ -83,4 +85,6 @@ module vga_core #(
 	end
 	assign hcount_o = hcount_s[HSZ-1:0];
 	assign vcount_o = vcount_s[VSZ-1:0];
+	assign hbstart_o = (hcount_s == H_RES);
+	assign vbstart_o = ((hcount_s == H_RES) && (vcount_s == V_RES-1));
 endmodule

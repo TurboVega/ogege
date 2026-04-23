@@ -59,6 +59,8 @@ wire blank_s;
 reg [3:0] glyph_row_count;
 wire [2:0] cell_col_count;
 reg [4:0] text_row_count;
+wire hbstart;
+wire vbstart;
 
 /* 10 MHz to 100 MHz */
 pll pll_inst (
@@ -89,7 +91,9 @@ vga_core #(
 	.vcount_o(v_count_s),
 	.de_o(active_s),
 	.vsync_o(o_vsync),
-	.hsync_o(o_hsync)
+	.hsync_o(o_hsync),
+	.hbstart_o(hbstart),
+	.vbstart_o(vbstart)
 );
 
 assign cell_col_count = h_count_s[2:0];
