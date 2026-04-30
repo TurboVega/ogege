@@ -47,7 +47,7 @@ module ogege (
 	inout  wire       io_psram_data7
 );
 
-wire clk_main, clk_50mhz, pix_clk, clk_locked;
+wire clk_psram, pix_clk, clk_locked_psram, clk_locked_pix;
 reg [11:0] reg_fg_color = 12'b111111111111;
 reg [11:0] reg_bg_color = 12'b000000000000;
 wire [11:0] new_color;
@@ -62,31 +62,24 @@ reg [4:0] text_row_count;
 wire hbstart;
 wire vbstart;
 
-/* 10 MHz to 100 MHz */
+wire clocks_locked;
+assign clocks_locked = clk_locked_psram & clk_locked_pix;
+
+/* 10 MHz to 75 and 25 MHz */
 pll pll_inst (
 	.clock_in(clk_i), // 10 MHz
 	.rst_in(~rstn_i),
-	.clock_out(clk_main), // 100 MHz
-	.locked(clk_locked)
+	.clock_out_psram(clk_psram),
+	.locked_psram(clk_locked_psram),
+	.clock_out_vga(pix_clk),
+	.locked_vga(clk_locked_pix)
 );
-
-reg [1:0] clk_cnt = 0;
-assign pix_clk = clk_cnt[0]; // divides clk_main by 2 
-assign clk_50mhz = clk_main; // equals clk_main
-
-always @(posedge clk_main or negedge rstn_i)
-begin
-	if (~rstn_i)
-		clk_cnt <= 0;
-	else
-		clk_cnt <= clk_cnt + 1;
-end
 
 vga_core #(
 	.HSZ(10),
 	.VSZ(9)
 ) vga_inst (.clk_i(pix_clk),
-    .rst_i(~clk_locked),
+    .rst_i(rst_s),
 	.hcount_o(h_count_s),
 	.vcount_o(v_count_s),
 	.de_o(active_s),
@@ -165,7 +158,7 @@ text_area8x8 text_area8x8_inst (
     .i_cs(periph_text_cs),
 	.i_pix_clk(pix_clk),
 	.i_blank(blank_s),
-    .i_cpu_clk(clk_50mhz),
+    //.i_cpu_clk(pix_clk),
     .i_stb(periph_text_stb),
     .i_we(periph_text_we),
     .i_addr(periph_text_addr),
@@ -186,7 +179,7 @@ text_area8x8 text_area8x8_inst (
 psram psram_inst (
 	.i_rst(rst_s),
     .i_cs(periph_psram_cs),
-	.i_clk(pix_clk),
+	.i_clk(clk_psram),
 	.i_stb(periph_psram_stb),
 	.i_we(periph_psram_we),
 	.i_addr(periph_psram_addr),
@@ -294,10 +287,10 @@ always @(posedge rst_s or posedge pix_clk) begin
 	end;
 end
 
-assign rst_s = ~rstn_i;
+assign rst_s = (~rstn_i) & clocks_locked;
 assign o_led = 1'd0;
 assign o_clk = clk_i;
-assign o_rst = rstn_i;
+assign o_rst = rst_s;
 assign blank_s = ~active_s;
 assign o_r = active_s ? new_color[11:8] : 4'd0;
 assign o_g = active_s ? new_color[7:4] : 4'd0;
