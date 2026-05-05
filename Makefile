@@ -1,6 +1,6 @@
 RM    = rm -rf
 
-CC_TOOL=/home/curtis/oss-cad-suite
+CC_TOOL=/home/turbovega/gatemate/oss-cad-suite
 CC_TOOL_DIR=$(CC_TOOL)
 YOSYS = $(CC_TOOL)/bin/yosys
 P_R   = $(CC_TOOL)/bin/nextpnr-himbaechel
