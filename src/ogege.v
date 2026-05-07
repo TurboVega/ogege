@@ -63,16 +63,14 @@ wire hbstart;
 wire vbstart;
 
 wire clocks_locked;
-assign clocks_locked = clk_locked_psram & clk_locked_pix;
+wire sys_rst_n;
 
-/* 10 MHz to 75 and 25 MHz */
-pll pll_inst (
-	.clock_in(clk_i), // 10 MHz
-	.rst_in(~rstn_i),
-	.clock_out_psram(clk_psram),
-	.locked_psram(clk_locked_psram),
-	.clock_out_vga(pix_clk),
-	.locked_vga(clk_locked_pix)
+clock_gen_50_25 pll_inst(
+    .clk_osc(clk_i), // 10 MHz (Olimex)
+    .clk_50_25(clk_psram), // 50.250 MHz
+    .clk_25_12(pix_clk), // 25.125 MHz
+    .pll_lock(clocks_locked),
+    .sys_rst_n(sys_rst_n)
 );
 
 vga_core #(

@@ -1,62 +1,56 @@
-module pll (
-	input  wire clock_in,
-	input  wire rst_in,
-	output wire clock_out_psram,
-	output reg  locked_psram,
-	output wire clock_out_vga,
-	output reg  locked_vga,
+module clock_gen_50_25 (
+    input wire clk_osc, // 10 MHz (Olimex)
+    output wire clk_50_25, // 50.250 MHz
+    output wire clk_25_12, // 25.125 MHz
+    output wire pll_lock,
+    output wire sys_rst_n
 );
 
-wire clk270, clk180, clk90, clk0, usr_ref_out;
-wire usr_pll_lock_stdy, usr_pll_lock;
+    wire clk_fb;
 
-wire pll_clk_nobuf;
-CC_PLL #(
-    .REF_CLK("10.0"),    // reference input in MHz
-    .OUT_CLK("40.0"),   // pll output frequency in MHz
-    .LOCK_REQ(1),        // require lock before output
-    .PERF_MD("SPEED"),   // LOWPOWER, ECONOMY, SPEED
-    .LOW_JITTER(1),      // 0: disable, 1: enable low jitter mode
-    .CI_FILTER_CONST(2), // optional CI filter constant
-    .CP_FILTER_CONST(4)  // optional CP filter constant
-) pll75 (
-    .CLK_REF(clock_in), .CLK_FEEDBACK(1'b0), .USR_CLK_REF(1'b0),
-    .USR_LOCKED_STDY_RST(1'b0), .USR_PLL_LOCKED_STDY(usr_pll_lock_stdy), .USR_PLL_LOCKED(usr_pll_lock),
-	.CLK270(clk270), .CLK180(clk180), .CLK90(clk90), .CLK0(pll_clk_nobuf), .CLK_REF_OUT(usr_ref_out)
-);
-CC_BUFG pll_bufg (.I(pll_clk_nobuf), .O(clock_out_psram));
+    // CC_PLL Primitive
+    // Ratio: 10 * (201 / 40) = 50.250 MHz
+    CC_PLL #(
+        .REF_CLK("10.0"),
+        .P_DIV(40), // N = 40
+        .M_MULT(201), // M = 201
+        .S_DIV(0) // S = 0 (2^0 = 1)
+    ) pll_inst (
+        .CLK_REF(clk_osc),
+        .CLK_FEEDBACK(clk_fb),
+        .CLK_OUT(clk_50_25),
+        .CLK_LOCK(pll_lock)
+    );
 
-// reset is synced the clock
-reg locked_s1;
-always @(posedge clock_out_psram) begin
-	locked_s1 <= usr_pll_lock;//_stdy;
-	locked_psram <= locked_s1;
+    assign clk_fb = clk_50_25;
+
+    // Synchronous clock divider for 25.125 MHz
+    reg r_clk_25;
+    always @(posedge clk_50_25 or negedge pll_lock) begin
+        if (!pll_lock) 
+            r_clk_25 <= 0;
+        else           
+            r_clk_25 <= ~r_clk_25;
+    end
+    
+    // Global Buffer for the divided clock
+    CC_BUFG bufg_25 (
+        .I(r_clk_25),
+        .Y(clk_25_12)
+    );
+
+wire sys_rst_n;
+reg [3:0] rst_sync;
+
+// Create a reset that releases only AFTER the PLL is locked
+// and stays synchronous to the fast clock
+always @(posedge clk_50_25 or negedge pll_lock) begin
+    if (!pll_lock)
+        rst_sync <= 4'b0000;
+    else
+        rst_sync <= {rst_sync[2:0], 1'b1};
 end
 
-wire clk270_b, clk180_b, clk90_b, clk0_b, usr_ref_out_b;
-wire usr_pll_lock_stdy_b, usr_pll_lock_b;
-
-wire pll_clk_nobuf_b;
-CC_PLL #(
-    .REF_CLK("10.0"),    // reference input in MHz
-    .OUT_CLK("25.175"),   // pll output frequency in MHz
-    .LOCK_REQ(1),        // require lock before output
-    .PERF_MD("SPEED"),   // LOWPOWER, ECONOMY, SPEED
-    .LOW_JITTER(1),      // 0: disable, 1: enable low jitter mode
-    .CI_FILTER_CONST(2), // optional CI filter constant
-    .CP_FILTER_CONST(4)  // optional CP filter constant
-) pll25 (
-    .CLK_REF(clock_in), .CLK_FEEDBACK(1'b0), .USR_CLK_REF(1'b0),
-    .USR_LOCKED_STDY_RST(1'b0), .USR_PLL_LOCKED_STDY(usr_pll_lock_stdy_b), .USR_PLL_LOCKED(usr_pll_lock_b),
-	.CLK270(clk270_b), .CLK180(clk180_b), .CLK90(clk90_b), .CLK0(pll_clk_nobuf_b), .CLK_REF_OUT(usr_ref_out_b)
-);
-CC_BUFG pll_bufg_b (.I(pll_clk_nobuf_b), .O(clock_out_vga));
-
-// reset is synced the clock
-reg locked_s1_b;
-always @(posedge clock_out_vga) begin
-	locked_s1_b <= usr_pll_lock_b;//_stdy_b;
-	locked_vga <= locked_s1_b;
-end
+assign sys_rst_n = rst_sync[3];
 
 endmodule
