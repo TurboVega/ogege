@@ -6,22 +6,28 @@ module clock_gen_50_25 (
     output wire sys_rst_n
 );
 
-    wire clk_fb;
+    wire clk270, clk180, clk90, clk0, usr_ref_out;
+    wire usr_pll_lock_stdy;
+    wire pll_clk_nobuf;
 
-    // CC_PLL Primitive
-    // Ratio: 10 * (201 / 40) = 50.250 MHz
     CC_PLL #(
-        .REF_CLK("10.0"),
-        .OUT_CLK(50.250),
-        .LOW_JITTER(1),
-        .CI_FILTER_CONST(2),
-        .CP_FILTER_CONST(4)
-    ) pll_inst (
-        .CLK_REF(clk_osc),
-        .CLK_FEEDBACK(clk_fb),
-        .CLK0(clk_50_25),
-        .USR_PLL_LOCKED_STDY(pll_lock)
+        .REF_CLK("10.0"),    // reference input in MHz
+        .OUT_CLK("50.25"),   // pll output frequency in MHz
+        .LOCK_REQ(1),        // require lock before output
+        .PERF_MD("SPEED"),   // LOWPOWER, ECONOMY, SPEED
+        .LOW_JITTER(1),      // 0: disable, 1: enable low jitter mode
+        .CI_FILTER_CONST(2), // optional CI filter constant
+        .CP_FILTER_CONST(4)  // optional CP filter constant
+    ) pll25 (
+        .CLK_REF(clk_osc), .CLK_FEEDBACK(1'b0), .USR_CLK_REF(1'b0),
+        .USR_LOCKED_STDY_RST(1'b0),
+        .USR_PLL_LOCKED_STDY(usr_pll_lock_stdy), .USR_PLL_LOCKED(pll_lock),
+        .CLK270(clk270), .CLK180(clk180),
+        .CLK90(clk90), .CLK0(pll_clk_nobuf),
+        .CLK_REF_OUT(usr_ref_out)
     );
+
+    CC_BUFG pll_bufg (.I(pll_clk_nobuf), .O(clk_50_25));
 
     assign clk_fb = clk_50_25;
 
@@ -34,10 +40,7 @@ module clock_gen_50_25 (
             r_clk_25 <= ~r_clk_25;
     end
     
-    // Global Buffer for the divided clock
-    CC_BUFG bufg_25 (
-        .I(r_clk_25),
-        .O(clk_25_12)
+    CC_BUFG bufg_25 (.I(r_clk_25), .O(clk_25_12)
     );
 
 wire sys_rst_n;

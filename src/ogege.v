@@ -47,23 +47,25 @@ module ogege (
 	inout  wire       io_psram_data7
 );
 
-wire clk_psram, pix_clk, clk_locked_psram, clk_locked_pix;
+wire clocks_locked;
+wire sys_rst_n;
+wire clk_psram, pix_clk;
+wire rst_s;
+
 reg [11:0] reg_fg_color = 12'b111111111111;
 reg [11:0] reg_bg_color = 12'b000000000000;
 wire [11:0] new_color;
 wire [9:0] h_count_s;
 wire [8:0] v_count_s;
-wire rst_s;
+
 wire active_s;
 wire blank_s;
+
 reg [3:0] glyph_row_count;
 wire [2:0] cell_col_count;
 reg [4:0] text_row_count;
 wire hbstart;
 wire vbstart;
-
-wire clocks_locked;
-wire sys_rst_n;
 
 clock_gen_50_25 pll_inst(
     .clk_osc(clk_i), // 10 MHz (Olimex)
@@ -285,7 +287,7 @@ always @(posedge rst_s or posedge pix_clk) begin
 	end;
 end
 
-assign rst_s = (~rstn_i) & clocks_locked;
+assign rst_s = (~rstn_i) || (~clocks_locked);
 assign o_led = 1'd0;
 assign o_clk = clk_i;
 assign o_rst = rst_s;
