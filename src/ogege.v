@@ -49,7 +49,7 @@ module ogege (
 
 wire clocks_locked;
 wire sys_rst_n;
-wire clk_psram, pix_clk;
+wire psram_clk, pix_clk;
 wire rst_s;
 
 reg [11:0] reg_fg_color = 12'b111111111111;
@@ -69,7 +69,7 @@ wire vbstart;
 
 clock_gen_50_25 pll_inst(
     .clk_osc(clk_i), // 10 MHz (Olimex)
-    .clk_50_25(clk_psram), // 50.250 MHz
+    .clk_50_25(psram_clk), // 50.250 MHz
     .clk_25_12(pix_clk), // 25.125 MHz
     .pll_lock(clocks_locked),
     .sys_rst_n(sys_rst_n)
@@ -158,7 +158,7 @@ text_area8x8 text_area8x8_inst (
     .i_cs(periph_text_cs),
 	.i_pix_clk(pix_clk),
 	.i_blank(blank_s),
-    .i_cpu_clk(clk_psram),
+    .i_cpu_clk(psram_clk),
     .i_stb(periph_text_stb),
     .i_we(periph_text_we),
     .i_addr(periph_text_addr),
@@ -179,7 +179,7 @@ text_area8x8 text_area8x8_inst (
 psram psram_inst (
 	.i_rst(rst_s),
     .i_cs(periph_psram_cs),
-	.i_clk(clk_psram),
+	.i_clk(pix_clk), // not psram_clk ?
 	.i_stb(periph_psram_stb),
 	.i_we(periph_psram_we),
 	.i_addr(periph_psram_addr),
