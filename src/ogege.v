@@ -287,7 +287,7 @@ always @(posedge rst_s or posedge pix_clk) begin
 	end;
 end
 
-assign rst_s = (~rstn_i) || (~clocks_locked);
+assign rst_s = (~rstn_i) || (~sys_rst_n);
 assign o_led = 1'd0;
 assign o_clk = clk_i;
 assign o_rst = rst_s;
