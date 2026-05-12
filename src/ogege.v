@@ -158,7 +158,7 @@ text_area8x8 text_area8x8_inst (
     .i_cs(periph_text_cs),
 	.i_pix_clk(pix_clk),
 	.i_blank(blank_s),
-    //.i_cpu_clk(pix_clk),
+    .i_cpu_clk(clk_psram),
     .i_stb(periph_text_stb),
     .i_we(periph_text_we),
     .i_addr(periph_text_addr),

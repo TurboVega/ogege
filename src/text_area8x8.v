@@ -21,7 +21,7 @@ module text_area8x8 (
     input  wire i_cs,
     input  wire i_pix_clk,
     input  wire i_blank,
-    //input  wire i_cpu_clk,
+    input  wire i_cpu_clk,
     input  wire i_stb,
     input  wire i_we,
     input  wire [6:0] i_addr,
@@ -259,7 +259,7 @@ module text_area8x8 (
      4B  r w -----AAA Text area alpha value
 */
 
-    /*always @(posedge i_cpu_clk) begin
+    always @(posedge i_cpu_clk) begin
         if (i_rst) begin
             reg_scroll_x_offset <= 0;
             reg_scroll_y_offset <= 0;
@@ -894,5 +894,5 @@ module text_area8x8 (
                 7'h4B: reg_text_area_alpha <= i_data[2:0];
             endcase
         end
-    end*/
+    end
 endmodule

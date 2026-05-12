@@ -8,7 +8,7 @@ module clock_gen_50_25 (
 
     wire clk270, clk180, clk90, clk0, usr_ref_out;
     wire usr_pll_lock_stdy;
-    wire pll_clk_nobuf;
+    wire pll_clk_nobuf, clk_fb;
 
     CC_PLL #(
         .REF_CLK("10.0"),    // reference input in MHz
