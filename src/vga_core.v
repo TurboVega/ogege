@@ -2,6 +2,7 @@
  * vga_core.v
  *
  * Copyright (C) 2017-2022  Gwenhael Goavec-Merou <gwenhael.goavec-merou@trabucayre.com>
+ * Modified by Curtis Whitley to run at double-speed (50MHz+).
  * SPDX-License-Identifier: MIT
  */
 module vga_core #(
@@ -31,10 +32,10 @@ module vga_core #(
 		H_SYNC = 96*2,
 		H_BP   = 48*2,
 
-		V_RES  = 480*2,
-		V_FP   = 10*2,
-		V_SYNC = 2*2,
-		V_BP   = 33*2;
+		V_RES  = 480,
+		V_FP   = 10,
+		V_SYNC = 2,
+		V_BP   = 33;
 //endif
 
 	// horizontal timings
@@ -42,19 +43,18 @@ module vga_core #(
 		H_START_SYNC = H_RES + H_FP,
 		H_END_SYNC   = H_START_SYNC + H_SYNC,
 		H_MAX_COUNT  = H_END_SYNC + H_BP,
-		HMAX_SZ      = $clog2(H_MAX_COUNT),
+
 		// vertical timings
 		V_START_SYNC = V_RES + V_FP,
 		V_END_SYNC   = V_START_SYNC + V_SYNC,
-		V_MAX_COUNT  = V_END_SYNC + V_BP,
-		VMAX_SZ      = $clog2(V_MAX_COUNT);
+		V_MAX_COUNT  = V_END_SYNC + V_BP;
 
 	// hsync
 	// -------------------------+       +------+
 	//                           \_____/        \_
 	//    display       | front   sync   back
 	//                    porch   pulse  porch
-	reg  [HMAX_SZ-1:0] hcount_s;
+	reg  [HSZ:0] hcount_s;
 	wire hsync_s        = ~(hcount_s >= H_START_SYNC && hcount_s < H_END_SYNC);
 	wire clear_hcount_s = (hcount_s == H_MAX_COUNT-1);
 	
@@ -63,7 +63,7 @@ module vga_core #(
 	//                           \____/         \_
 	//    display       | front   sync   back
 	//                    porch   pulse  porch
-	reg  [VMAX_SZ-1:0] vcount_s;
+	reg  [VSZ-1:0] vcount_s;
 	wire vsync_s        = ~(vcount_s >= V_START_SYNC && vcount_s < V_END_SYNC);
 	wire clear_vcount_s = (vcount_s == V_MAX_COUNT-1);
 	
@@ -83,8 +83,8 @@ module vga_core #(
 		if (rst_i)
 			vcount_s <= 0;
 	end
-	assign hcount_o = hcount_s[HSZ-1:1]; // note not using lowest bit
-	assign vcount_o = vcount_s[VSZ-1:1]; // note not using lowest bit
+	assign hcount_o = hcount_s[HSZ:1]; // note not using lowest bit
+	assign vcount_o = vcount_s[VSZ-1:0];
 	assign hbstart_o = (hcount_s == H_RES);
 	assign vbstart_o = ((hcount_s == H_RES) && (vcount_s == V_RES-1));
 endmodule

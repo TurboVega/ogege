@@ -17,7 +17,7 @@ module clock_gen_50_25 (
         .LOW_JITTER(1),      // 0: disable, 1: enable low jitter mode
         .CI_FILTER_CONST(2), // optional CI filter constant
         .CP_FILTER_CONST(4)  // optional CP filter constant
-    ) pll25 (
+    ) pll50_25 (
         .CLK_REF(clk_osc), .CLK_FEEDBACK(1'b0), .USR_CLK_REF(1'b0),
         .USR_LOCKED_STDY_RST(1'b0),
         .USR_PLL_LOCKED_STDY(usr_pll_lock_stdy), .USR_PLL_LOCKED(pll_lock),
