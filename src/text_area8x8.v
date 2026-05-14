@@ -34,7 +34,7 @@ module text_area8x8 (
     output wire [11:0] o_color,
     input  wire [3:0] i_cycle,
     input  wire [15:0] i_test_wr,
-    input  wire [31:0] i_test_ad,
+    input  wire [23:0] i_test_ad,
     input  wire [15:0] i_test_wr,
     input  wire [15:0] i_test_rd,
     input  wire i_test_busy
@@ -155,8 +155,6 @@ module text_area8x8 (
     wire [7:0] rdchar2; assign rdchar2 = (i_test_rd[7:4]<10 ? {`Z4,i_test_rd[7:4]}+8'h30 : {`Z4,i_test_rd[7:4]}+8'h41-8'd10);
     wire [7:0] rdchar3; assign rdchar3 = (i_test_rd[3:0]<10 ? {`Z4,i_test_rd[3:0]}+8'h30 : {`Z4,i_test_rd[3:0]}+8'h41-8'd10);
 
-    wire [7:0] adchar0; assign adchar0 = (i_test_ad[31:28]<10 ? {`Z4,i_test_ad[31:28]}+8'h30 : {`Z4,i_test_ad[31:28]}+8'h41-8'd10);
-    wire [7:0] adchar1; assign adchar1 = (i_test_ad[27:24]<10 ? {`Z4,i_test_ad[27:24]}+8'h30 : {`Z4,i_test_ad[27:24]}+8'h41-8'd10);
     wire [7:0] adchar2; assign adchar2 = (i_test_ad[23:20]<10 ? {`Z4,i_test_ad[23:20]}+8'h30 : {`Z4,i_test_ad[23:20]}+8'h41-8'd10);
     wire [7:0] adchar3; assign adchar3 = (i_test_ad[19:16]<10 ? {`Z4,i_test_ad[19:16]}+8'h30 : {`Z4,i_test_ad[19:16]}+8'h41-8'd10);
     wire [7:0] adchar4; assign adchar4 = (i_test_ad[15:12]<10 ? {`Z4,i_test_ad[15:12]}+8'h30 : {`Z4,i_test_ad[15:12]}+8'h41-8'd10);
@@ -186,9 +184,7 @@ module text_area8x8 (
 
                             // row 46, column 38
                             (text_cell_row == 46) ?
-                              (text_cell_column == 38 ? adchar0 :
-                              text_cell_column == 39 ? adchar1 :
-                              text_cell_column == 40 ? adchar2 :
+                              (text_cell_column == 40 ? adchar2 :
                               text_cell_column == 41 ? adchar3 :
                               text_cell_column == 42 ? adchar4 :
                               text_cell_column == 43 ? adchar5 :
