@@ -27,10 +27,10 @@ module vga_core #(
 //ifdef DISP_640x480_60Hz
 	// 25MHz pixel clock
 	localparam
-		H_RES  = 640*2,
-		H_FP   = 16*2,
-		H_SYNC = 96*2,
-		H_BP   = 48*2,
+		H_RES  = 640,
+		H_FP   = 16,
+		H_SYNC = 96,
+		H_BP   = 48,
 
 		V_RES  = 480,
 		V_FP   = 10,
@@ -54,7 +54,7 @@ module vga_core #(
 	//                           \_____/        \_
 	//    display       | front   sync   back
 	//                    porch   pulse  porch
-	reg  [HSZ:0] hcount_s;
+	reg  [HSZ-1:0] hcount_s;
 	wire hsync_s        = ~(hcount_s >= H_START_SYNC && hcount_s < H_END_SYNC);
 	wire clear_hcount_s = (hcount_s == H_MAX_COUNT-1);
 	
@@ -83,7 +83,7 @@ module vga_core #(
 		if (rst_i)
 			vcount_s <= 0;
 	end
-	assign hcount_o = hcount_s[HSZ:1]; // note not using lowest bit
+	assign hcount_o = hcount_s[HSZ-1:0];
 	assign vcount_o = vcount_s[VSZ-1:0];
 	assign hbstart_o = (hcount_s == H_RES);
 	assign vbstart_o = ((hcount_s == H_RES) && (vcount_s == V_RES-1));

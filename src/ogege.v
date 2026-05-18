@@ -58,9 +58,9 @@ reg [4:0] text_row_count;
 wire hbstart;
 wire vbstart;
 
-clock_gen_50_25 pll_inst(
+clock_gen_25_125 pll_inst(
     .clk_osc(clk_i), // 10 MHz (Olimex)
-    .clk_50_25(main_clk), // 50.250 MHz
+    .clk_25_125(main_clk), // 25.125 MHz
     .pll_lock(clock_locked),
     .sys_rst_n(sys_rst_n)
 );
@@ -143,7 +143,7 @@ text_area8x8 text_area8x8_inst (
 psram psram_inst (
 	.i_rst(rst_s),
     .i_cs(periph_psram_cs),
-	.i_clk(main_clk), // not main_clk ?
+	.i_clk(main_clk),
 	.i_stb(periph_psram_stb),
 	.i_we(periph_psram_we),
 	.i_addr(periph_psram_addr),
@@ -259,7 +259,7 @@ assign periph_text_we = 0;
 assign periph_text_addr = 0;
 assign periph_text_i_data = 0;
 
-assign rst_s = (~rstn_i) || (~sys_rst_n);
+assign rst_s = (~rstn_i);// || (~sys_rst_n);
 assign o_led = 1'd0;
 assign o_clk = clk_i;
 assign o_rst = rst_s;
