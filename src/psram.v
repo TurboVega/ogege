@@ -72,9 +72,9 @@ module psram (
     output  reg [34:0] states_hit
 );
 
-// The main clock (i_clk) here is 100 MHz, which ticks every
-// 10 nS. In order to wait 150 uS upon reset, we must count
-// at least 15000 ticks. So, we wait 20000, to be safe.
+// The main clock (i_clk) here is 25 MHz, which ticks every
+// 40 nS. In order to wait 150 uS upon reset, we must count
+// at least 3750 ticks. So, we wait 20000, to be safe.
 reg [14:0] long_delay;
 
 reg [3:0] short_delay;
